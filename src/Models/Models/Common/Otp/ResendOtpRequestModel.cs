@@ -1,0 +1,11 @@
+using SharedKernel.SystemEnum.Otp;
+
+namespace Models.Common.Otp;
+
+public class ResendOtpRequestModel
+{
+    public OtpType OtpType { get; set; }
+    public OtpChannel Channel { get; set; }
+    public string Otp { get; set; }
+    public string Username { get; set; }
+}

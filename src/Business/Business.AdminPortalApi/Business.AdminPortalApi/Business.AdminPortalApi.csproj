@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Data\Data\Data.csproj" />
+    <ProjectReference Include="..\..\Business.Common\Business.Common.csproj" />
+    <ProjectReference Include="..\..\Business.CustomerPortalApi\Business.BeemaEdgeApi.csproj" />
+  </ItemGroup>
+
+</Project>

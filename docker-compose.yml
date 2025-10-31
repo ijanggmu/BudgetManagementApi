@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  customerportalapi:
+    image: codehop/beemaedge-backend:beemaedge-backend
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+      dockerfile: src/Web/Dockerfile
+    environment:
+      - ASPNETCORE_API_USER_SECRETS_ID=28040e26-cf45-47bd-958d-a99d40dfb352
+      - ASPNETCORE_ENVIRONMENT=Dev
+      - Seq__ServerUrl=http://seq:5341
+      - Serilog__WriteTo__0__Name=Seq
+      - Serilog__WriteTo__0__Args__serverUrl=http://seq:5341
+    volumes:
+      - /root/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+    depends_on:
+      - seq
+    restart: always
+
+  seq:
+    image: datalust/seq:latest
+    ports:
+      - "5341:80"     # Web UI
+      - "5342:5341"   # Ingest API (optional if only using web UI)
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=S3cur3d@1990
+    volumes:
+      - seq-data:/data
+    restart: always
+
+volumes:
+  seq-data:
