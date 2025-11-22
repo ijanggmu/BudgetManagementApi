@@ -6,7 +6,7 @@ using Models.WebApi.TenantDTOs;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Admin;
 
-[Route("api/v1/admin/admins")]
+
 public class AdminController(IAdminService adminService) : BaseAdminApiController
 {
     /// <summary>
