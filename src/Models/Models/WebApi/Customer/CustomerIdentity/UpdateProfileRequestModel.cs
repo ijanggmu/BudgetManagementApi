@@ -93,6 +93,7 @@ public class UpdateProfileRequestModel
     public string FatherName { get; set; }
     public string GrandFatherName { get; set; }
     public string MotherName { get; set; }
+    public string PhoneNumber { get; set; }
 }
 public class UsernameValidationRequest
 {

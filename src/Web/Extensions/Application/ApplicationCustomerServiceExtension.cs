@@ -4,6 +4,7 @@ using AdminPortalApi.Controllers.V1.SystemLog;
 using Business.AdminPortalApi.Auth;
 using Business.AdminPortalApi.Claim;
 using Business.AdminPortalApi.CMSCustomer;
+using Business.AdminPortalApi.Profile;
 using Business.BeemaEdgeApi.AccountValidation;
 using Business.BeemaEdgeApi.Auth;
 using Business.BeemaEdgeApi.Bank;
