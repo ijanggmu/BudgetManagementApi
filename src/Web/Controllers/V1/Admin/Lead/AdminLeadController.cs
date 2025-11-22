@@ -7,7 +7,6 @@ using Models.Common;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Lead;
 
-[Route("api/v1/admin/leads")]
 public class AdminLeadController(ILeadService leadService) : BaseAdminApiController
 {
     /// <summary>

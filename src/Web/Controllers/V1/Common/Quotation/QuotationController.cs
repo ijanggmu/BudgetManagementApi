@@ -7,7 +7,6 @@ using Models.WebApi.TenantDTOs;
 
 namespace BeemaEdgeApi.Controllers.V1.Common.Quotation;
 
-[Route("api/v1/quotations")]
 public class QuotationController(IQuotationService quotes) : BaseCommonApiController
 {
     [HttpPost]

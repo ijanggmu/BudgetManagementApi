@@ -7,7 +7,6 @@ using Models.Common;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Quotation;
 
-[Route("api/v1/admin/quotations")]
 public class AdminQuotationController(IQuotationService quotationService) : BaseAdminApiController
 {
     /// <summary>

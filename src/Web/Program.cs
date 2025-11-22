@@ -168,7 +168,7 @@ static async Task RunDatabaseMigrationAsync(WebApplication app)
         await CountriesSeeder.SeedData(context);
     }
     catch (Exception ex)
-    {
+   {
         Log.Error(ex, "An error occurred during migration");
         throw;
     }

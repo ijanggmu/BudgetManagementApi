@@ -1,20 +1,21 @@
-//using System.Threading.Tasks;
-//using Business.BeemaEdgeApi.Profile;
-//using Microsoft.AspNetCore.Mvc;
-//using Models.BeemaEdgeApi.Customer.CustomerIdentity;
+using System.Threading.Tasks;
+using BeemaEdgeApi.Controllers.V1.BaseController;
+using Business.AdminPortalApi.Profile;
+using Microsoft.AspNetCore.Mvc;
+using Models.BeemaEdgeApi.Customer.CustomerIdentity;
 
-//namespace BeemaEdgeApi.Controllers.V1.Admin.Profile
-//{
-//    public class AdminProfileController(ICustomerProfileService customerProfileService) : BaseApiController
-//    {
-//        [HttpGet]
-//        public async Task<IActionResult> GetProfile()
-//            => HandleResult(await customerProfileService.GetProfileAsync());
+namespace BeemaEdgeApi.Controllers.V1.Admin.Profile
+{
+    public class AdminProfileController(IAdminProfileService adminProfileService) : BaseAdminApiController
+    {
+        [HttpGet]
+        public async Task<IActionResult> GetProfile()
+            => HandleResult(await adminProfileService.GetProfileAsync());
 
-//        [HttpPut("Update")]
-//        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequestModel requestModel)
-//            => HandleResult(await customerProfileService.UpdateProfileAsync(requestModel));
-//    }
-//}
+        [HttpPut("Update")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequestModel requestModel)
+            => HandleResult(await adminProfileService.UpdateProfileAsync(requestModel));
+    }
+}
 
 
