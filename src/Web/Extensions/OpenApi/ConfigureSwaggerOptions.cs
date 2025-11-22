@@ -27,7 +27,7 @@ public class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider) : 
 
     private static OpenApiInfo CreateInfoForApiVersion(ApiVersionDescription description)
     {
-        var text = new StringBuilder("Customer Portal APi");
+        var text = new StringBuilder("Beema Edge API");
         var info = new OpenApiInfo()
         {
             Title = "BeemaEdgeApi",
