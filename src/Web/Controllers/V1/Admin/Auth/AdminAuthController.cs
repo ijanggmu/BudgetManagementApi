@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
-using Business.AdminPortalApi.Auth;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using Business.AdminPortalApi.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Identity;
@@ -10,13 +10,13 @@ namespace BeemaEdgeApi.Controllers.V1.Admin.Auth
     [AllowAnonymous]
     public class AdminAuthController(IAdminAuthService adminAuthService) : BaseAdminApiController
     {
-        [HttpPost("Login")]
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] AdminLoginRequestModel requestModel) => HandleResult(await adminAuthService.LoginAsync(requestModel));
 
         [HttpPost("Login2FA")]
         public async Task<IActionResult> Login2FA([FromBody] Verify2FaAdminRequestModel requestModel) => HandleResult(await adminAuthService.Login2FaAsync(requestModel));
 
-        [HttpGet("Refresh")]
+        [HttpPost("refresh")]
         public async Task<IActionResult> RefreshToken() => HandleResult(await adminAuthService.RefreshTokenAsync());
 
         [HttpPost("Logout")]

@@ -21,14 +21,16 @@ public static class ApplicationDatabaseExtension
 
         services.AddDbContext<ApplicationDataContext>((sp, opt) =>
         {
-            opt.UseNpgsql(_configuration.GetConnectionString("DefaultConnection"));
+            var resolver = sp.GetRequiredService<Data.Infrastructure.ITenantConnectionResolver>();
+            opt.UseNpgsql(resolver.ResolveDefaultConnection());
             var interceptor = sp.GetService<AuditingInterceptor>();
             opt.AddInterceptors(interceptor);
         });
 
         services.AddDbContextFactory<ApplicationDataContext>((sp, opt) =>
         {
-            opt.UseNpgsql(_configuration.GetConnectionString("DefaultConnection"));
+            var resolver = sp.GetRequiredService<Data.Infrastructure.ITenantConnectionResolver>();
+            opt.UseNpgsql(resolver.ResolveDefaultConnection());
             var interceptor = sp.GetService<AuditingInterceptor>();
             opt.AddInterceptors(interceptor);
         }, ServiceLifetime.Scoped);
@@ -47,6 +49,7 @@ public static class ApplicationDatabaseExtension
         services.AddSingleton(_ => System.Threading.Channels.Channel.CreateUnbounded<UserActivity>());
         services.AddHostedService<RequestLoggingDbWriterBackgroundWorker>();
 
+        services.AddScoped<Data.Infrastructure.ITenantConnectionResolver, Data.Infrastructure.TenantConnectionResolver>();
         return services;
     }
 }

@@ -66,6 +66,8 @@ try
         .AddApplicationAdminServiceExtension()
         .AddApplicationConfigExtension()
         .AddApplicationCoreApiRefitServices(builder.Configuration)
+        .AddTenancy()
+        .AddTenantDomainServices()
         .AddCorsPolicy(builder.Configuration)
         .ConfigureOpenApi()
         .ConfigureJobs()
@@ -96,6 +98,7 @@ try
     app.UseJobDashboard(app.Configuration);
     app.UseResponseCompression();
     app.UseRouting();
+    app.UseTenantResolution();
     app.UseStaticFiles();
 
     app.UseAuthentication();

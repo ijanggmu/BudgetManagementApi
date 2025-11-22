@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Data.Entities.BaseEntity;
 using Data.Entities.Common;
+using Data.Entities.Tenant;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -33,7 +34,7 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
 }
 
 [EntityTypeConfiguration(typeof(ApplicationUserConfiguration))]
-public class ApplicationUser : IdentityUser<string>, IBaseEntity, IAuditableEntity
+public class ApplicationUser : IdentityUser<string>, IBaseEntity, IAuditableEntity, ITenantEntity
 {
     public string RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiryDateTime { get; set; }
@@ -53,6 +54,11 @@ public class ApplicationUser : IdentityUser<string>, IBaseEntity, IAuditableEnti
     public List<UserTotpBackUpCode> UserTotpBackUpCodes { get; set; }
     public ICollection<UserOtp> Otp { get; set; }
     public TwoFaSetupStatus TwoFaSetupStatus { get; set; } = TwoFaSetupStatus.NotStarted;
+    
+    /// <summary>
+    /// Tenant ID for multi-tenancy support. Automatically set when saving.
+    /// </summary>
+    public string TenantId { get; set; }
 }
 
 public class UserTotpBackUpCode

@@ -15,11 +15,16 @@ public class AdminConfiguration : IEntityTypeConfiguration<Admin>
 }
 
 [EntityTypeConfiguration(typeof(AdminConfiguration))]
-public class Admin : ApplicationBaseEntity
+public class Admin : ApplicationBaseEntity, ITenantEntity
 {
     public string FullName { get; set; }
     public string UserId { get; set; }
     public virtual ApplicationUser User { get; set; }
+    
+    /// <summary>
+    /// Tenant ID for multi-tenancy support. Null for SuperAdmin, set for tenant-specific admins.
+    /// </summary>
+    public string TenantId { get; set; }
 }
 
 

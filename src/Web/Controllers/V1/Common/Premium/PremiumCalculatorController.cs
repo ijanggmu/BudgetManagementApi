@@ -8,7 +8,7 @@ namespace BeemaEdgeApi.Controllers.V1.Common.Premium;
 
 public class PremiumCalculatorController(IPolicyCalculatorService policyCalculatorService) : BaseCommonApiController
 {
-    [HttpPost("CalculatePremium")]
+    [HttpPost("api/v1/premiums/calculate")]
     public async Task<IActionResult> CalculatePremium([FromBody] PremiumCalculateRequestModel policyDto)
     {
         var result = await policyCalculatorService.CalculatePremiumAsync(policyDto);

@@ -509,3 +509,16 @@ The application implements a secure authentication system using JWTs (JSON Web T
    - Secure error messages
    - Proper HTTP status codes
    - Audit logging for security events
+
+### Multitenancy & Theming
+
+- Tenant is resolved per-request via `X-Tenant` header or subdomain and applied as a global EF Core filter.
+- Tenant-aware entities inherit `TenantEntity` and are automatically stamped with `TenantId` on insert.
+- Company branding (logo URL, palette, typography) is stored per-tenant and exposed via `/api/v1/Branding`.
+- Admins can manage branding at `/api/v1/AdminBranding`.
+
+### Security & Secrets
+
+- Prefer environment variables or User Secrets for sensitive values (JWT keys, API keys, storage credentials).
+- Do not commit production secrets to `appsettings.*.json`. Use deployment-time environment injection.
+- Configure reverse proxy and TLS; set `Cookie` flags (HttpOnly, Secure) and strict CORS.

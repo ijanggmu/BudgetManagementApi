@@ -97,8 +97,11 @@ public class UserProfileService : IUserProfileService
     }
     public string GetAccessToken()
     {
-        var token = _httpContextAccessor.HttpContext.Request.Cookies["X-Access-Token"].ToString();
-        if (token == null)
+        if (_httpContextAccessor.HttpContext?.Request.Cookies == null)
+            return null;
+
+        var token = _httpContextAccessor.HttpContext.Request.Cookies["X-Access-Token"];
+        if (string.IsNullOrEmpty(token))
             return null;
 
         return HttpUtility.UrlDecode(token);

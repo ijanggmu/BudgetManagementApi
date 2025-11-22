@@ -8,32 +8,32 @@ public class TodoServiceTests
 {
     private readonly ApplicationDataContext _context;
     //private readonly TodoService _sut; // System Under Test
-    private ApplicationDataContext GetInMemoryDbContext()
-    {
+    //private ApplicationDataContext GetInMemoryDbContext()
+    //{
 
-        // Mock the IUserProfileService
-        var mockUserProfileService = new Mock<IUserProfileService>();
-        mockUserProfileService.Setup(x => x.GetUserId()).Returns("test-user-id");
+    //    // Mock the IUserProfileService
+    //    var mockUserProfileService = new Mock<IUserProfileService>();
+    //    mockUserProfileService.Setup(x => x.GetUserId()).Returns("test-user-id");
 
-        // Configure InMemory database
-        var options = new DbContextOptionsBuilder<ApplicationDataContext>()
-            .UseInMemoryDatabase(databaseName: "TodoTestDb")
-            .Options;
+    //    // Configure InMemory database
+    //    var options = new DbContextOptionsBuilder<ApplicationDataContext>()
+    //        .UseInMemoryDatabase(databaseName: "TodoTestDb")
+    //        .Options;
 
-        var context = new ApplicationDataContext(options, mockUserProfileService.Object);
+    //    var context = new ApplicationDataContext(options, mockUserProfileService.Object);
 
-        // Ensure database is clean for each test
-        context.Database.EnsureDeleted();
-        context.Database.EnsureCreated();
+    //    // Ensure database is clean for each test
+    //    context.Database.EnsureDeleted();
+    //    context.Database.EnsureCreated();
 
-        return context;
-    }
+    //    return context;
+    //}
     public TodoServiceTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDataContext>()
             .UseInMemoryDatabase(databaseName: "TestDatabase")
             .Options;
-        _context = GetInMemoryDbContext();
+        //_context = GetInMemoryDbContext();
 
         //_sut = new TodoService(_context);
     }

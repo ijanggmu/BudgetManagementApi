@@ -84,7 +84,7 @@ OtpGeneratorService otpGeneratorService) : IAdminAuthService
         //    return Result<LoginCustomerResponseModel>.Failed(ResponseMessage.OtpNotVerified, errorCode: ErrorCodeConstant.OtpNotVerified);
 
 
-        if (user.PhoneNumberConfirmed && user.TwoFactorEnabled)
+        if ((user.EmailConfirmed || user.PhoneNumberConfirmed) && user.TwoFactorEnabled)
         {
             var token = userManager.PasswordHasher.HashPassword(user, Guid.NewGuid().ToString());
             user.TotpToken = token;
@@ -95,7 +95,7 @@ OtpGeneratorService otpGeneratorService) : IAdminAuthService
             responseModel.Token = token;
         }
 
-        if (user.PhoneNumberConfirmed && !user.TwoFactorEnabled)
+        if ((user.EmailConfirmed || user.PhoneNumberConfirmed) && !user.TwoFactorEnabled)
         {
             var roleIds = await userManager.GetRolesAsync(user);
 

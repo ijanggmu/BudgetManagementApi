@@ -3,6 +3,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Web;
 using Business.Common.Token;
 using Data.Context;
 using Data.Entities.Identity;
@@ -71,7 +72,12 @@ public static class AuthenticationServiceExtension
 
                     if (context.Request.Cookies.ContainsKey("X-Access-Token"))
                     {
-                        context.Token = context.Request.Cookies["X-Access-Token"];
+                        var cookieValue = context.Request.Cookies["X-Access-Token"];
+                        if (!string.IsNullOrEmpty(cookieValue))
+                        {
+                            // Decode the URL-encoded token from cookie
+                            context.Token = HttpUtility.UrlDecode(cookieValue);
+                        }
                     }
                     else if (context.Request.Cookies.ContainsKey("X-Refresh-Token"))
                     {
@@ -80,8 +86,9 @@ public static class AuthenticationServiceExtension
                     }
                     else
                     {
-                        context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                        context.Fail("");
+                        // Don't fail if no token - let the authorization handle it
+                        // This allows public endpoints to work
+                        return Task.CompletedTask;
                     }
                     return Task.CompletedTask;
                 },

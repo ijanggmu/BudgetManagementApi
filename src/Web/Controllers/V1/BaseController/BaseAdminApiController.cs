@@ -7,5 +7,9 @@ namespace BeemaEdgeApi.Controllers.V1.BaseController
     public class BaseAdminApiController : BaseApiController
     {
     }
+    [ApiExplorerSettings(GroupName = "Tenant")]
+    public class BaseTenantAdminApiController : BaseApiController
+    {
+    }
 }
 

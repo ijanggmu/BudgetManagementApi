@@ -12,6 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Config;
 using SharedKernel.Config.Mail;
 using Sieve.Services;
+using FluentValidation.AspNetCore;
+using FluentValidation;
 
 namespace BeemaEdgeApi.Extensions.Application;
 
@@ -49,6 +51,8 @@ public static class ApplicationConfigExtension
         services.AddOptions<MinioSettings>().BindConfiguration(nameof(MinioSettings));
         services.AddOptions<HmacAuthSettings>().BindConfiguration(nameof(HmacAuthSettings));
         services.AddOptions<SmsOptions>().BindConfiguration(nameof(SmsOptions));
+        services.AddFluentValidationAutoValidation();
+        services.AddValidatorsFromAssemblyContaining<Program>();
 
         return services;
     }

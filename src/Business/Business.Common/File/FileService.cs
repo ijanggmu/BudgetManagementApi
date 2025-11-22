@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using ImageMagick;
 using Infrastructure.Common.UserProfile;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -75,7 +74,7 @@ public class FileService : IFileService, IDisposable
             if (extension == ".heic" || extension == ".heif")
             {
                 var jpegFilePath = $"{filePath}.jpg";
-                await ConvertHEICtoJPEGAndUpload(memoryStream, jpegFilePath);
+                //await ConvertHEICtoJPEGAndUpload(memoryStream, jpegFilePath);
                 return Result<FileUploadSummaryResponseModel>.Success(new FileUploadSummaryResponseModel { FilePath = jpegFilePath });
             }
 
@@ -149,25 +148,25 @@ public class FileService : IFileService, IDisposable
         return Regex.Replace(input, @"[^a-zA-Z0-9-_]", string.Empty);
     }
 
-    private async Task ConvertHEICtoJPEGAndUpload(Stream heicStream, string jpegFilePath)
-    {
-        using var jpegStream = new MemoryStream();
-        using (var image = new MagickImage(heicStream))
-        {
-            image.Format = MagickFormat.Jpeg;
-            await image.WriteAsync(jpegStream);
-        }
-        jpegStream.Position = 0;
+    //private async Task ConvertHEICtoJPEGAndUpload(Stream heicStream, string jpegFilePath)
+    //{
+    //    using var jpegStream = new MemoryStream();
+    //    using (var image = new MagickImage(heicStream))
+    //    {
+    //        image.Format = MagickFormat.Jpeg;
+    //        await image.WriteAsync(jpegStream);
+    //    }
+    //    jpegStream.Position = 0;
 
-        var putArgs = new PutObjectArgs()
-            .WithBucket(_minioConfig.Value.Bucket)
-            .WithObject(jpegFilePath)
-            .WithStreamData(jpegStream)
-            .WithObjectSize(jpegStream.Length)
-            .WithContentType("image/jpeg");
+    //    var putArgs = new PutObjectArgs()
+    //        .WithBucket(_minioConfig.Value.Bucket)
+    //        .WithObject(jpegFilePath)
+    //        .WithStreamData(jpegStream)
+    //        .WithObjectSize(jpegStream.Length)
+    //        .WithContentType("image/jpeg");
 
-        await _minioClient.PutObjectAsync(putArgs);
-    }
+    //    await _minioClient.PutObjectAsync(putArgs);
+    //}
 
     public void Dispose()
     {

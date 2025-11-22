@@ -63,7 +63,10 @@ public static class UserSeeder
                 Email = userInfo.Email,
                 IsDisabled = false,
                 LockoutEnabled = false,
-                PhoneNumberConfirmed = true
+                PhoneNumberConfirmed = true,
+                // SuperAdmin should have null TenantId to access all tenants
+                // Other users will get TenantId assigned automatically when they're created in tenant context
+                TenantId = userInfo.Role == SystemRoles.SuperAdmin ? null : null // Will be set by context if needed
             };
 
             // TODO: Move password to secure storage or secrets

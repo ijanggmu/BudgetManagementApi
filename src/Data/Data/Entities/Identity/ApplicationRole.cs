@@ -13,7 +13,7 @@ public class ApplicationRoleConfiguration : IEntityTypeConfiguration<Application
 }
 
 [EntityTypeConfiguration(typeof(ApplicationRoleConfiguration))]
-public class ApplicationRole: IdentityRole<string>, IBaseEntity, IAuditableEntity
+public class ApplicationRole: IdentityRole<string>, IBaseEntity, IAuditableEntity, ITenantEntity
 {
     public string Description { get; set; }
     public string RoleType { get; set; }
@@ -27,4 +27,8 @@ public class ApplicationRole: IdentityRole<string>, IBaseEntity, IAuditableEntit
 
     public bool IsDeleted { get; set; }
     
+    /// <summary>
+    /// Tenant ID for multi-tenancy support. Automatically set when saving.
+    /// </summary>
+    public string TenantId { get; set; }
 }
