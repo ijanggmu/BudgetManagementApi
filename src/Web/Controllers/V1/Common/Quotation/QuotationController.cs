@@ -16,12 +16,29 @@ public class QuotationController(IQuotationService quotes) : BaseCommonApiContro
         return HandleResult(await quotes.CreateAsync(dto));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel? requestModel = null)
+    {
+        return HandleResult(await quotes.ListAsync(requestModel));
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetAsync(string id)
     {
         return HandleResult(await quotes.GetByIdAsync(id));
     }
 
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateQuotationDto dto)
+    {
+        return HandleResult(await quotes.UpdateAsync(id, dto));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAsync(string id)
+    {
+        return HandleResult(await quotes.DeleteAsync(id));
+    }
 
     [HttpGet("{id}/pdf")]
     public async Task<IActionResult> GetPdfAsync(string id)

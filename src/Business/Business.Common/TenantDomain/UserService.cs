@@ -8,6 +8,7 @@ using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Models.Common;
+using Models.WebApi.TenantDTOs;
 using SharedKernel.Operation;
 
 namespace Business.Common.TenantDomain;
@@ -27,13 +28,27 @@ public class UserService : IUserService
         _userProfileService = userProfileService;
     }
 
-    public async Task<Result<ApplicationUser>> CreateAsync(CreateUserDto dto)
+    private static UserResponseDto MapToDto(ApplicationUser user)
+    {
+        return new UserResponseDto(
+            user.Id,
+            user.UserName,
+            user.Email,
+            user.PhoneNumber,
+            user.EmailConfirmed,
+            user.PhoneNumberConfirmed,
+            user.IsDisabled,
+            user.TenantId
+        );
+    }
+
+    public async Task<Result<UserResponseDto>> CreateAsync(CreateUserDto dto)
     {
         if (await _userManager.FindByNameAsync(dto.UserName) != null)
-            return Result<ApplicationUser>.Failed("Username already exists.");
+            return Result<UserResponseDto>.Failed("Username already exists.");
 
         if (!string.IsNullOrEmpty(dto.Email) && await _userManager.FindByEmailAsync(dto.Email) != null)
-            return Result<ApplicationUser>.Failed("Email already exists.");
+            return Result<UserResponseDto>.Failed("Email already exists.");
 
         var user = new ApplicationUser
         {
@@ -46,22 +61,24 @@ public class UserService : IUserService
 
         var result = await _userManager.CreateAsync(user, dto.Password);
         if (!result.Succeeded)
-            return Result<ApplicationUser>.Failed(string.Join(", ", result.Errors.Select(e => e.Description)));
+            return Result<UserResponseDto>.Failed(string.Join(", ", result.Errors.Select(e => e.Description)));
 
         if (!string.IsNullOrEmpty(dto.Role))
         {
             await _userManager.AddToRoleAsync(user, dto.Role);
         }
 
-        return Result<ApplicationUser>.Success(user);
+        return Result<UserResponseDto>.Success(MapToDto(user));
     }
 
-    public async Task<Result<List<ApplicationUser>>> ListAsync(CommonPaginationRequestModel requestModel)
+    public async Task<Result<List<UserResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel)
     {
         var query = _db.Users.AsNoTracking().Where(u => !u.IsDeleted);
 
         var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
         var users = await result.ToListAsync();
+
+        var userDtos = users.Select(MapToDto).ToList();
 
         var pagination = new Pagination
         {
@@ -71,28 +88,28 @@ public class UserService : IUserService
             CurrentPage = requestModel.PageNumber
         };
 
-        return Result<List<ApplicationUser>>.Success(users, pagination);
+        return Result<List<UserResponseDto>>.Success(userDtos, pagination);
     }
 
-    public async Task<Result<ApplicationUser>> GetByIdAsync(string id)
+    public async Task<Result<UserResponseDto>> GetByIdAsync(string id)
     {
         var user = await _userManager.FindByIdAsync(id);
         if (user == null || user.IsDeleted)
-            return Result<ApplicationUser>.Failed("User not found.");
+            return Result<UserResponseDto>.Failed("User not found.");
 
-        return Result<ApplicationUser>.Success(user);
+        return Result<UserResponseDto>.Success(MapToDto(user));
     }
 
-    public async Task<Result<ApplicationUser>> UpdateAsync(string id, UpdateUserDto dto)
+    public async Task<Result<UserResponseDto>> UpdateAsync(string id, UpdateUserDto dto)
     {
         var user = await _userManager.FindByIdAsync(id);
         if (user == null || user.IsDeleted)
-            return Result<ApplicationUser>.Failed("User not found.");
+            return Result<UserResponseDto>.Failed("User not found.");
 
         if (!string.IsNullOrEmpty(dto.Email) && dto.Email != user.Email)
         {
             if (await _userManager.FindByEmailAsync(dto.Email) != null)
-                return Result<ApplicationUser>.Failed("Email already exists.");
+                return Result<UserResponseDto>.Failed("Email already exists.");
 
             user.Email = dto.Email;
         }
@@ -105,9 +122,9 @@ public class UserService : IUserService
 
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
-            return Result<ApplicationUser>.Failed(string.Join(", ", result.Errors.Select(e => e.Description)));
+            return Result<UserResponseDto>.Failed(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-        return Result<ApplicationUser>.Success(user);
+        return Result<UserResponseDto>.Success(MapToDto(user));
     }
 
     public async Task<Result<bool>> DeleteAsync(string id)

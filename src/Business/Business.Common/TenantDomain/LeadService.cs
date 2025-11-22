@@ -40,7 +40,40 @@ public class LeadService : ILeadService
         _userManager = userManager;
     }
 
-    public async Task<Result<Lead>> CreateLeadAsync(CreateLeadPublicDto dto)
+    private static LeadResponseDto MapToDto(Lead lead)
+    {
+        return new LeadResponseDto(
+            lead.Id,
+            lead.ProspectId,
+            lead.Status.ToString(),
+            lead.Source,
+            lead.OwnerUserId,
+            lead.CreatedOn,
+            lead.Prospect != null ? new ProspectResponseDto(
+                lead.Prospect.Id,
+                lead.Prospect.PrimaryContactId,
+                lead.Prospect.PrimaryContact != null ? new ContactResponseDto(
+                    lead.Prospect.PrimaryContact.Id,
+                    lead.Prospect.PrimaryContact.FullName,
+                    lead.Prospect.PrimaryContact.Email,
+                    lead.Prospect.PrimaryContact.Phone
+                ) : null
+            ) : null
+        );
+    }
+
+    private static LeadActivityResponseDto MapActivityToDto(LeadActivity activity)
+    {
+        return new LeadActivityResponseDto(
+            activity.Id,
+            activity.LeadId,
+            activity.Kind,
+            activity.Notes,
+            activity.When
+        );
+    }
+
+    public async Task<Result<LeadResponseDto>> CreateLeadAsync(CreateLeadPublicDto dto)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
@@ -78,7 +111,7 @@ public class LeadService : ILeadService
             await _db.Entry(lead).Reference(l => l.Prospect).LoadAsync();
             await _db.Entry(lead.Prospect).Reference(p => p.PrimaryContact).LoadAsync();
 
-            return Result<Lead>.Success(lead);
+            return Result<LeadResponseDto>.Success(MapToDto(lead));
         }
         catch (Exception ex)
         {
@@ -88,14 +121,14 @@ public class LeadService : ILeadService
         }
     }
 
-    public async Task<Result<LeadActivity>> AddActivityAsync(string leadId, LeadActivityDto dto)
+    public async Task<Result<LeadActivityResponseDto>> AddActivityAsync(string leadId, LeadActivityDto dto)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
             var lead = await _db.Set<Lead>().FirstOrDefaultAsync(l => l.Id == leadId);
             if (lead == null)
-                return Result<LeadActivity>.Failed("Lead not found.");
+                return Result<LeadActivityResponseDto>.Failed("Lead not found.");
 
             var act = new LeadActivity
             {
@@ -109,7 +142,7 @@ public class LeadService : ILeadService
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return Result<LeadActivity>.Success(act);
+            return Result<LeadActivityResponseDto>.Success(MapActivityToDto(act));
         }
         catch (Exception ex)
         {
@@ -119,7 +152,7 @@ public class LeadService : ILeadService
         }
     }
 
-    public async Task<Result<List<Lead>>> ListAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
+    public async Task<Result<List<LeadResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
     {
         var query = _db.Set<Lead>()
             .Include(l => l.Prospect)
@@ -145,6 +178,8 @@ public class LeadService : ILeadService
         var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
         var leads = await result.ToListAsync();
 
+        var leadDtos = leads.Select(MapToDto).ToList();
+
         var pagination = new Pagination
         {
             TotalItems = totalCount,
@@ -153,10 +188,10 @@ public class LeadService : ILeadService
             CurrentPage = requestModel.PageNumber
         };
 
-        return Result<List<Lead>>.Success(leads, pagination);
+        return Result<List<LeadResponseDto>>.Success(leadDtos, pagination);
     }
 
-    public async Task<Result<Lead>> GetByIdAsync(string id)
+    public async Task<Result<LeadResponseDto>> GetByIdAsync(string id)
     {
         var lead = await _db.Set<Lead>()
             .Include(l => l.Prospect)
@@ -165,29 +200,29 @@ public class LeadService : ILeadService
             .FirstOrDefaultAsync(l => l.Id == id);
 
         if (lead == null)
-            return Result<Lead>.Failed("Lead not found.");
+            return Result<LeadResponseDto>.Failed("Lead not found.");
 
-        return Result<Lead>.Success(lead);
+        return Result<LeadResponseDto>.Success(MapToDto(lead));
     }
 
-    public async Task<Result<Lead>> UpdateStatusAsync(string id, string newStatus)
+    public async Task<Result<LeadResponseDto>> UpdateStatusAsync(string id, string newStatus)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
             var lead = await _db.Set<Lead>().FirstOrDefaultAsync(l => l.Id == id);
             if (lead == null)
-                return Result<Lead>.Failed("Lead not found.");
+                return Result<LeadResponseDto>.Failed("Lead not found.");
 
             if (!Enum.TryParse<LeadStatus>(newStatus, true, out var statusEnum))
             {
-                return Result<Lead>.Failed($"Invalid status: {newStatus}");
+                return Result<LeadResponseDto>.Failed($"Invalid status: {newStatus}");
             }
 
             // Simple state machine validation
             if (lead.Status == LeadStatus.Lost && statusEnum == LeadStatus.Contacted)
             {
-                return Result<Lead>.Failed("Cannot move from Lost to Contacted directly.");
+                return Result<LeadResponseDto>.Failed("Cannot move from Lost to Contacted directly.");
             }
 
             lead.Status = statusEnum;
@@ -198,7 +233,7 @@ public class LeadService : ILeadService
             await _db.Entry(lead).Reference(l => l.Prospect).LoadAsync();
             await _db.Entry(lead.Prospect).Reference(p => p.PrimaryContact).LoadAsync();
 
-            return Result<Lead>.Success(lead);
+            return Result<LeadResponseDto>.Success(MapToDto(lead));
         }
         catch (Exception ex)
         {
@@ -208,32 +243,34 @@ public class LeadService : ILeadService
         }
     }
 
-    public async Task<Result<List<LeadActivity>>> GetActivitiesAsync(string leadId)
+    public async Task<Result<List<LeadActivityResponseDto>>> GetActivitiesAsync(string leadId)
     {
         var lead = await _db.Set<Lead>().AsNoTracking().FirstOrDefaultAsync(l => l.Id == leadId);
         if (lead == null)
-            return Result<List<LeadActivity>>.Failed("Lead not found.");
+            return Result<List<LeadActivityResponseDto>>.Failed("Lead not found.");
 
         var activities = await _db.Set<LeadActivity>()
             .Where(a => a.LeadId == leadId)
             .OrderByDescending(a => a.When)
             .ToListAsync();
 
-        return Result<List<LeadActivity>>.Success(activities);
+        var activityDtos = activities.Select(MapActivityToDto).ToList();
+
+        return Result<List<LeadActivityResponseDto>>.Success(activityDtos);
     }
 
-    public async Task<Result<List<Lead>>> GetLeadsForAdminAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
+    public async Task<Result<List<LeadResponseDto>>> GetLeadsForAdminAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
     {
         try
         {
             var userId = _userProfileService.GetUserId();
             if (string.IsNullOrEmpty(userId))
-                return Result<List<Lead>>.Failed("User not authenticated.");
+                return Result<List<LeadResponseDto>>.Failed("User not authenticated.");
 
             // Get current user and their roles
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null || user.IsDeleted || user.IsDisabled)
-                return Result<List<Lead>>.Failed("User not found or inactive.");
+                return Result<List<LeadResponseDto>>.Failed("User not found or inactive.");
 
             var userRoles = await _db.UserRoles
                 .Where(ur => ur.UserId == userId && !ur.IsDeleted)
@@ -247,7 +284,7 @@ public class LeadService : ILeadService
             var isAdmin = userRoles.Contains(SystemRoles.Admin);
 
             if (!isSuperAdmin && !isAdmin)
-                return Result<List<Lead>>.Failed("Access denied. Admin or SuperAdmin role required.");
+                return Result<List<LeadResponseDto>>.Failed("Access denied. Admin or SuperAdmin role required.");
 
             // Build query with includes
             IQueryable<Lead> query = _db.Set<Lead>()
@@ -290,6 +327,8 @@ public class LeadService : ILeadService
             var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
             var leads = await result.ToListAsync();
 
+            var leadDtos = leads.Select(MapToDto).ToList();
+
             var pagination = new Pagination
             {
                 TotalItems = totalCount,
@@ -298,27 +337,27 @@ public class LeadService : ILeadService
                 CurrentPage = requestModel.PageNumber
             };
 
-            return Result<List<Lead>>.Success(leads, pagination);
+            return Result<List<LeadResponseDto>>.Success(leadDtos, pagination);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving leads for admin: {Message}", ex.Message);
-            return Result<List<Lead>>.Failed($"An error occurred while retrieving leads: {ex.Message}");
+            return Result<List<LeadResponseDto>>.Failed($"An error occurred while retrieving leads: {ex.Message}");
         }
     }
 
-    public async Task<Result<Lead>> GetLeadDetailsForAdminAsync(string id)
+    public async Task<Result<LeadResponseDto>> GetLeadDetailsForAdminAsync(string id)
     {
         try
         {
             var userId = _userProfileService.GetUserId();
             if (string.IsNullOrEmpty(userId))
-                return Result<Lead>.Failed("User not authenticated.");
+                return Result<LeadResponseDto>.Failed("User not authenticated.");
 
             // Get current user and their roles
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null || user.IsDeleted || user.IsDisabled)
-                return Result<Lead>.Failed("User not found or inactive.");
+                return Result<LeadResponseDto>.Failed("User not found or inactive.");
 
             var userRoles = await _db.UserRoles
                 .Where(ur => ur.UserId == userId && !ur.IsDeleted)
@@ -332,7 +371,7 @@ public class LeadService : ILeadService
             var isAdmin = userRoles.Contains(SystemRoles.Admin);
 
             if (!isSuperAdmin && !isAdmin)
-                return Result<Lead>.Failed("Access denied. Admin or SuperAdmin role required.");
+                return Result<LeadResponseDto>.Failed("Access denied. Admin or SuperAdmin role required.");
 
             // Build query with includes
             IQueryable<Lead> query = _db.Set<Lead>()
@@ -349,35 +388,35 @@ public class LeadService : ILeadService
             var lead = await query.FirstOrDefaultAsync(l => l.Id == id);
 
             if (lead == null)
-                return Result<Lead>.Failed("Lead not found.");
+                return Result<LeadResponseDto>.Failed("Lead not found.");
 
             // For Tenant Admin, verify the lead belongs to their tenant
             if (!isSuperAdmin && !string.IsNullOrEmpty(user.TenantId) && lead.TenantId != user.TenantId)
             {
-                return Result<Lead>.Failed("Access denied. Lead does not belong to your tenant.");
+                return Result<LeadResponseDto>.Failed("Access denied. Lead does not belong to your tenant.");
             }
 
-            return Result<Lead>.Success(lead);
+            return Result<LeadResponseDto>.Success(MapToDto(lead));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving lead details for admin: {Message}", ex.Message);
-            return Result<Lead>.Failed($"An error occurred while retrieving lead details: {ex.Message}");
+            return Result<LeadResponseDto>.Failed($"An error occurred while retrieving lead details: {ex.Message}");
         }
     }
 
-    public async Task<Result<List<Lead>>> GetLeadsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
+    public async Task<Result<List<LeadResponseDto>>> GetLeadsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
     {
         try
         {
             var userId = _userProfileService.GetUserId();
             if (string.IsNullOrEmpty(userId))
-                return Result<List<Lead>>.Failed("User not authenticated.");
+                return Result<List<LeadResponseDto>>.Failed("User not authenticated.");
 
             // Get current user and their roles
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null || user.IsDeleted || user.IsDisabled)
-                return Result<List<Lead>>.Failed("User not found or inactive.");
+                return Result<List<LeadResponseDto>>.Failed("User not found or inactive.");
 
             var userRoles = await _db.UserRoles
                 .Where(ur => ur.UserId == userId && !ur.IsDeleted)
@@ -391,7 +430,7 @@ public class LeadService : ILeadService
 
             // Only SuperAdmin can filter by tenantId
             if (!isSuperAdmin)
-                return Result<List<Lead>>.Failed("Access denied. SuperAdmin role required to filter by tenantId.");
+                return Result<List<LeadResponseDto>>.Failed("Access denied. SuperAdmin role required to filter by tenantId.");
 
             // Verify tenant exists
             var tenant = await _db.Set<Data.Entities.Tenant.Tenant>()
@@ -399,7 +438,7 @@ public class LeadService : ILeadService
                 .FirstOrDefaultAsync(t => t.Id == tenantId && t.IsActive);
 
             if (tenant == null)
-                return Result<List<Lead>>.Failed("Tenant not found or inactive.");
+                return Result<List<LeadResponseDto>>.Failed("Tenant not found or inactive.");
 
             // Build query with includes
             IQueryable<Lead> query = _db.Set<Lead>()
@@ -430,6 +469,8 @@ public class LeadService : ILeadService
             var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
             var leads = await result.ToListAsync();
 
+            var leadDtos = leads.Select(MapToDto).ToList();
+
             var pagination = new Pagination
             {
                 TotalItems = totalCount,
@@ -438,12 +479,12 @@ public class LeadService : ILeadService
                 CurrentPage = requestModel.PageNumber
             };
 
-            return Result<List<Lead>>.Success(leads, pagination);
+            return Result<List<LeadResponseDto>>.Success(leadDtos, pagination);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving leads by tenantId: {Message}", ex.Message);
-            return Result<List<Lead>>.Failed($"An error occurred while retrieving leads: {ex.Message}");
+            return Result<List<LeadResponseDto>>.Failed($"An error occurred while retrieving leads: {ex.Message}");
         }
     }
 }

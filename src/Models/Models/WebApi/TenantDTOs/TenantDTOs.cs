@@ -13,6 +13,7 @@ public record RatingPreviewDto(string ProductCode, DateOnly AsOf, IDictionary<st
 public record RatingPreviewResultDto(decimal Total, object Breakdown, int RateTable, int Formula);
 
 public record CreateQuotationDto(Guid ProductId, Guid ProspectId, IEnumerable<QuotationItemDto> Items);
+public record UpdateQuotationDto(string? Status, decimal? TotalPremium, decimal? DiscountPercent, DateOnly? ValidUntil, IEnumerable<QuotationItemDto>? Items);
 public record QuotationItemDto(Guid CoverageId, decimal SumInsured);
 public record ComputeQuotationDto(DateOnly AsOf, IDictionary<string, object> Inputs);
 
@@ -31,6 +32,76 @@ public record TenantResponseDto(string Id, string Name, string Slug, bool IsActi
 // Tenant Login DTOs
 public record TenantLoginRequestDto(string Slug, string Username, string Password);
 public record TenantLoginResponseDto(string AccessToken, int AccessTokenExpiryInSeconds, string RefreshToken, int RefreshTokenExpiryInSeconds, string TenantId, string TenantName);
+
+// Tenant Dropdown DTO
+public record TenantDropdownDto(string Id, string Name, string Slug);
+
+// Lead Response DTOs
+public record LeadResponseDto(
+    string Id,
+    string ProspectId,
+    string Status,
+    string Source,
+    Guid? OwnerUserId,
+    DateTime CreatedOn,
+    ProspectResponseDto? Prospect
+);
+
+public record ProspectResponseDto(
+    string Id,
+    string PrimaryContactId,
+    ContactResponseDto? PrimaryContact
+);
+
+public record ContactResponseDto(
+    string Id,
+    string FullName,
+    string Email,
+    string Phone
+);
+
+public record LeadActivityResponseDto(
+    string Id,
+    string LeadId,
+    string Kind,
+    string Notes,
+    DateTimeOffset When
+);
+
+// Quotation Response DTOs
+public record QuotationResponseDto(
+    string Id,
+    string Number,
+    string Status,
+    string ProductId,
+    string ProspectId,
+    decimal? TotalPremium,
+    decimal? DiscountPercent,
+    DateOnly? ValidUntil,
+    string? PdfUrl,
+    DateTime CreatedOn,
+    List<QuotationItemResponseDto> Items
+);
+
+public record QuotationItemResponseDto(
+    string Id,
+    string QuotationId,
+    string CoverageId,
+    decimal SumInsured,
+    decimal Premium
+);
+
+// User Response DTOs
+public record UserResponseDto(
+    string Id,
+    string UserName,
+    string? Email,
+    string? PhoneNumber,
+    bool EmailConfirmed,
+    bool PhoneNumberConfirmed,
+    bool IsDisabled,
+    string? TenantId
+);
 
 //public static class LeadStateMachine
 //{

@@ -149,7 +149,7 @@ public class TenantAdminService : ITenantAdminService
             await _db.CompanyBrandings.AddAsync(companyBranding);
 
             // Determine if we're in development environment
-            var isDevelopment = _hostEnvironment.IsDevelopment() 
+            var isDevelopment = _hostEnvironment.IsDevelopment()
                 || _hostEnvironment.EnvironmentName.Equals("Development", StringComparison.OrdinalIgnoreCase)
                 || _hostEnvironment.EnvironmentName.Equals("Dev", StringComparison.OrdinalIgnoreCase);
 
@@ -264,7 +264,7 @@ public class TenantAdminService : ITenantAdminService
             }
             else
             {
-                _logger.LogInformation("Development mode: Skipping activation email for tenant admin {Email}. Password: {Password}", 
+                _logger.LogInformation("Development mode: Skipping activation email for tenant admin {Email}. Password: {Password}",
                     adminUser.Email, DevelopmentPassword);
             }
 
@@ -359,6 +359,26 @@ public class TenantAdminService : ITenantAdminService
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Error deleting tenant {TenantId}: {Message}", id, ex.Message);
             throw;
+        }
+    }
+
+    public async Task<Result<List<TenantDropdownDto>>> GetTenantsForDropdownAsync()
+    {
+        try
+        {
+            var tenants = await _db.Set<Tenant>()
+                .AsNoTracking()
+                .Where(t => t.IsActive)
+                .OrderBy(t => t.Name)
+                .Select(t => new TenantDropdownDto(t.Id, t.Name, t.Slug))
+                .ToListAsync();
+
+            return Result<List<TenantDropdownDto>>.Success(tenants);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving tenants for dropdown: {Message}", ex.Message);
+            return Result<List<TenantDropdownDto>>.Failed($"An error occurred while retrieving tenants: {ex.Message}");
         }
     }
 }

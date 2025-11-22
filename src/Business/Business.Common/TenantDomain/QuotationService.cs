@@ -27,8 +27,8 @@ public class QuotationService : IQuotationService
     private readonly ILogger<QuotationService> _logger;
 
     public QuotationService(
-        ApplicationDataContext db, 
-        IQuotationNumberGenerator numbers, 
+        ApplicationDataContext db,
+        IQuotationNumberGenerator numbers,
         ISieveExtension sieveExtension,
         IUserProfileService userProfileService,
         UserManager<ApplicationUser> userManager,
@@ -42,31 +42,69 @@ public class QuotationService : IQuotationService
         _logger = logger;
     }
 
-    public async Task<Result<Quotation>> CreateAsync(CreateQuotationDto dto)
+    private static QuotationResponseDto MapToDto(Quotation quotation)
     {
-        var quote = new Quotation
-        {
-            Number = await _numbers.NextAsync(),
-            ProductId = dto.ProductId.ToString(),
-            ProspectId = dto.ProspectId.ToString(),
-        };
-
-        foreach (var item in dto.Items)
-        {
-            quote.Items.Add(new QuotationItem
-            {
-                CoverageId = item.CoverageId.ToString(),
-                SumInsured = item.SumInsured,
-                Premium = 0m
-            });
-        }
-
-        _db.Add(quote);
-        await _db.SaveChangesAsync();
-        return Result<Quotation>.Success(quote);
+        return new QuotationResponseDto(
+            quotation.Id,
+            quotation.Number,
+            quotation.Status,
+            quotation.ProductId,
+            quotation.ProspectId,
+            quotation.TotalPremium,
+            quotation.DiscountPercent,
+            quotation.ValidUntil,
+            quotation.PdfUrl,
+            quotation.CreatedOn,
+            quotation.Items?.Select(item => new QuotationItemResponseDto(
+                item.Id,
+                item.QuotationId,
+                item.CoverageId,
+                item.SumInsured,
+                item.Premium
+            )).ToList() ?? new List<QuotationItemResponseDto>()
+        );
     }
 
-    public async Task<Result<List<Quotation>>> ListAsync(CommonPaginationRequestModel? requestModel = null)
+    public async Task<Result<QuotationResponseDto>> CreateAsync(CreateQuotationDto dto)
+    {
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            var quote = new Quotation
+            {
+                Number = await _numbers.NextAsync(),
+                ProductId = dto.ProductId.ToString(),
+                ProspectId = dto.ProspectId.ToString(),
+            };
+
+            foreach (var item in dto.Items)
+            {
+                quote.Items.Add(new QuotationItem
+                {
+                    CoverageId = item.CoverageId.ToString(),
+                    SumInsured = item.SumInsured,
+                    Premium = 0m
+                });
+            }
+
+            _db.Add(quote);
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            // Reload with items
+            await _db.Entry(quote).Collection(q => q.Items).LoadAsync();
+
+            return Result<QuotationResponseDto>.Success(MapToDto(quote));
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error creating quotation: {Message}", ex.Message);
+            return Result<QuotationResponseDto>.Failed($"An error occurred while creating quotation: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<List<QuotationResponseDto>>> ListAsync(CommonPaginationRequestModel? requestModel = null)
     {
         var query = _db.Set<Quotation>()
             .Include(q => q.Items)
@@ -77,6 +115,7 @@ public class QuotationService : IQuotationService
         {
             var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
             var quotations = await result.ToListAsync();
+            var quotationDtos = quotations.Select(MapToDto).ToList();
             var pagination = new Pagination
             {
                 TotalItems = totalCount,
@@ -84,14 +123,15 @@ public class QuotationService : IQuotationService
                 PageSize = requestModel.PageSize,
                 CurrentPage = requestModel.PageNumber
             };
-            return Result<List<Quotation>>.Success(quotations, pagination);
+            return Result<List<QuotationResponseDto>>.Success(quotationDtos, pagination);
         }
 
         var allQuotations = await query.ToListAsync();
-        return Result<List<Quotation>>.Success(allQuotations);
+        var allQuotationDtos = allQuotations.Select(MapToDto).ToList();
+        return Result<List<QuotationResponseDto>>.Success(allQuotationDtos);
     }
 
-    public async Task<Result<Quotation>> GetByIdAsync(string id)
+    public async Task<Result<QuotationResponseDto>> GetByIdAsync(string id)
     {
         var quotation = await _db.Set<Quotation>()
             .Include(q => q.Items)
@@ -99,9 +139,9 @@ public class QuotationService : IQuotationService
             .FirstOrDefaultAsync(q => q.Id == id);
 
         if (quotation == null)
-            return Result<Quotation>.Failed("Quotation not found.");
+            return Result<QuotationResponseDto>.Failed("Quotation not found.");
 
-        return Result<Quotation>.Success(quotation);
+        return Result<QuotationResponseDto>.Success(MapToDto(quotation));
     }
 
     public async Task<Result<string>> GeneratePdfAsync(string id)
@@ -113,18 +153,18 @@ public class QuotationService : IQuotationService
         // Placeholder for PDF generation logic
         // In real app, use DinkToPdf or similar, upload to S3, return URL
         var pdfUrl = $"https://storage.example.com/quotes/{id}.pdf";
-        
+
         quote.PdfUrl = pdfUrl;
         await _db.SaveChangesAsync();
-        
+
         return Result<string>.Success(pdfUrl);
     }
 
-    public async Task<Result<List<Quotation>>> GetByLeadIdAsync(string leadId)
+    public async Task<Result<List<QuotationResponseDto>>> GetByLeadIdAsync(string leadId)
     {
         var lead = await _db.Set<Lead>().AsNoTracking().FirstOrDefaultAsync(l => l.Id == leadId);
         if (lead == null)
-            return Result<List<Quotation>>.Failed("Lead not found.");
+            return Result<List<QuotationResponseDto>>.Failed("Lead not found.");
 
         // Assuming ProspectId links to quotations
         var quotations = await _db.Set<Quotation>()
@@ -133,21 +173,22 @@ public class QuotationService : IQuotationService
             .OrderByDescending(q => q.CreatedOn)
             .ToListAsync();
 
-        return Result<List<Quotation>>.Success(quotations);
+        var quotationDtos = quotations.Select(MapToDto).ToList();
+        return Result<List<QuotationResponseDto>>.Success(quotationDtos);
     }
 
-    public async Task<Result<List<Quotation>>> GetQuotationsForAdminAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
+    public async Task<Result<List<QuotationResponseDto>>> GetQuotationsForAdminAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
     {
         try
         {
             var userId = _userProfileService.GetUserId();
             if (string.IsNullOrEmpty(userId))
-                return Result<List<Quotation>>.Failed("User not authenticated.");
+                return Result<List<QuotationResponseDto>>.Failed("User not authenticated.");
 
             // Get current user and their roles
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null || user.IsDeleted || user.IsDisabled)
-                return Result<List<Quotation>>.Failed("User not found or inactive.");
+                return Result<List<QuotationResponseDto>>.Failed("User not found or inactive.");
 
             var userRoles = await _db.UserRoles
                 .Where(ur => ur.UserId == userId && !ur.IsDeleted)
@@ -161,7 +202,7 @@ public class QuotationService : IQuotationService
             var isAdmin = userRoles.Contains(SystemRoles.Admin);
 
             if (!isSuperAdmin && !isAdmin)
-                return Result<List<Quotation>>.Failed("Access denied. Admin or SuperAdmin role required.");
+                return Result<List<QuotationResponseDto>>.Failed("Access denied. Admin or SuperAdmin role required.");
 
             // Build query with includes
             IQueryable<Quotation> query = _db.Set<Quotation>()
@@ -202,6 +243,8 @@ public class QuotationService : IQuotationService
             var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
             var quotations = await result.ToListAsync();
 
+            var quotationDtos = quotations.Select(MapToDto).ToList();
+
             var pagination = new Pagination
             {
                 TotalItems = totalCount,
@@ -210,27 +253,27 @@ public class QuotationService : IQuotationService
                 CurrentPage = requestModel.PageNumber
             };
 
-            return Result<List<Quotation>>.Success(quotations, pagination);
+            return Result<List<QuotationResponseDto>>.Success(quotationDtos, pagination);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving quotations for admin: {Message}", ex.Message);
-            return Result<List<Quotation>>.Failed($"An error occurred while retrieving quotations: {ex.Message}");
+            return Result<List<QuotationResponseDto>>.Failed($"An error occurred while retrieving quotations: {ex.Message}");
         }
     }
 
-    public async Task<Result<Quotation>> GetQuotationDetailsForAdminAsync(string id)
+    public async Task<Result<QuotationResponseDto>> GetQuotationDetailsForAdminAsync(string id)
     {
         try
         {
             var userId = _userProfileService.GetUserId();
             if (string.IsNullOrEmpty(userId))
-                return Result<Quotation>.Failed("User not authenticated.");
+                return Result<QuotationResponseDto>.Failed("User not authenticated.");
 
             // Get current user and their roles
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null || user.IsDeleted || user.IsDisabled)
-                return Result<Quotation>.Failed("User not found or inactive.");
+                return Result<QuotationResponseDto>.Failed("User not found or inactive.");
 
             var userRoles = await _db.UserRoles
                 .Where(ur => ur.UserId == userId && !ur.IsDeleted)
@@ -244,7 +287,7 @@ public class QuotationService : IQuotationService
             var isAdmin = userRoles.Contains(SystemRoles.Admin);
 
             if (!isSuperAdmin && !isAdmin)
-                return Result<Quotation>.Failed("Access denied. Admin or SuperAdmin role required.");
+                return Result<QuotationResponseDto>.Failed("Access denied. Admin or SuperAdmin role required.");
 
             // Build query with includes
             IQueryable<Quotation> query = _db.Set<Quotation>()
@@ -260,35 +303,35 @@ public class QuotationService : IQuotationService
             var quotation = await query.FirstOrDefaultAsync(q => q.Id == id);
 
             if (quotation == null)
-                return Result<Quotation>.Failed("Quotation not found.");
+                return Result<QuotationResponseDto>.Failed("Quotation not found.");
 
             // For Tenant Admin, verify the quotation belongs to their tenant
             if (!isSuperAdmin && !string.IsNullOrEmpty(user.TenantId) && quotation.TenantId != user.TenantId)
             {
-                return Result<Quotation>.Failed("Access denied. Quotation does not belong to your tenant.");
+                return Result<QuotationResponseDto>.Failed("Access denied. Quotation does not belong to your tenant.");
             }
 
-            return Result<Quotation>.Success(quotation);
+            return Result<QuotationResponseDto>.Success(MapToDto(quotation));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving quotation details for admin: {Message}", ex.Message);
-            return Result<Quotation>.Failed($"An error occurred while retrieving quotation details: {ex.Message}");
+            return Result<QuotationResponseDto>.Failed($"An error occurred while retrieving quotation details: {ex.Message}");
         }
     }
 
-    public async Task<Result<List<Quotation>>> GetQuotationsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
+    public async Task<Result<List<QuotationResponseDto>>> GetQuotationsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
     {
         try
         {
             var userId = _userProfileService.GetUserId();
             if (string.IsNullOrEmpty(userId))
-                return Result<List<Quotation>>.Failed("User not authenticated.");
+                return Result<List<QuotationResponseDto>>.Failed("User not authenticated.");
 
             // Get current user and their roles
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null || user.IsDeleted || user.IsDisabled)
-                return Result<List<Quotation>>.Failed("User not found or inactive.");
+                return Result<List<QuotationResponseDto>>.Failed("User not found or inactive.");
 
             var userRoles = await _db.UserRoles
                 .Where(ur => ur.UserId == userId && !ur.IsDeleted)
@@ -302,7 +345,7 @@ public class QuotationService : IQuotationService
 
             // Only SuperAdmin can filter by tenantId
             if (!isSuperAdmin)
-                return Result<List<Quotation>>.Failed("Access denied. SuperAdmin role required to filter by tenantId.");
+                return Result<List<QuotationResponseDto>>.Failed("Access denied. SuperAdmin role required to filter by tenantId.");
 
             // Verify tenant exists
             var tenant = await _db.Set<Data.Entities.Tenant.Tenant>()
@@ -310,7 +353,7 @@ public class QuotationService : IQuotationService
                 .FirstOrDefaultAsync(t => t.Id == tenantId && t.IsActive);
 
             if (tenant == null)
-                return Result<List<Quotation>>.Failed("Tenant not found or inactive.");
+                return Result<List<QuotationResponseDto>>.Failed("Tenant not found or inactive.");
 
             // Build query with includes
             IQueryable<Quotation> query = _db.Set<Quotation>()
@@ -340,6 +383,8 @@ public class QuotationService : IQuotationService
             var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
             var quotations = await result.ToListAsync();
 
+            var quotationDtos = quotations.Select(MapToDto).ToList();
+
             var pagination = new Pagination
             {
                 TotalItems = totalCount,
@@ -348,12 +393,102 @@ public class QuotationService : IQuotationService
                 CurrentPage = requestModel.PageNumber
             };
 
-            return Result<List<Quotation>>.Success(quotations, pagination);
+            return Result<List<QuotationResponseDto>>.Success(quotationDtos, pagination);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving quotations by tenantId: {Message}", ex.Message);
-            return Result<List<Quotation>>.Failed($"An error occurred while retrieving quotations: {ex.Message}");
+            return Result<List<QuotationResponseDto>>.Failed($"An error occurred while retrieving quotations: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<QuotationResponseDto>> UpdateAsync(string id, UpdateQuotationDto dto)
+    {
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            var quotation = await _db.Set<Quotation>()
+                .Include(q => q.Items)
+                .FirstOrDefaultAsync(q => q.Id == id);
+
+            if (quotation == null)
+                return Result<QuotationResponseDto>.Failed("Quotation not found.");
+
+            // Update properties if provided
+            if (!string.IsNullOrEmpty(dto.Status))
+                quotation.Status = dto.Status;
+
+            if (dto.TotalPremium.HasValue)
+                quotation.TotalPremium = dto.TotalPremium.Value;
+
+            if (dto.DiscountPercent.HasValue)
+                quotation.DiscountPercent = dto.DiscountPercent.Value;
+
+            if (dto.ValidUntil.HasValue)
+                quotation.ValidUntil = dto.ValidUntil.Value;
+
+            // Update items if provided
+            if (dto.Items != null && dto.Items.Any())
+            {
+                // Remove existing items
+                _db.Set<QuotationItem>().RemoveRange(quotation.Items);
+
+                // Add new items
+                foreach (var itemDto in dto.Items)
+                {
+                    quotation.Items.Add(new QuotationItem
+                    {
+                        CoverageId = itemDto.CoverageId.ToString(),
+                        SumInsured = itemDto.SumInsured,
+                        Premium = 0m // Can be calculated later
+                    });
+                }
+            }
+
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            // Reload with items
+            await _db.Entry(quotation).Collection(q => q.Items).LoadAsync();
+
+            return Result<QuotationResponseDto>.Success(MapToDto(quotation));
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error updating quotation {QuotationId}: {Message}", id, ex.Message);
+            return Result<QuotationResponseDto>.Failed($"An error occurred while updating quotation: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<bool>> DeleteAsync(string id)
+    {
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            var quotation = await _db.Set<Quotation>()
+                .Include(q => q.Items)
+                .FirstOrDefaultAsync(q => q.Id == id);
+
+            if (quotation == null)
+                return Result<bool>.Failed("Quotation not found.");
+
+            // Delete items first (if cascade delete is not configured)
+            _db.Set<QuotationItem>().RemoveRange(quotation.Items);
+
+            // Delete quotation
+            _db.Set<Quotation>().Remove(quotation);
+
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error deleting quotation {QuotationId}: {Message}", id, ex.Message);
+            return Result<bool>.Failed($"An error occurred while deleting quotation: {ex.Message}");
         }
     }
 }

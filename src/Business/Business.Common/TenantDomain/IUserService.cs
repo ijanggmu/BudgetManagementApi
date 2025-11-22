@@ -1,17 +1,17 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Data.Entities.Identity;
 using Models.Common;
+using Models.WebApi.TenantDTOs;
 using SharedKernel.Operation;
 
 namespace Business.Common.TenantDomain;
 
 public interface IUserService
 {
-    Task<Result<ApplicationUser>> CreateAsync(CreateUserDto dto);
-    Task<Result<List<ApplicationUser>>> ListAsync(CommonPaginationRequestModel requestModel);
-    Task<Result<ApplicationUser>> GetByIdAsync(string id);
-    Task<Result<ApplicationUser>> UpdateAsync(string id, UpdateUserDto dto);
+    Task<Result<UserResponseDto>> CreateAsync(CreateUserDto dto);
+    Task<Result<List<UserResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel);
+    Task<Result<UserResponseDto>> GetByIdAsync(string id);
+    Task<Result<UserResponseDto>> UpdateAsync(string id, UpdateUserDto dto);
     Task<Result<bool>> DeleteAsync(string id);
 }
 

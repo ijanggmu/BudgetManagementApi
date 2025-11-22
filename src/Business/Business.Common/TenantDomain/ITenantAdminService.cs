@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
 using SharedKernel.Operation;
@@ -11,4 +13,5 @@ public interface ITenantAdminService
     Task<Result<TenantsResponseDto>> CreateAsync(CreateTenantDto dto);
     Task<Result<TenantsResponseDto>> UpdateAsync(string id, UpdateTenantDto dto);
     Task<Result<bool>> DeleteAsync(string id);
+    Task<Result<List<TenantDropdownDto>>> GetTenantsForDropdownAsync();
 }

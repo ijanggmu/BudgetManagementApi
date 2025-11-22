@@ -32,4 +32,20 @@ public class AdminTenantController(ITenantAdminService service) : BaseAdminApiCo
     {
         return HandleResult(await service.UpdateAsync(id, dto));
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAsync(string id)
+    {
+        return HandleResult(await service.DeleteAsync(id));
+    }
+
+    /// <summary>
+    /// Get all active tenants for dropdown selection
+    /// </summary>
+    /// <returns>List of active tenants (Id, Name, Slug)</returns>
+    [HttpGet("dropdown")]
+    public async Task<IActionResult> GetTenantsForDropdownAsync()
+    {
+        return HandleResult(await service.GetTenantsForDropdownAsync());
+    }
 }
