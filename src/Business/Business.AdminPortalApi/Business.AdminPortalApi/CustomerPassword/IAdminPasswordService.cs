@@ -10,4 +10,6 @@ public interface IAdminPasswordService
     Task<Result<MessageResponseModel>> ChangePasswordAsync(ChangePasswordRequestModel requestModel);
     Task<Result<MessageResponseModel>> ForgetPasswordAsync(ForgetPasswordRequestModel requestModel);
     Task<Result<MessageResponseModel>> SetPasswordAsync(ChangePasswordRequestModel requestModel);
+    Task<Result<MessageResponseModel>> ResetPasswordWithOtpAsync(ResetPasswordRequestModel requestModel);
 }
+

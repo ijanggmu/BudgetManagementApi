@@ -6,7 +6,6 @@ using Models.WebApi.TenantDTOs;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Branding;
 
-[Route("api/v1/admin/branding")]
 public class AdminBrandingController(IBrandingService brandingService) : BaseAdminApiController
 {
     /// <summary>

@@ -6,11 +6,13 @@ public static class SystemRoles
     public const string Individual = "Individual";
     public const string Corporate = "Corporate";
     public const string Agent = "Agent";
+    public const string FoDo = "FoDo";
 
     public const int SuperAdminLevel = 999;
 
     public const int AdminLevel = 500;
     public const int AgentLevel = 300;
+    public const int FoDoLevel = 300;
 
     public const int CustomerLevel = 200;
     public const int CorporateLevel = 200;
@@ -24,7 +26,8 @@ public static class SystemRoles
                 Admin,
                 Individual,
                 Corporate,
-                Agent
+                Agent,
+                FoDo
             };
     }
 
@@ -34,6 +37,7 @@ public static class SystemRoles
             {
                 Agent,
                 Admin,
+                FoDo,
             };
     }
 
@@ -43,7 +47,8 @@ public static class SystemRoles
                 Corporate,
                 Individual,
                 Agent,
-                Admin
+                Admin,
+                FoDo
             };
 }
 

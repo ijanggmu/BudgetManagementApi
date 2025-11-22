@@ -24,6 +24,8 @@ public enum SmsType
     ClaimRegister,
     CliamApproval,
     SurveyorAppointment,
+    RegisterFoDo,
+
 }
 public class SmsLog : ApplicationBaseEntity
 {

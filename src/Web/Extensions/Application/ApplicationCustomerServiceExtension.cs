@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AdminPortalApi.Controllers.V1.SystemLog;
+using Business.AdminPortalApi.AdminPassword;
 using Business.AdminPortalApi.Auth;
 using Business.AdminPortalApi.Claim;
 using Business.AdminPortalApi.CMSCustomer;
@@ -95,6 +96,7 @@ public static class ApplicationCustomerServiceExtension
         services.AddScoped<ICmsCustomerService, CmsCustomerService>();
         services.AddScoped<IAdminAuthService, AdminAuthService>();
         services.AddScoped<IAdminProfileService, AdminProfileService>();
+        services.AddScoped<IAdminPasswordService, AdminPasswordService>();
 
         return services;
     }

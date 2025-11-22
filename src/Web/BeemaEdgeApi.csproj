@@ -47,7 +47,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\V1\Admin\Password\" />
     <Folder Include="Extensions\Database\" />
   </ItemGroup>
 

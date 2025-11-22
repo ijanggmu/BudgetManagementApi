@@ -3,19 +3,18 @@ using Data.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Data.Entities.AgentEntity;
-public class AgentConfiguration : IEntityTypeConfiguration<Agent>
+namespace Data.Entities.FodoEntity;
+public class FodoConfiguration : IEntityTypeConfiguration<Fodo>
 {
-    public void Configure(EntityTypeBuilder<Agent> builder)
+    public void Configure(EntityTypeBuilder<Fodo> builder)
     {
-
+        builder.ToTable("Fodos");
         builder.HasIndex(x => x.FullName).IsUnique(false);
-
     }
 }
 
-[EntityTypeConfiguration(typeof(AgentConfiguration))]
-public class Agent : ApplicationBaseEntity, ITenantEntity
+[EntityTypeConfiguration(typeof(FodoConfiguration))]
+public class Fodo : ApplicationBaseEntity, ITenantEntity
 {
     public string FullName { get; set; }
     public string UserId { get; set; }

@@ -3,10 +3,10 @@ using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BeemaEdgeApi.Controllers.V1.Common.Lead;
+namespace BeemaEdgeApi.Controllers.V1.FoDo.Lead;
 
 [Route("api/v1/leads")]
-public class LeadQuotationController : BaseCommonApiController
+public class LeadQuotationController : BaseFoDoApiController
 {
     private readonly IQuotationService _quotationService;
 

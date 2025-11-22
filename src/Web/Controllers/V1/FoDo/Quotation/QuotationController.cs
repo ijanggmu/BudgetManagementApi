@@ -5,9 +5,9 @@ using Business.Common.TenantDomain;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
 
-namespace BeemaEdgeApi.Controllers.V1.Common.Quotation;
+namespace BeemaEdgeApi.Controllers.V1.FoDo.Quotation;
 
-public class QuotationController(IQuotationService quotes) : BaseCommonApiController
+public class QuotationController(IQuotationService quotes) : BaseFoDoApiController
 {
     [HttpPost]
     public async Task<IActionResult> CreateAsync([FromBody] CreateQuotationDto dto)

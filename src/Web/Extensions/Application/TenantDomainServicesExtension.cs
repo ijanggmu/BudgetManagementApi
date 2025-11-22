@@ -19,6 +19,9 @@ public static class TenantDomainServicesExtension
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ITenantAuthService, TenantAuthService>();
         services.AddScoped<IReportingService, ReportingService>();
+        services.AddScoped<IFodoService, FodoService>();
+        services.AddScoped<IFodoAuthService, FodoAuthService>();
+        services.AddScoped<IFodoRegistrationService, FodoRegistrationService>();
         return services;
     }
 }

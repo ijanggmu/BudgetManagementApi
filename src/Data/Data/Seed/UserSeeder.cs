@@ -1,6 +1,5 @@
 using Data.Context;
 using Data.Entities.AdminEntity;
-using Data.Entities.AgentEntity;
 using Data.Entities.CorporateEntity;
 using Data.Entities.CustomerEntity;
 using Data.Entities.Identity;
@@ -9,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using SharedKernel.Constant.Roles;
 
 namespace Data.Seed;
+
 public static class UserSeeder
 {
     public static async Task SeedData(ApplicationDataContext context,
@@ -34,11 +34,11 @@ public static class UserSeeder
         },
         new
         {
-            UserName = "superagent",
-            Email = "superagent@hei.com",
-            Role = SystemRoles.Agent,
-            FullName = "Super Agent",
-            EntityType = "Agent"
+            UserName = "superfodo",
+            Email = "superfodo@hei.com",
+            Role = SystemRoles.FoDo,
+            FullName = "Super FoDo",
+            EntityType = "FoDo"
         },
         new
         {
@@ -93,7 +93,7 @@ public static class UserSeeder
                     });
                     break;
                 case "Agent":
-                    await context.Agents.AddAsync(new Agent
+                    await context.Fodos.AddAsync(new Entities.FodoEntity.Fodo
                     {
                         FullName = userInfo.FullName,
                         UserId = newUser.Id
