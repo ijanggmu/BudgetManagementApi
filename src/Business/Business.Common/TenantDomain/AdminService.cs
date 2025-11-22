@@ -1,0 +1,469 @@
+using System.Linq;
+using System.Threading.Tasks;
+using Data.Context;
+using Data.Entities.AdminEntity;
+using Data.Entities.Identity;
+using Infrastructure.Common.PaginationAndFilter.Sieve;
+using Infrastructure.Common.UserProfile;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Models.Common;
+using Models.WebApi.TenantDTOs;
+using SharedKernel.Constant.Roles;
+using SharedKernel.Operation;
+using Tenant = Data.Entities.Tenant.Tenant;
+
+namespace Business.Common.TenantDomain;
+
+public class AdminService(
+    ApplicationDataContext db,
+    UserManager<ApplicationUser> userManager,
+    RoleManager<ApplicationRole> roleManager,
+    IUserProfileService userProfileService,
+    ISieveExtension sieveExtension)
+    : IAdminService
+{
+    public async Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(string? tenantId = null)
+    {
+        var userId = userProfileService.GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Result<List<AdminResponseDto>>.Failed("User not authenticated.");
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            return Result<List<AdminResponseDto>>.Failed("User not found.");
+
+        var roles = await userManager.GetRolesAsync(user);
+        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        var isAdmin = roles.Contains(SystemRoles.Admin);
+
+        if (!isSuperAdmin && !isAdmin)
+            return Result<List<AdminResponseDto>>.Failed("Unauthorized access.");
+
+        IQueryable<Admin> query = db.Admins
+            .Include(a => a.User)
+            .Where(a => !a.IsDeleted && !a.User.IsDeleted);
+
+        // For SuperAdmin: filter by tenantId if provided, otherwise show all
+        if (isSuperAdmin)
+        {
+            if (!string.IsNullOrEmpty(tenantId))
+            {
+                query = query.Where(a => a.TenantId == tenantId);
+            }
+            // If tenantId is null, show all admins (global query filter will be ignored)
+            query = query.IgnoreQueryFilters();
+        }
+        // For Admin: only show admins from their tenant (global query filter applies)
+
+        var admins = await query.ToListAsync();
+
+        // Get tenant names for all unique tenant IDs
+        var tenantIds = admins.Where(a => !string.IsNullOrEmpty(a.TenantId)).Select(a => a.TenantId).Distinct().ToList();
+        var tenants = await db.Tenants.Where(t => tenantIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.Name);
+
+        var dtos = new List<AdminResponseDto>();
+        foreach (var admin in admins)
+        {
+            var userRoles = await userManager.GetRolesAsync(admin.User);
+            var tenantName = !string.IsNullOrEmpty(admin.TenantId) && tenants.ContainsKey(admin.TenantId) 
+                ? tenants[admin.TenantId] 
+                : string.Empty;
+
+            dtos.Add(new AdminResponseDto(
+                admin.Id,
+                admin.FullName,
+                admin.User.Email ?? string.Empty,
+                admin.User.PhoneNumber,
+                admin.User.UserName ?? string.Empty,
+                admin.UserId,
+                admin.TenantId ?? string.Empty,
+                tenantName,
+                userRoles.ToList(),
+                admin.User.IsDisabled,
+                admin.User.EmailConfirmed,
+                admin.CreatedOn
+            ));
+        }
+
+        return Result<List<AdminResponseDto>>.Success(dtos);
+    }
+
+    public async Task<Result<AdminResponseDto>> GetAdminByIdAsync(string id)
+    {
+        var userId = userProfileService.GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Result<AdminResponseDto>.Failed("User not authenticated.");
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            return Result<AdminResponseDto>.Failed("User not found.");
+
+        var roles = await userManager.GetRolesAsync(user);
+        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+
+        var query = db.Admins
+            .Include(a => a.User)
+            .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+
+        if (isSuperAdmin)
+            query = query.IgnoreQueryFilters();
+
+        var admin = await query.FirstOrDefaultAsync();
+
+        if (admin == null)
+            return Result<AdminResponseDto>.Failed("Admin not found.");
+
+        var userRoles = await userManager.GetRolesAsync(admin.User);
+        var tenantName = string.Empty;
+        if (!string.IsNullOrEmpty(admin.TenantId))
+        {
+            var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == admin.TenantId);
+            tenantName = tenant?.Name ?? string.Empty;
+        }
+
+        var dto = new AdminResponseDto(
+            admin.Id,
+            admin.FullName,
+            admin.User.Email ?? string.Empty,
+            admin.User.PhoneNumber,
+            admin.User.UserName ?? string.Empty,
+            admin.UserId,
+            admin.TenantId ?? string.Empty,
+            tenantName,
+            userRoles.ToList(),
+            admin.User.IsDisabled,
+            admin.User.EmailConfirmed,
+            admin.CreatedOn
+        );
+
+        return Result<AdminResponseDto>.Success(dto);
+    }
+
+    public async Task<Result<AdminResponseDto>> CreateAsync(CreateAdminDto dto)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        try
+        {
+            var userId = userProfileService.GetUserId();
+            if (string.IsNullOrEmpty(userId))
+                return Result<AdminResponseDto>.Failed("User not authenticated.");
+
+            var currentUser = await userManager.FindByIdAsync(userId);
+            if (currentUser == null)
+                return Result<AdminResponseDto>.Failed("User not found.");
+
+            var roles = await userManager.GetRolesAsync(currentUser);
+            var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+            var isAdmin = roles.Contains(SystemRoles.Admin);
+
+            if (!isSuperAdmin && !isAdmin)
+                return Result<AdminResponseDto>.Failed("Unauthorized access.");
+
+            // Get tenant ID from current user (for Admin) or from context
+            var tenantId = isSuperAdmin ? currentUser.TenantId : db.CurrentTenantId;
+
+            // Check if username already exists
+            var usernameExists = await db.Users
+                .AnyAsync(u => u.UserName == dto.Username && !u.IsDeleted);
+
+            if (usernameExists)
+                return Result<AdminResponseDto>.Failed("Username already exists.");
+
+            // Check if email already exists
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                var emailExists = await db.Users
+                    .AnyAsync(u => u.Email == dto.Email && !u.IsDeleted);
+
+                if (emailExists)
+                    return Result<AdminResponseDto>.Failed("Email already exists.");
+            }
+
+            // Validate roles if provided
+            if (dto.Roles != null && dto.Roles.Any())
+            {
+                var validRoles = await roleManager.Roles
+                    .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
+                    .Select(r => r.Name)
+                    .ToListAsync();
+
+                if (validRoles.Count != dto.Roles.Count)
+                    return Result<AdminResponseDto>.Failed("One or more roles are invalid.");
+
+                // Tenant admins can only assign Admin role, not SuperAdmin
+                if (!isSuperAdmin && dto.Roles.Any(r => r == SystemRoles.SuperAdmin))
+                    return Result<AdminResponseDto>.Failed("You cannot assign SuperAdmin role.");
+            }
+
+            // Create ApplicationUser
+            var adminUser = new ApplicationUser
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = dto.Username,
+                Email = dto.Email,
+                PhoneNumber = dto.PhoneNumber,
+                EmailConfirmed = false,
+                PhoneNumberConfirmed = false,
+                LockoutEnabled = true,
+                IsDisabled = false,
+                TenantId = tenantId
+            };
+
+            var createUserResult = await userManager.CreateAsync(adminUser, dto.Password);
+            if (!createUserResult.Succeeded)
+                return Result<AdminResponseDto>.Failed(createUserResult.Errors.FirstOrDefault()?.Description ?? "Failed to create user.");
+
+            // Assign roles - default to Admin if no roles specified
+            var rolesToAssign = dto.Roles != null && dto.Roles.Any() 
+                ? dto.Roles 
+                : new List<string> { SystemRoles.Admin };
+
+            foreach (var roleName in rolesToAssign)
+            {
+                var roleResult = await userManager.AddToRoleAsync(adminUser, roleName);
+                if (!roleResult.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    return Result<AdminResponseDto>.Failed(roleResult.Errors.FirstOrDefault()?.Description ?? "Failed to assign role.");
+                }
+            }
+
+            // Create Admin entity
+            var admin = new Admin
+            {
+                Id = Guid.NewGuid().ToString(),
+                FullName = dto.FullName.Trim(),
+                UserId = adminUser.Id,
+                TenantId = tenantId
+            };
+
+            await db.Admins.AddAsync(admin);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            var userRoles = await userManager.GetRolesAsync(adminUser);
+            var tenantName = string.Empty;
+            if (!string.IsNullOrEmpty(tenantId))
+            {
+                var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId);
+                tenantName = tenant?.Name ?? string.Empty;
+            }
+
+            var responseDto = new AdminResponseDto(
+                admin.Id,
+                admin.FullName,
+                adminUser.Email ?? string.Empty,
+                adminUser.PhoneNumber,
+                adminUser.UserName ?? string.Empty,
+                adminUser.Id,
+                admin.TenantId ?? string.Empty,
+                tenantName,
+                userRoles.ToList(),
+                adminUser.IsDisabled,
+                adminUser.EmailConfirmed,
+                admin.CreatedOn
+            );
+
+            return Result<AdminResponseDto>.Success(responseDto);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return Result<AdminResponseDto>.Failed($"An error occurred: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<AdminResponseDto>> UpdateAsync(string id, UpdateAdminDto dto)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        try
+        {
+            var userId = userProfileService.GetUserId();
+            if (string.IsNullOrEmpty(userId))
+                return Result<AdminResponseDto>.Failed("User not authenticated.");
+
+            var currentUser = await userManager.FindByIdAsync(userId);
+            if (currentUser == null)
+                return Result<AdminResponseDto>.Failed("User not found.");
+
+            var roles = await userManager.GetRolesAsync(currentUser);
+            var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+
+            var query = db.Admins
+                .Include(a => a.User)
+                .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+
+            if (isSuperAdmin)
+                query = query.IgnoreQueryFilters();
+
+            var admin = await query.FirstOrDefaultAsync();
+
+            if (admin == null)
+                return Result<AdminResponseDto>.Failed("Admin not found.");
+
+            // Update admin properties
+            if (!string.IsNullOrWhiteSpace(dto.FullName))
+                admin.FullName = dto.FullName.Trim();
+
+            // Update user properties
+            if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email != admin.User.Email)
+            {
+                var emailExists = await db.Users
+                    .AnyAsync(u => u.Email == dto.Email && u.Id != admin.UserId && !u.IsDeleted);
+
+                if (emailExists)
+                    return Result<AdminResponseDto>.Failed("Email already exists.");
+
+                admin.User.Email = dto.Email.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && dto.PhoneNumber != admin.User.PhoneNumber)
+            {
+                var phoneExists = await db.Users
+                    .AnyAsync(u => u.PhoneNumber == dto.PhoneNumber && u.Id != admin.UserId && !u.IsDeleted);
+
+                if (phoneExists)
+                    return Result<AdminResponseDto>.Failed("Phone number already exists.");
+
+                admin.User.PhoneNumber = dto.PhoneNumber;
+            }
+
+            if (dto.IsDisabled.HasValue)
+                admin.User.IsDisabled = dto.IsDisabled.Value;
+
+            // Update roles if provided
+            if (dto.Roles != null)
+            {
+                // Validate roles
+                var validRoles = await roleManager.Roles
+                    .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
+                    .Select(r => r.Name)
+                    .ToListAsync();
+
+                if (validRoles.Count != dto.Roles.Count)
+                    return Result<AdminResponseDto>.Failed("One or more roles are invalid.");
+
+                // Tenant admins cannot assign SuperAdmin role
+                if (!isSuperAdmin && dto.Roles.Any(r => r == SystemRoles.SuperAdmin))
+                    return Result<AdminResponseDto>.Failed("You cannot assign SuperAdmin role.");
+
+                // Get current roles
+                var currentRoles = await userManager.GetRolesAsync(admin.User);
+                
+                // Remove roles that are not in the new list
+                var rolesToRemove = currentRoles.Except(dto.Roles).ToList();
+                if (rolesToRemove.Any())
+                {
+                    var removeResult = await userManager.RemoveFromRolesAsync(admin.User, rolesToRemove);
+                    if (!removeResult.Succeeded)
+                    {
+                        await transaction.RollbackAsync();
+                        return Result<AdminResponseDto>.Failed("Failed to remove roles.");
+                    }
+                }
+
+                // Add new roles
+                var rolesToAdd = dto.Roles.Except(currentRoles).ToList();
+                if (rolesToAdd.Any())
+                {
+                    var addResult = await userManager.AddToRolesAsync(admin.User, rolesToAdd);
+                    if (!addResult.Succeeded)
+                    {
+                        await transaction.RollbackAsync();
+                        return Result<AdminResponseDto>.Failed("Failed to add roles.");
+                    }
+                }
+            }
+
+            var updateResult = await userManager.UpdateAsync(admin.User);
+            if (!updateResult.Succeeded)
+                return Result<AdminResponseDto>.Failed(updateResult.Errors.FirstOrDefault()?.Description ?? "Failed to update user.");
+
+            db.Admins.Update(admin);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            var userRoles = await userManager.GetRolesAsync(admin.User);
+            var tenantName = string.Empty;
+            if (!string.IsNullOrEmpty(admin.TenantId))
+            {
+                var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == admin.TenantId);
+                tenantName = tenant?.Name ?? string.Empty;
+            }
+
+            var responseDto = new AdminResponseDto(
+                admin.Id,
+                admin.FullName,
+                admin.User.Email ?? string.Empty,
+                admin.User.PhoneNumber,
+                admin.User.UserName ?? string.Empty,
+                admin.UserId,
+                admin.TenantId ?? string.Empty,
+                tenantName,
+                userRoles.ToList(),
+                admin.User.IsDisabled,
+                admin.User.EmailConfirmed,
+                admin.CreatedOn
+            );
+
+            return Result<AdminResponseDto>.Success(responseDto);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return Result<AdminResponseDto>.Failed($"An error occurred: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<bool>> DeleteAsync(string id)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        try
+        {
+            var userId = userProfileService.GetUserId();
+            if (string.IsNullOrEmpty(userId))
+                return Result<bool>.Failed("User not authenticated.");
+
+            var currentUser = await userManager.FindByIdAsync(userId);
+            if (currentUser == null)
+                return Result<bool>.Failed("User not found.");
+
+            var roles = await userManager.GetRolesAsync(currentUser);
+            var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+
+            var query = db.Admins
+                .Include(a => a.User)
+                .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+
+            if (isSuperAdmin)
+                query = query.IgnoreQueryFilters();
+
+            var admin = await query.FirstOrDefaultAsync();
+
+            if (admin == null)
+                return Result<bool>.Failed("Admin not found.");
+
+            // Prevent deleting yourself
+            if (admin.UserId == userId)
+                return Result<bool>.Failed("You cannot delete your own account.");
+
+            // Soft delete
+            admin.IsDeleted = true;
+            admin.User.IsDeleted = true;
+
+            db.Admins.Update(admin);
+            db.Users.Update(admin.User);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return Result<bool>.Failed($"An error occurred: {ex.Message}");
+        }
+    }
+}
+
