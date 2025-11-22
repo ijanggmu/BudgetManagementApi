@@ -1,37 +1,37 @@
 using System.Threading.Tasks;
+using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.BeemaEdgeApi.Permission;
-using BeemaEdgeApi.Controllers.V1;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Roles;
-using BeemaEdgeApi.Controllers.V1.BaseController;
 
-namespace BeemaEdgeApi.Controllers.V1.Permission;
+namespace BeemaEdgeApi.Controllers.V1.Admin.Permission;
 
+[Route("api/v1/admin/permissions")]
 public class AdminMenuPermissionController(IMenuPermissionService menuPermissionService) : BaseAdminApiController
 {
-    [HttpGet]
-    [Route("GetMenu")]
-    public IActionResult GetMenu()
-    {
-        var result = menuPermissionService.GetMenu();
+    /// <summary>
+    /// Get all menu items with permissions
+    /// </summary>
+    /// <returns>Menu structure with permissions</returns>
+    [HttpGet("menu")]
+    public IActionResult GetMenuAsync()
+        => HandleResult(menuPermissionService.GetMenu());
 
-        return HandleResult(result);
-    }
+    /// <summary>
+    /// Get menu permissions by role ID
+    /// </summary>
+    /// <param name="roleId">Role ID</param>
+    /// <returns>Menu permissions for the specified role</returns>
+    [HttpGet("role/{roleId}")]
+    public IActionResult GetByRoleIdAsync(string roleId)
+        => HandleResult(menuPermissionService.GetAllMenuByRoleId(roleId));
 
-
-    [HttpGet("GetAllMenuByRoleId/{roleId}")]
-    public IActionResult GetAllMenuByRoleId(string roleId)
-    {
-        var result = menuPermissionService.GetAllMenuByRoleId(roleId);
-        return HandleResult(result);
-    }
-
-
-    [HttpPost("ManagePermissions")]
-    public async Task<IActionResult> ManagePermissions(PermissionManagementViewModel managementViewModel)
-    {
-        var result = await menuPermissionService.AssignRolePermissionAsync(managementViewModel);
-
-        return HandleResult(result);
-    }
+    /// <summary>
+    /// Assign permissions to a role
+    /// </summary>
+    /// <param name="managementViewModel">Permission management data</param>
+    /// <returns>Success message</returns>
+    [HttpPost]
+    public async Task<IActionResult> AssignAsync([FromBody] PermissionManagementViewModel managementViewModel)
+        => HandleResult(await menuPermissionService.AssignRolePermissionAsync(managementViewModel));
 }

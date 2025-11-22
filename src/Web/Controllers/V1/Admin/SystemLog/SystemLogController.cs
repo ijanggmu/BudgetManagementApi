@@ -6,19 +6,14 @@ using Models.Common;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.SystemLog;
 
-public class SystemLogController : BaseAdminApiController
+public class SystemLogController(ISystemLogService systemLogService) : BaseAdminApiController
 {
-    private readonly ISystemLogService _systemLogService;
-    public SystemLogController(ISystemLogService systemLogService)
-    {
-        _systemLogService = systemLogService;
-    }
-
-    [HttpPost("GetSystemAccessLog")]
-    public async Task<IActionResult> GetSystemAccessLog([FromBody] CommonPaginationRequestModel searchModel)
-    {
-        var result = await _systemLogService.GetAllSystemAccessLogAsync(searchModel);
-        return HandleResult(result);
-    }
-
+    /// <summary>
+    /// Get system access logs with pagination
+    /// </summary>
+    /// <param name="searchModel">Pagination and filter parameters</param>
+    /// <returns>Paginated list of system access logs</returns>
+    [HttpPost("access")]
+    public async Task<IActionResult> GetAccessLogAsync([FromBody] CommonPaginationRequestModel searchModel)
+        => HandleResult(await systemLogService.GetAllSystemAccessLogAsync(searchModel));
 }

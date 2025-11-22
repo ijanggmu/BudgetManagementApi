@@ -93,7 +93,7 @@ public static class ApplicationCustomerServiceExtension
     {
         services.AddScoped<ICmsCustomerService, CmsCustomerService>();
         services.AddScoped<IAdminAuthService, AdminAuthService>();
-
+        services.AddScoped<IAdminProfileService, AdminProfileService>();
 
         return services;
     }

@@ -6,23 +6,16 @@ using Business.Common.TenantDomain;
 
 namespace BeemaEdgeApi.Controllers.V1.Common.Branding;
 
-public class BrandingController : BaseCommonApiController
+public class BrandingController(IBrandingService brandingService) : BaseCommonApiController
 {
-    private readonly IBrandingService _branding;
-
-    public BrandingController(IBrandingService branding)
-    {
-        _branding = branding;
-    }
-
+    /// <summary>
+    /// Get branding for current tenant (public endpoint)
+    /// </summary>
+    /// <returns>Branding information</returns>
     [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> GetAsync()
-    {
-        var branding = await _branding.GetAsync();
-        if (branding is null) return NotFound();
-        return Ok(branding);
-    }
+        => HandleResult(await brandingService.GetAsync());
 }
 
 

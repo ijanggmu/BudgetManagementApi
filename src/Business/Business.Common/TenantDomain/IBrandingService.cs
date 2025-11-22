@@ -1,12 +1,14 @@
 using System.Threading.Tasks;
-using Data.Entities.Tenant;
+using Models.WebApi.TenantDTOs;
+using SharedKernel.Operation;
 
 namespace Business.Common.TenantDomain;
 
 public interface IBrandingService
 {
-    Task<CompanyBranding?> GetAsync();
-    Task<CompanyBranding> UpdateAsync(string? logoUrl, string? paletteJson, string? typographyJson);
+    Task<Result<BrandingResponseDto>> GetAsync();
+    Task<Result<BrandingResponseDto>> GetByTenantIdAsync(string tenantId);
+    Task<Result<BrandingResponseDto>> UpdateAsync(UpdateBrandingDto dto);
 }
 
 

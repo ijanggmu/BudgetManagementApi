@@ -36,6 +36,22 @@ public record TenantLoginResponseDto(string AccessToken, int AccessTokenExpiryIn
 // Tenant Dropdown DTO
 public record TenantDropdownDto(string Id, string Name, string Slug);
 
+// Branding DTOs
+public record BrandingResponseDto(
+    string TenantId,
+    string LogoUrl,
+    string PaletteJson,
+    string TypographyJson,
+    int Version,
+    DateTime CreatedOn
+);
+
+public record UpdateBrandingDto(
+    string? LogoUrl,
+    string? PaletteJson,
+    string? TypographyJson
+);
+
 // Lead Response DTOs
 public record LeadResponseDto(
     string Id,
