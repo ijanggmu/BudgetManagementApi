@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Data.Entities.Tenant;
@@ -15,4 +16,7 @@ public interface ILeadService
     Task<Result<Lead>> GetByIdAsync(string id);
     Task<Result<Lead>> UpdateStatusAsync(string id, string newStatus);
     Task<Result<List<LeadActivity>>> GetActivitiesAsync(string leadId);
+    Task<Result<List<Lead>>> GetLeadsForAdminAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null);
+    Task<Result<Lead>> GetLeadDetailsForAdminAsync(string id);
+    Task<Result<List<Lead>>> GetLeadsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null);
 }

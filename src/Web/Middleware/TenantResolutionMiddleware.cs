@@ -1,13 +1,10 @@
 using System;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using Data.Context;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Models.Tenancy;
-using SharedKernel.Constant;
 using SharedKernel.Constant.Roles;
 using Data.Infrastructure;
 
@@ -46,23 +43,29 @@ public class TenantResolutionMiddleware
                 .FirstOrDefaultAsync(t => t.Slug == slug && t.IsActive);
         }
 
-        // Second try: resolve by userId from JWT token/claims
+        // Second try: resolve by userId from authenticated user (authentication has already run)
         if (tenant == null)
         {
+            // Authentication middleware has already run, so we can use the validated claims
+            var userId = userProfileService.GetUserId();
             var username = userProfileService.GetUsername();
-            if (!string.IsNullOrWhiteSpace(username))
+
+            if (!string.IsNullOrWhiteSpace(userId))
             {
                 var user = await db.Users
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(u => u.UserName == username && !u.IsDeleted && !u.IsDisabled);
+                    .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted && !u.IsDisabled);
 
                 if (user != null)
                 {
                     // Check if user is SuperAdmin - SuperAdmin can access all tenants
                     var userRoles = await db.UserRoles
-                        .Join(db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
-                        .Where(x => x.UserId == username)
-                        .Select(x => x.Name)
+                        .Where(ur => ur.UserId == userId && !ur.IsDeleted)
+                        .Join(db.Roles
+                            .Where(r => !r.IsDeleted),
+                            ur => ur.RoleId,
+                            r => r.Id,
+                            (ur, r) => r.Name)
                         .ToListAsync();
 
                     // If SuperAdmin, don't restrict to a specific tenant (can access all)

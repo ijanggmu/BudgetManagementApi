@@ -98,10 +98,10 @@ try
     app.UseJobDashboard(app.Configuration);
     app.UseResponseCompression();
     app.UseRouting();
-    app.UseTenantResolution();
     app.UseStaticFiles();
 
     app.UseAuthentication();
+    app.UseTenantResolution();
     app.UseAuthorization();
     app.UseRequestLogging();
 

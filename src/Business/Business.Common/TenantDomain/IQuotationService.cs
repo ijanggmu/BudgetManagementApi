@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Data.Entities.Tenant;
@@ -14,4 +15,7 @@ public interface IQuotationService
     Task<Result<Quotation>> GetByIdAsync(string id);
     Task<Result<string>> GeneratePdfAsync(string id);
     Task<Result<List<Quotation>>> GetByLeadIdAsync(string leadId);
+    Task<Result<List<Quotation>>> GetQuotationsForAdminAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null);
+    Task<Result<Quotation>> GetQuotationDetailsForAdminAsync(string id);
+    Task<Result<List<Quotation>>> GetQuotationsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null);
 }
