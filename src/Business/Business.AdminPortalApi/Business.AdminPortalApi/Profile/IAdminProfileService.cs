@@ -6,6 +6,6 @@ namespace Business.AdminPortalApi.Profile;
 
 public interface IAdminProfileService
 {
-    Task<Result<UserProfileResponseModel>> GetProfileAsync();
+    Task<Result<AdminUserProfileResponseModel>> GetProfileAsync();
     Task<Result<MessageResponseModel>> UpdateProfileAsync(UpdateProfileRequestModel requestModel);
 }
