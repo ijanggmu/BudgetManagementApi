@@ -8,7 +8,6 @@ using Models.BeemaEdgeApi.Identity;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Password;
 
-[Route("api/v1/admin/password")]
 public class AdminPasswordController(IAdminPasswordService adminPasswordService) : BaseAdminApiController
 {
     /// <summary>

@@ -2,8 +2,8 @@ using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.BeemaEdgeApi.Role;
 using Microsoft.AspNetCore.Mvc;
-using Models.Common;
 using Models.BeemaEdgeApi.Roles;
+using Models.Common;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Role;
 
