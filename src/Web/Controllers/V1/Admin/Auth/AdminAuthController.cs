@@ -13,13 +13,13 @@ namespace BeemaEdgeApi.Controllers.V1.Admin.Auth
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] AdminLoginRequestModel requestModel) => HandleResult(await adminAuthService.LoginAsync(requestModel));
 
-        [HttpPost("Login2FA")]
+        [HttpPost("login2FA")]
         public async Task<IActionResult> Login2FA([FromBody] Verify2FaAdminRequestModel requestModel) => HandleResult(await adminAuthService.Login2FaAsync(requestModel));
 
         [HttpPost("refresh")]
         public async Task<IActionResult> RefreshToken() => HandleResult(await adminAuthService.RefreshTokenAsync());
 
-        [HttpPost("Logout")]
+        [HttpPost("logout")]
         public IActionResult Logout()
         {
             HttpContext.Response.Cookies.Delete("X-Access-Token");
