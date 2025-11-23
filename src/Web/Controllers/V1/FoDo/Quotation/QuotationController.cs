@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
-using Microsoft.AspNetCore.Mvc;
 using Business.Common.TenantDomain;
+using Microsoft.AspNetCore.Mvc;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
 
