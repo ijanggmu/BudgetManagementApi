@@ -23,23 +23,33 @@ public class UserProfileService : IUserProfileService
 
     public string GetIpAddress()
     {
+        if (_httpContextAccessor.HttpContext?.Request == null)
+            return string.Empty;
+
         var ip = _httpContextAccessor.HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
         if (string.IsNullOrEmpty(ip))
         {
-            ip = _httpContextAccessor.HttpContext.Request.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+            var remoteIp = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress;
+            if (remoteIp != null)
+            {
+                ip = remoteIp.MapToIPv4().ToString();
+            }
         }
 
-        return ip;
+        return ip ?? string.Empty;
     }
     public string GetScheme()
     {
+        if (_httpContextAccessor.HttpContext?.Request == null)
+            return "https"; // Default to https
+
         var scheme = _httpContextAccessor.HttpContext.Request.Headers["X-Original-Scheme"].FirstOrDefault();
 
         if (string.IsNullOrEmpty(scheme))
         {
             scheme = _httpContextAccessor.HttpContext.Request.Scheme;
         }
-        return scheme;
+        return scheme ?? "https";
     }
     public LoggingUserObject GetUser()
     {
@@ -53,13 +63,16 @@ public class UserProfileService : IUserProfileService
         else
         {
             var claimsIdentity = _httpContextAccessor?.HttpContext?.User?.Identity as ClaimsIdentity;
-            if (claimsIdentity != null && claimsIdentity.FindFirst(TokenKey.UserId) != null)
+            var userIdClaim = claimsIdentity?.FindFirst(TokenKey.UserId);
+            var usernameClaim = claimsIdentity?.FindFirst(TokenKey.Username);
+            
+            if (claimsIdentity != null && userIdClaim != null && usernameClaim != null)
             {
                 return new LoggingUserObject
                 {
                     IpAddress = GetIpAddress(),
-                    UserId = claimsIdentity.FindFirst(TokenKey.UserId).Value,
-                    Username = claimsIdentity.FindFirst(TokenKey.Username).Value,
+                    UserId = userIdClaim.Value,
+                    Username = usernameClaim.Value,
                 };
             }
             else
@@ -75,25 +88,26 @@ public class UserProfileService : IUserProfileService
     public string GetUserId()
     {
         var claimsIdentity = _httpContextAccessor?.HttpContext?.User?.Identity as ClaimsIdentity;
-        if (claimsIdentity != null && claimsIdentity.FindFirst(TokenKey.UserId) != null)
-            return claimsIdentity.FindFirst(TokenKey.UserId).Value;
-        return string.Empty;
+        var userIdClaim = claimsIdentity?.FindFirst(TokenKey.UserId);
+        return userIdClaim?.Value ?? string.Empty;
     }
 
     public string GetUsername()
     {
         var claimsIdentity = _httpContextAccessor?.HttpContext?.User?.Identity as ClaimsIdentity;
-        if (claimsIdentity != null && claimsIdentity.FindFirst(TokenKey.Username) != null)
-            return claimsIdentity.FindFirst(TokenKey.Username).Value;
-        return string.Empty;
+        var usernameClaim = claimsIdentity?.FindFirst(TokenKey.Username);
+        return usernameClaim?.Value ?? string.Empty;
     }
 
     public string GetUserTimeZone()
     {
-        if (_httpContextAccessor.HttpContext.Request.Headers.TryGetValue("X-Timezone-Offset", out var timezoneOffset))
-            return timezoneOffset;
+        if (_httpContextAccessor.HttpContext?.Request.Headers != null &&
+            _httpContextAccessor.HttpContext.Request.Headers.TryGetValue("X-Timezone-Offset", out var timezoneOffset))
+        {
+            return timezoneOffset.ToString();
+        }
 
-        return timezoneOffset;
+        return string.Empty;
     }
     public string GetAccessToken()
     {
@@ -109,15 +123,17 @@ public class UserProfileService : IUserProfileService
 
     public string GetRefreshToken()
     {
-        var token = _httpContextAccessor.HttpContext.Request.Cookies["X-Refresh-Token"];
-        if (token == null)
+        if (_httpContextAccessor.HttpContext?.Request.Cookies == null)
             return null;
-        return HttpUtility.UrlDecode(HttpUtility.UrlDecode(token));
+            
+        var token = _httpContextAccessor.HttpContext.Request.Cookies["X-Refresh-Token"];
+        if (string.IsNullOrEmpty(token))
+            return null;
+        return HttpUtility.UrlDecode(token);
     }
     public void SetAuthCookiesInClient(TokenModel tokenModel, string username)
     {
         var environmentName = _webHostEnvironment.EnvironmentName;
-        Console.WriteLine("environmentname:@env", environmentName);
 
         if (_webHostEnvironment.IsDevelopment() || environmentName.ToLower() == "dev")
         {
@@ -135,50 +151,29 @@ public class UserProfileService : IUserProfileService
         var expirytimeRefresh = DateTimeOffset.UtcNow.AddSeconds(refreshTokenExpiryInSeconds);
 
         var isLocalhost = _httpContextAccessor.HttpContext.Request.Host.Host.Contains("localhost", StringComparison.OrdinalIgnoreCase);
+        var isDevelopment = _webHostEnvironment.IsDevelopment() || _webHostEnvironment.EnvironmentName.ToLower() == "dev";
+        
+        // In development/localhost, use Lax SameSite and conditional Secure flag
+        var sameSite = (isDevelopment && isLocalhost) ? SameSiteMode.Lax : SameSiteMode.Strict;
+        var secure = !isLocalhost; // Only use Secure flag for non-localhost
 
-        _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Access-Token", HttpUtility.UrlEncode(accessToken),
-                                                                                          new CookieOptions()
-                                                                                          {
-                                                                                              HttpOnly = true,
-                                                                                              SameSite = SameSiteMode.Strict,
-                                                                                              Secure = true,
-                                                                                              Expires = expirytimeAccess
-                                                                                          });
+        void AppendCookie(string key, string value, DateTimeOffset expiry)
+        {
+            _httpContextAccessor.HttpContext.Response.Cookies.Append(key, value, new CookieOptions
+            {
+                HttpOnly = true,
+                SameSite = sameSite,
+                Secure = secure,
+                Expires = expiry,
+                Path = "/"
+            });
+        }
 
-        _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Access-Token-ExpiryInSeconds", accessTokenExpiryInSeconds.ToString(),
-                                                                                                new CookieOptions()
-                                                                                                {
-                                                                                                    HttpOnly = true,
-                                                                                                    SameSite = SameSiteMode.Strict,
-                                                                                                    Secure = true,
-                                                                                                    Expires = expirytimeAccess
-                                                                                                });
-        _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Username", userName,
-                                                                new CookieOptions()
-                                                                {
-                                                                    HttpOnly = true,
-                                                                    SameSite = SameSiteMode.Strict,
-                                                                    Secure = true,
-                                                                    Expires = expirytimeRefresh
-                                                                });
-
-        _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Refresh-Token", HttpUtility.UrlEncode(refreshToken),
-                                                                    new CookieOptions()
-                                                                    {
-                                                                        HttpOnly = true,
-                                                                        SameSite = SameSiteMode.Strict,
-                                                                        Secure = true,
-                                                                        Expires = expirytimeRefresh
-                                                                    });
-
-        _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Refresh-ExpiryInSeconds", refreshTokenExpiryInSeconds.ToString(),
-                                                                    new CookieOptions()
-                                                                    {
-                                                                        HttpOnly = true,
-                                                                        SameSite = SameSiteMode.Strict,
-                                                                        Secure = true,
-                                                                        Expires = expirytimeRefresh
-                                                                    });
+        AppendCookie("X-Access-Token", HttpUtility.UrlEncode(accessToken), expirytimeAccess);
+        AppendCookie("X-Access-Token-ExpiryInSeconds", accessTokenExpiryInSeconds.ToString(), expirytimeAccess);
+        AppendCookie("X-Username", userName, expirytimeRefresh);
+        AppendCookie("X-Refresh-Token", HttpUtility.UrlEncode(refreshToken), expirytimeRefresh);
+        AppendCookie("X-Refresh-ExpiryInSeconds", refreshTokenExpiryInSeconds.ToString(), expirytimeRefresh);
     }
 
     public void SetAuthCookiesInDevelopmentClient(
@@ -193,23 +188,22 @@ public class UserProfileService : IUserProfileService
         var expiryAccess = DateTimeOffset.UtcNow.AddSeconds(accessTokenExpiryInSeconds);
         var expiryRefresh = DateTimeOffset.UtcNow.AddSeconds(refreshTokenExpiryInSeconds);
 
-        var baseOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None,
-            // Domain = "localhost" // if using subdomains
-        };
-        Console.WriteLine(baseOptions.Domain);
+        var isLocalhost = httpContext.Request.Host.Host.Contains("localhost", StringComparison.OrdinalIgnoreCase);
+        
+        // For development: use Lax for localhost, None for cross-origin (but only if needed)
+        // Secure flag should be false for localhost http, true for https
+        var sameSite = isLocalhost ? SameSiteMode.Lax : SameSiteMode.None;
+        var secure = !isLocalhost; // Only use Secure for non-localhost
 
         void AppendCookie(string key, string value, DateTimeOffset expiry)
         {
             var options = new CookieOptions
             {
-                HttpOnly = baseOptions.HttpOnly,
-                Secure = baseOptions.Secure,
-                SameSite = baseOptions.SameSite,
+                HttpOnly = true,
+                Secure = secure,
+                SameSite = sameSite,
                 Expires = expiry,
+                Path = "/"
             };
             httpContext.Response.Cookies.Append(key, value, options);
         }
@@ -227,28 +221,39 @@ public class UserProfileService : IUserProfileService
         if (httpContext != null)
         {
             var claimsIdentity = httpContext.User?.Identity as ClaimsIdentity;
-            if (claimsIdentity != null && claimsIdentity.FindFirst(TokenKey.RoleId) != null)
-            {
-                return claimsIdentity.FindFirst(TokenKey.RoleId).Value;
-            }
+            var roleIdClaim = claimsIdentity?.FindFirst(TokenKey.RoleId);
+            return roleIdClaim?.Value ?? string.Empty;
         }
         return string.Empty;
     }
     public void RemoveAuthCookies(HttpResponse response)
     {
-        response.Cookies.Delete("X-Access-Token");
-        response.Cookies.Delete("X-Access-Token-ExpiryInSeconds");
-        response.Cookies.Delete("X-Username");
-        response.Cookies.Delete("X-Refresh-Token");
-        response.Cookies.Delete("X-Refresh-ExpiryInSeconds");
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Path = "/",
+            Expires = DateTimeOffset.UtcNow.AddDays(-1)
+        };
+
+        response.Cookies.Append("X-Access-Token", string.Empty, cookieOptions);
+        response.Cookies.Append("X-Access-Token-ExpiryInSeconds", string.Empty, cookieOptions);
+        response.Cookies.Append("X-Username", string.Empty, cookieOptions);
+        response.Cookies.Append("X-Refresh-Token", string.Empty, cookieOptions);
+        response.Cookies.Append("X-Refresh-ExpiryInSeconds", string.Empty, cookieOptions);
     }
     public void SetUser(string userId, string username)
     {
+        if (_httpContextAccessor.HttpContext == null)
+            return;
+
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(username))
+            return;
+
         var claims = new List<Claim>
-    {
-        new Claim(TokenKey.UserId, userId),
-        new Claim(TokenKey.Username, username)
-    };
+        {
+            new Claim(TokenKey.UserId, userId),
+            new Claim(TokenKey.Username, username)
+        };
 
         var identity = new ClaimsIdentity(claims, "Custom"); // <<< important: scheme name
         var principal = new ClaimsPrincipal(identity);

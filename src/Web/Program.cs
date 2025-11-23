@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,12 +12,14 @@ using BeemaEdgeApi.Extensions.Logging.SeriLog;
 using BeemaEdgeApi.Extensions.OpenApi;
 using BeemaEdgeApi.Extensions.RateLimit;
 using BeemaEdgeApi.Extensions.Refit;
+using BeemaEdgeApi.Extensions.SecurityHeaders;
 using BeemaEdgeApi.Filters.ActionFilters;
 using BeemaEdgeApi.Middleware;
 using Data.Context;
 using Data.Entities.Identity;
 using Data.Seed;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -25,6 +28,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 
 try
@@ -58,6 +62,8 @@ try
 
     ConfigureConfiguration(builder);
 
+    ValidateConfiguration(builder.Configuration, builder.Environment);
+
     builder.Services.AddApplicationDatabase(builder.Configuration)
         .AddAuthenticationServices(builder.Configuration)
         .AddApplicationExtension()
@@ -69,6 +75,7 @@ try
         .AddTenancy()
         .AddTenantDomainServices()
         .AddCorsPolicy(builder.Configuration)
+        .AddSecurityHeaders(builder.Configuration, builder.Environment)
         .ConfigureOpenApi()
         .ConfigureJobs()
         .ConfigureHealthCheck(builder.Configuration)
@@ -90,6 +97,7 @@ try
     {
         ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
     });
+    app.UseSecurityHeaders(app.Configuration, app.Environment);
     app.UseRateLimit();
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseExceptionHandler();
@@ -137,6 +145,49 @@ static void ConfigureConfiguration(WebApplicationBuilder builder)
         builder.Configuration.AddUserSecrets(userSecretId);
 }
 
+static void ValidateConfiguration(IConfiguration config, IWebHostEnvironment environment)
+{
+    var requiredSettings = new List<string>
+    {
+        "Jwt:Key",
+        "Jwt:Issuer",
+        "Jwt:Audience"
+    };
+
+    var missingSettings = new List<string>();
+
+    foreach (var setting in requiredSettings)
+    {
+        var value = config[setting];
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            missingSettings.Add(setting);
+        }
+    }
+
+    // In production, also validate that JWT key is not the default/development key
+    if (!environment.IsDevelopment())
+    {
+        var jwtKey = config["Jwt:Key"];
+        // Check if it's a development key (you may want to adjust this check)
+        if (!string.IsNullOrEmpty(jwtKey) && jwtKey.Length < 64)
+        {
+            Log.Warning("JWT key appears to be too short for production use. Please use a strong key.");
+        }
+    }
+
+    if (missingSettings.Any())
+    {
+        var missingList = string.Join(", ", missingSettings);
+        var errorMessage = $"Missing required configuration settings: {missingList}. " +
+                          "Please ensure these are set in appsettings.json or environment variables.";
+        Log.Error(errorMessage);
+        throw new InvalidOperationException(errorMessage);
+    }
+
+    Log.Information("Configuration validation passed.");
+}
+
 static async Task RunDatabaseMigrationAsync(WebApplication app)
 {
     try
@@ -168,7 +219,7 @@ static async Task RunDatabaseMigrationAsync(WebApplication app)
         await CountriesSeeder.SeedData(context);
     }
     catch (Exception ex)
-   {
+    {
         Log.Error(ex, "An error occurred during migration");
         throw;
     }

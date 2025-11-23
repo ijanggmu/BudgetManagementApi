@@ -20,15 +20,7 @@ namespace BeemaEdgeApi.Controllers.V1.Admin.Auth
         public async Task<IActionResult> RefreshToken() => HandleResult(await adminAuthService.RefreshTokenAsync());
 
         [HttpPost("logout")]
-        public IActionResult Logout()
-        {
-            HttpContext.Response.Cookies.Delete("X-Access-Token");
-            HttpContext.Response.Cookies.Delete("X-Access-Token-ExpiryInSeconds");
-            HttpContext.Response.Cookies.Delete("X-Username");
-            HttpContext.Response.Cookies.Delete("X-Refresh-Token");
-            HttpContext.Response.Cookies.Delete("X-Refresh-ExpiryInSeconds");
-            return Ok("Logged out successfully.");
-        }
+        public async Task<IActionResult> Logout() => HandleResult(await adminAuthService.LogoutAsync(HttpContext.Response));
     }
 }
 

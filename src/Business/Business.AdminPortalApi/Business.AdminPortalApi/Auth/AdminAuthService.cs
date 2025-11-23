@@ -15,6 +15,7 @@ using SharedKernel.Constant.ResponseConstant;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Helper;
 using SharedKernel.Operation;
+using Microsoft.AspNetCore.Http;
 
 namespace Business.AdminPortalApi.Auth;
 
@@ -24,8 +25,7 @@ SignInManager<ApplicationUser> signInManager,
 ITokenService tokenService,
 IUserProfileService ipersonAccessor,
 ITotpService totpService,
-StringCipherService stringCipherService,
-OtpGeneratorService otpGeneratorService) : IAdminAuthService
+StringCipherService stringCipherService) : IAdminAuthService
 {
     public async Task<Result<LoginCustomerResponseModel>> LoginAsync(AdminLoginRequestModel requestModel)
     {
@@ -239,6 +239,12 @@ OtpGeneratorService otpGeneratorService) : IAdminAuthService
             if (userInfo.User == null || userInfo.RefreshToken != refreshToken)
                 return Result<MessageResponseModel>.Failed("Invalid refresh token.");
 
+            // Refresh token rotation: Invalidate old token before creating new one
+            // This prevents token reuse attacks
+            userInfo.User.RefreshToken = null;
+            userInfo.User.RefreshTokenExpiryDateTime = null;
+            dbContext.Users.Update(userInfo.User);
+            await dbContext.SaveChangesAsync();
 
             var roleNames = await (from role in dbContext.Roles
                                    join userRoles in dbContext.UserRoles
@@ -268,5 +274,29 @@ OtpGeneratorService otpGeneratorService) : IAdminAuthService
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    public async Task<Result<MessageResponseModel>> LogoutAsync(HttpResponse response)
+    {
+        var refreshToken = ipersonAccessor.GetRefreshToken();
+        var username = ipersonAccessor.GetUsername();
+
+        if (!string.IsNullOrEmpty(refreshToken) && !string.IsNullOrEmpty(username))
+        {
+            var user = await dbContext.Users
+                .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken && u.UserName == username);
+
+            if (user != null)
+            {
+                // Revoke refresh token by clearing it
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryDateTime = null;
+                dbContext.Users.Update(user);
+                await dbContext.SaveChangesAsync();
+            }
+        }
+
+        ipersonAccessor.RemoveAuthCookies(response);
+        return Result<MessageResponseModel>.Success(new MessageResponseModel("Logged out successfully."));
     }
 }

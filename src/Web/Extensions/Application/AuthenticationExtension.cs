@@ -41,6 +41,9 @@ public static class AuthenticationServiceExtension
             .AddDefaultTokenProviders();
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]));
+        var issuer = config["Jwt:Issuer"];
+        var audience = config["Jwt:Audience"];
+        
         services.AddAuthentication(i =>
         {
             i.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -54,8 +57,10 @@ public static class AuthenticationServiceExtension
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = key,
-                ValidateIssuer = false,
-                ValidateAudience = false,
+                ValidateIssuer = !string.IsNullOrEmpty(issuer),
+                ValidIssuer = issuer,
+                ValidateAudience = !string.IsNullOrEmpty(audience),
+                ValidAudience = audience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.FromMinutes(1)
             };

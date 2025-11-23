@@ -5,14 +5,13 @@ using Data.Entities.Identity;
 using Data.Entities.MotorEntity;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Models.Common;
 using Models.BeemaEdgeApi.Customer.Policy;
+using Models.Common;
 using Models.WebApi.Address;
-using Models.WebApi.Customer.Policy;
 using SharedKernel.Operation;
 
 namespace Business.AdminPortalApi.PolicyDraftService;
+
 public class PolicyDraftService : IPolicyDraftService
 {
     private readonly ApplicationDataContext _context;
@@ -47,15 +46,15 @@ public class PolicyDraftService : IPolicyDraftService
 
             return Result<MessageResponseModel>.Success(new MessageResponseModel("Draft Saved."));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             await transaction.RollbackAsync();
-            return Result<MessageResponseModel>.Failed("Failed to save draft.");
+            throw;
         }
     }
 
 
-   
+
     private Motor CreateMotor(SaveDraftRequestModel model)
     {
         var motor = model.Motor;

@@ -254,6 +254,12 @@ ISmsService smsService) : ICustomerAuthService
             if (userInfo.User == null || userInfo.RefreshToken != refreshToken)
                 return Result<MessageResponseModel>.Failed("Invalid refresh token.");
 
+            // Refresh token rotation: Invalidate old token before creating new one
+            // This prevents token reuse attacks
+            userInfo.User.RefreshToken = null;
+            userInfo.User.RefreshTokenExpiryDateTime = null;
+            dbContext.Users.Update(userInfo.User);
+            await dbContext.SaveChangesAsync();
 
             var roleNames = await (from role in dbContext.Roles
                                    join userRoles in dbContext.UserRoles
@@ -285,8 +291,26 @@ ISmsService smsService) : ICustomerAuthService
         }
     }
 
-    public Result<MessageResponseModel> Logout(HttpResponse response)
+    public async Task<Result<MessageResponseModel>> LogoutAsync(HttpResponse response)
     {
+        var refreshToken = ipersonAccessor.GetRefreshToken();
+        var username = ipersonAccessor.GetUsername();
+
+        if (!string.IsNullOrEmpty(refreshToken) && !string.IsNullOrEmpty(username))
+        {
+            var user = await dbContext.Users
+                .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken && u.UserName == username);
+
+            if (user != null)
+            {
+                // Revoke refresh token by clearing it
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryDateTime = null;
+                dbContext.Users.Update(user);
+                await dbContext.SaveChangesAsync();
+            }
+        }
+
         ipersonAccessor.RemoveAuthCookies(response);
         return Result<MessageResponseModel>.Success(new MessageResponseModel("Logged out successfully."));
     }

@@ -30,17 +30,23 @@ public class TokenService : ITokenService
                 new Claim(TokenKey.UserId, user.Id),
                 new Claim(TokenKey.Username, user.UserName),
                 new Claim(TokenKey.RoleId, string.Join(',',roleIds)),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
         _ = int.TryParse(_config["Jwt:JWTAdminExpiresInMinutes"], out int expiryTime);
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+        var issuer = _config["Jwt:Issuer"];
+        var audience = _config["Jwt:Audience"];
+        
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddMinutes(expiryTime),
             SigningCredentials = credentials,
+            Issuer = issuer,
+            Audience = audience,
         };
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
