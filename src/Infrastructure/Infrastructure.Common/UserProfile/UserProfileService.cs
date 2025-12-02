@@ -65,7 +65,7 @@ public class UserProfileService : IUserProfileService
             var claimsIdentity = _httpContextAccessor?.HttpContext?.User?.Identity as ClaimsIdentity;
             var userIdClaim = claimsIdentity?.FindFirst(TokenKey.UserId);
             var usernameClaim = claimsIdentity?.FindFirst(TokenKey.Username);
-            
+
             if (claimsIdentity != null && userIdClaim != null && usernameClaim != null)
             {
                 return new LoggingUserObject
@@ -125,7 +125,7 @@ public class UserProfileService : IUserProfileService
     {
         if (_httpContextAccessor.HttpContext?.Request.Cookies == null)
             return null;
-            
+
         var token = _httpContextAccessor.HttpContext.Request.Cookies["X-Refresh-Token"];
         if (string.IsNullOrEmpty(token))
             return null;
@@ -152,7 +152,7 @@ public class UserProfileService : IUserProfileService
 
         var isLocalhost = _httpContextAccessor.HttpContext.Request.Host.Host.Contains("localhost", StringComparison.OrdinalIgnoreCase);
         var isDevelopment = _webHostEnvironment.IsDevelopment() || _webHostEnvironment.EnvironmentName.ToLower() == "dev";
-        
+
         // In development/localhost, use Lax SameSite and conditional Secure flag
         var sameSite = (isDevelopment && isLocalhost) ? SameSiteMode.Lax : SameSiteMode.Strict;
         var secure = !isLocalhost; // Only use Secure flag for non-localhost
@@ -189,7 +189,7 @@ public class UserProfileService : IUserProfileService
         var expiryRefresh = DateTimeOffset.UtcNow.AddSeconds(refreshTokenExpiryInSeconds);
 
         var isLocalhost = httpContext.Request.Host.Host.Contains("localhost", StringComparison.OrdinalIgnoreCase);
-        
+
         // For development: use Lax for localhost, None for cross-origin (but only if needed)
         // Secure flag should be false for localhost http, true for https
         var sameSite = isLocalhost ? SameSiteMode.Lax : SameSiteMode.None;

@@ -77,6 +77,11 @@ namespace Data.Context
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Prospect> Prospects { get; set; }
 
+        // Premium Calculation
+        public DbSet<PremiumCalculationConfiguration> PremiumCalculationConfigurations { get; set; }
+        public DbSet<PremiumCalculationParameter> PremiumCalculationParameters { get; set; }
+        public DbSet<PremiumCalculationRule> PremiumCalculationRules { get; set; }
+        public DbSet<PremiumCalculationRateTable> PremiumCalculationRateTables { get; set; }
 
         #endregion  DbSets
 
@@ -236,6 +241,34 @@ namespace Data.Context
 
             builder.Entity<CompanyBranding>()
                 .HasKey(x => x.TenantId);
+
+            // Premium Calculation Configuration relationships and indexes
+            builder.Entity<PremiumCalculationConfiguration>(entity =>
+            {
+                entity.HasIndex(e => new { e.PortfolioAlias, e.FiscalYear, e.IsActive })
+                    .HasDatabaseName("IX_PremiumCalculationConfig_Portfolio_FiscalYear_Active");
+                entity.HasIndex(e => new { e.PortfolioAlias, e.FiscalYear, e.EffectiveFrom, e.EffectiveTo })
+                    .HasDatabaseName("IX_PremiumCalculationConfig_Portfolio_FiscalYear_Dates");
+            });
+
+            builder.Entity<PremiumCalculationParameter>(entity =>
+            {
+                entity.HasIndex(e => new { e.ConfigurationId, e.ParameterKey })
+                    .IsUnique()
+                    .HasDatabaseName("IX_PremiumCalculationParameter_ConfigId_Key");
+            });
+
+            builder.Entity<PremiumCalculationRule>(entity =>
+            {
+                entity.HasIndex(e => new { e.ConfigurationId, e.Priority })
+                    .HasDatabaseName("IX_PremiumCalculationRule_ConfigId_Priority");
+            });
+
+            builder.Entity<PremiumCalculationRateTable>(entity =>
+            {
+                entity.HasIndex(e => new { e.ConfigurationId, e.TableName })
+                    .HasDatabaseName("IX_PremiumCalculationRateTable_ConfigId_TableName");
+            });
 
             // Global query filter by TenantId for tenanted entities
             foreach (var entityType in builder.Model.GetEntityTypes().Where(t => typeof(TenantEntity).IsAssignableFrom(t.ClrType)))
