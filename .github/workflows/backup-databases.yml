@@ -1,0 +1,77 @@
+name: Database Backup
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to backup'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  backup:
+    name: Backup Databases
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}" > ~/.ssh/lightsail_key
+          chmod 600 ~/.ssh/lightsail_key
+          ssh-keyscan -H ${{ secrets.LIGHTSAIL_INSTANCE_IP }} >> ~/.ssh/known_hosts
+
+      - name: Create backup
+        run: |
+          ssh -i ~/.ssh/lightsail_key ubuntu@${{ secrets.LIGHTSAIL_INSTANCE_IP }} << 'ENDSSH'
+            cd /opt/beemaedge
+            chmod +x deploy/backup-databases.sh
+            export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
+            export POSTGRES_AUDIT_PASSWORD="${{ secrets.POSTGRES_AUDIT_PASSWORD }}"
+            export POSTGRES_HANGFIRE_PASSWORD="${{ secrets.POSTGRES_HANGFIRE_PASSWORD }}"
+            ./deploy/backup-databases.sh
+          ENDSSH
+
+      - name: Upload backup to S3
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          ssh -i ~/.ssh/lightsail_key ubuntu@${{ secrets.LIGHTSAIL_INSTANCE_IP }} << ENDSSH
+            cd /opt/beemaedge/backups
+            for file in *.sql.gz; do
+              aws s3 cp "\$file" s3://${{ secrets.S3_BACKUP_BUCKET }}/backups/\$file
+            done
+          ENDSSH
+
+      - name: Cleanup old backups
+        run: |
+          ssh -i ~/.ssh/lightsail_key ubuntu@${{ secrets.LIGHTSAIL_INSTANCE_IP }} << 'ENDSSH'
+            cd /opt/beemaedge/backups
+            # Keep last 7 days of backups locally
+            find . -name "*.sql.gz" -mtime +7 -delete
+          ENDSSH
+
+      - name: Backup summary
+        run: |
+          echo "## Backup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Timestamp: $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)" >> $GITHUB_STEP_SUMMARY
+          echo "- S3 Bucket: ${{ secrets.S3_BACKUP_BUCKET }}" >> $GITHUB_STEP_SUMMARY
+
+

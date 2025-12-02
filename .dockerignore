@@ -1,30 +1,89 @@
-**/.classpath
-**/.dockerignore
-**/.env
-**/.git
-**/.gitignore
-**/.project
-**/.settings
-**/.toolstarget
-**/.vs
-**/.vscode
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/azds.yaml
-**/bin
-**/charts
-**/docker-compose*
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
-**/secrets.dev.yaml
-**/values.dev.yaml
-LICENSE
-README.md
-!**/.gitignore
-!.git/HEAD
-!.git/config
-!.git/packed-refs
-!.git/refs/heads/**
+# .dockerignore - Exclude files from Docker build context
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build outputs
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+
+# Test files
+**/Tests/
+**/*Tests/
+**/*.Tests/
+**/*Test/
+**/*.Test/
+*.test.cs
+*.test.csproj
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.production.example
+!env.production.template
+
+# Deployment files
+deploy/
+*.sh
+
+# Docker files (except Dockerfile)
+docker-compose*.yml
+!docker-compose.production.yml
+.dockerignore
+
+# Node modules (if any)
+node_modules/
+npm-debug.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+backups/
+
+# Solution user options
+*.suo
+*.user
+
+# NuGet packages
+*.nupkg
+packages/
+
+# Coverage reports
+coverage/
+*.coverage
+
+# Frontend build (if exists)
+admin/
+dist/
+build/

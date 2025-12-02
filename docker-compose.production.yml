@@ -1,0 +1,210 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database - Main Application Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: beemaedge-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-beemaedge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-beemaedge_db}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-beemaedge}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beemaedge-network
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c max_connections=200
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+
+  # PostgreSQL Database - Audit Database
+  postgres-audit:
+    image: postgres:16-alpine
+    container_name: beemaedge-postgres-audit
+    environment:
+      POSTGRES_USER: ${POSTGRES_AUDIT_USER:-beemaedge_audit}
+      POSTGRES_PASSWORD: ${POSTGRES_AUDIT_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_AUDIT_DB:-beemaedge_audit_db}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-audit-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_AUDIT_USER:-beemaedge_audit}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beemaedge-network
+
+  # PostgreSQL Database - Hangfire Database
+  postgres-hangfire:
+    image: postgres:16-alpine
+    container_name: beemaedge-postgres-hangfire
+    environment:
+      POSTGRES_USER: ${POSTGRES_HANGFIRE_USER:-beemaedge_hangfire}
+      POSTGRES_PASSWORD: ${POSTGRES_HANGFIRE_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_HANGFIRE_DB:-beemaedge_hangfire_db}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-hangfire-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_HANGFIRE_USER:-beemaedge_hangfire}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beemaedge-network
+
+  # Seq Logging Service
+  seq:
+    image: datalust/seq:latest
+    container_name: beemaedge-seq
+    environment:
+      ACCEPT_EULA: Y
+      SEQ_FIRSTRUN_ADMINPASSWORD: ${SEQ_ADMIN_PASSWORD}
+      SEQ_FIRSTRUN_ADMINUSERNAME: ${SEQ_ADMIN_USERNAME:-admin}
+    volumes:
+      - seq-data:/data
+    ports:
+      - "5341:80"     # Web UI
+      - "5342:5341"   # Ingest API
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - beemaedge-network
+    depends_on:
+      - postgres
+
+  # BeemaEdge API Application
+  beemaedge-api:
+    build:
+      context: .
+      dockerfile: src/Web/Dockerfile
+    container_name: beemaedge-api
+    environment:
+      # ASP.NET Core Environment
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      
+      # Database Connection Strings
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-beemaedge_db};Username=${POSTGRES_USER:-beemaedge};Password=${POSTGRES_PASSWORD};Pooling=true;Minimum Pool Size=5;Maximum Pool Size=100;Command Timeout=30;"
+      ConnectionStrings__AuditDefaultConnection: "Host=postgres-audit;Port=5432;Database=${POSTGRES_AUDIT_DB:-beemaedge_audit_db};Username=${POSTGRES_AUDIT_USER:-beemaedge_audit};Password=${POSTGRES_AUDIT_PASSWORD};Pooling=true;Minimum Pool Size=5;Maximum Pool Size=50;Command Timeout=30;"
+      ConnectionStrings__HangFireDefaultConnection: "Host=postgres-hangfire;Port=5432;Database=${POSTGRES_HANGFIRE_DB:-beemaedge_hangfire_db};Username=${POSTGRES_HANGFIRE_USER:-beemaedge_hangfire};Password=${POSTGRES_HANGFIRE_PASSWORD};Pooling=true;Minimum Pool Size=5;Maximum Pool Size=50;Command Timeout=30;"
+      
+      # Seq Logging Configuration
+      SeqOptions__SeqUrl: "http://seq:5341"
+      SeqOptions__EnableSerilog: "true"
+      SeqOptions__EnableSeq: "true"
+      SeqOptions__ApiKey: "${SEQ_API_KEY}"
+      Serilog__WriteTo__0__Name: "Seq"
+      Serilog__WriteTo__0__Args__serverUrl: "http://seq:5341"
+      Serilog__WriteTo__0__Args__apiKey: "${SEQ_API_KEY}"
+      
+      # JWT Configuration (should be set via environment variables)
+      Jwt__Key: "${JWT_KEY}"
+      Jwt__Issuer: "${JWT_ISSUER:-BeemaEdgeApi}"
+      Jwt__Audience: "${JWT_AUDIENCE:-BeemaEdgeClient}"
+      Jwt__JWTExpiresInMinutes: "${JWT_EXPIRES_IN_MINUTES:-480}"
+      Jwt__RefreshExpiresInMinutes: "${JWT_REFRESH_EXPIRES_IN_MINUTES:-10080}"
+      
+      # Hangfire Configuration
+      JobConfig__HangfireUsername: "${HANGFIRE_USERNAME:-Hangfire-Admin}"
+      JobConfig__HangfirePassword: "${HANGFIRE_PASSWORD}"
+      JobConfig__HangfireRoute: "${HANGFIRE_ROUTE:-/hangfire-admin-dashboard}"
+      
+      # CORS Configuration
+      CORSUrls__0: "${CORS_URL_0:-localhost}"
+      CORSUrls__1: "${CORS_URL_1}"
+      CORSUrls__2: "${CORS_URL_2}"
+      
+      # Frontend URLs
+      FrontendUrl__CustomerPortal: "${FRONTEND_URL_CUSTOMER_PORTAL}"
+      FrontendUrl__AgentPortal: "${FRONTEND_URL_AGENT_PORTAL}"
+      
+      # Rate Limiting
+      RateLimitOptions__EnableRateLimiting: "${RATE_LIMIT_ENABLED:-true}"
+      RateLimitOptions__PermitLimitInMinutes: "${RATE_LIMIT_PER_MINUTE:-300}"
+      RateLimitOptions__PermitLimitInHours: "${RATE_LIMIT_PER_HOUR:-8000}"
+      
+      # Cache Configuration
+      CacheOptions__IsEnabled: "${CACHE_ENABLED:-true}"
+      CacheOptions__CacheType: "${CACHE_TYPE:-InMemory}"
+      
+      # MinIO/Object Storage (if used)
+      MinioSettings__Endpoint: "${MINIO_ENDPOINT}"
+      MinioSettings__AccessKey: "${MINIO_ACCESS_KEY}"
+      MinioSettings__SecretKey: "${MINIO_SECRET_KEY}"
+      MinioSettings__Bucket: "${MINIO_BUCKET}"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - beemaedge-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-audit:
+        condition: service_healthy
+      postgres-hangfire:
+        condition: service_healthy
+      seq:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres-data:
+    driver: local
+  postgres-audit-data:
+    driver: local
+  postgres-hangfire-data:
+    driver: local
+  seq-data:
+    driver: local
+
+networks:
+  beemaedge-network:
+    driver: bridge
+
+

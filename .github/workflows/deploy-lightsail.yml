@@ -1,0 +1,162 @@
+name: Deploy to Amazon Lightsail
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      run_migrations:
+        description: 'Run database migrations'
+        required: false
+        type: boolean
+        default: true
+      health_check:
+        description: 'Run health check after deployment'
+        required: false
+        type: boolean
+        default: true
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*'
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'production' }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}" > ~/.ssh/lightsail_key
+          chmod 600 ~/.ssh/lightsail_key
+          ssh-keyscan -H ${{ secrets.LIGHTSAIL_INSTANCE_IP }} >> ~/.ssh/known_hosts
+
+      - name: Create environment file
+        run: |
+          cat > .env.production << EOF
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          POSTGRES_AUDIT_USER=${{ secrets.POSTGRES_AUDIT_USER }}
+          POSTGRES_AUDIT_PASSWORD=${{ secrets.POSTGRES_AUDIT_PASSWORD }}
+          POSTGRES_AUDIT_DB=${{ secrets.POSTGRES_AUDIT_DB }}
+          POSTGRES_HANGFIRE_USER=${{ secrets.POSTGRES_HANGFIRE_USER }}
+          POSTGRES_HANGFIRE_PASSWORD=${{ secrets.POSTGRES_HANGFIRE_PASSWORD }}
+          POSTGRES_HANGFIRE_DB=${{ secrets.POSTGRES_HANGFIRE_DB }}
+          SEQ_ADMIN_USERNAME=${{ secrets.SEQ_ADMIN_USERNAME }}
+          SEQ_ADMIN_PASSWORD=${{ secrets.SEQ_ADMIN_PASSWORD }}
+          SEQ_API_KEY=${{ secrets.SEQ_API_KEY }}
+          JWT_KEY=${{ secrets.JWT_KEY }}
+          JWT_ISSUER=${{ secrets.JWT_ISSUER }}
+          JWT_AUDIENCE=${{ secrets.JWT_AUDIENCE }}
+          HANGFIRE_USERNAME=${{ secrets.HANGFIRE_USERNAME }}
+          HANGFIRE_PASSWORD=${{ secrets.HANGFIRE_PASSWORD }}
+          CORS_URL_1=${{ secrets.CORS_URL_1 }}
+          CORS_URL_2=${{ secrets.CORS_URL_2 }}
+          FRONTEND_URL_CUSTOMER_PORTAL=${{ secrets.FRONTEND_URL_CUSTOMER_PORTAL }}
+          FRONTEND_URL_AGENT_PORTAL=${{ secrets.FRONTEND_URL_AGENT_PORTAL }}
+          EOF
+
+      - name: Copy files to Lightsail
+        run: |
+          scp -i ~/.ssh/lightsail_key -r \
+            docker-compose.production.yml \
+            .env.production \
+            src \
+            BeemaEdge.sln \
+            ubuntu@${{ secrets.LIGHTSAIL_INSTANCE_IP }}:/opt/beemaedge/
+
+      - name: Deploy on Lightsail
+        run: |
+          ssh -i ~/.ssh/lightsail_key ubuntu@${{ secrets.LIGHTSAIL_INSTANCE_IP }} << 'ENDSSH'
+            set -e
+            cd /opt/beemaedge
+            
+            # Ensure Docker is running
+            sudo systemctl start docker || true
+            
+            # Pull latest images
+            docker-compose -f docker-compose.production.yml pull || docker compose -f docker-compose.production.yml pull
+            
+            # Stop existing containers
+            docker-compose -f docker-compose.production.yml down || docker compose -f docker-compose.production.yml down || true
+            
+            # Build and start containers
+            docker-compose -f docker-compose.production.yml up -d --build || docker compose -f docker-compose.production.yml up -d --build
+            
+            # Wait for services to be healthy
+            echo "Waiting for services to start..."
+            sleep 30
+            
+            # Check service status
+            docker-compose -f docker-compose.production.yml ps || docker compose -f docker-compose.production.yml ps
+          ENDSSH
+
+      - name: Run database migrations
+        if: ${{ github.event.inputs.run_migrations != false }}
+        run: |
+          ssh -i ~/.ssh/lightsail_key ubuntu@${{ secrets.LIGHTSAIL_INSTANCE_IP }} << 'ENDSSH'
+            cd /opt/beemaedge
+            docker-compose exec -T beemaedge-api dotnet ef database update --context ApplicationDataContext || true
+            docker-compose exec -T beemaedge-api dotnet ef database update --context AuditDataContext || true
+            docker-compose exec -T beemaedge-api dotnet ef database update --context HangfireDataContext || true
+          ENDSSH
+
+      - name: Health check
+        if: ${{ github.event.inputs.health_check != false }}
+        run: |
+          ssh -i ~/.ssh/lightsail_key ubuntu@${{ secrets.LIGHTSAIL_INSTANCE_IP }} << 'ENDSSH'
+            cd /opt/beemaedge
+            chmod +x deploy/health-check.sh || true
+            ./deploy/health-check.sh || true
+          ENDSSH
+
+      - name: Verify deployment
+        run: |
+          API_URL="http://${{ secrets.LIGHTSAIL_INSTANCE_IP }}:8080/health"
+          echo "Checking API health at $API_URL"
+          
+          for i in {1..30}; do
+            if curl -f -s "$API_URL" > /dev/null; then
+              echo "✓ API is healthy"
+              exit 0
+            fi
+            echo "Waiting for API to be ready... ($i/30)"
+            sleep 10
+          done
+          
+          echo "✗ API health check failed"
+          exit 1
+
+      - name: Deployment summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Instance: ${{ secrets.LIGHTSAIL_INSTANCE_IP }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Migrations: ${{ github.event.inputs.run_migrations != false }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Health Check: ${{ github.event.inputs.health_check != false }}" >> $GITHUB_STEP_SUMMARY
+
+
