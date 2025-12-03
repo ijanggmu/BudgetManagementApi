@@ -1,7 +1,6 @@
 using Data.Entities.BaseEntity;
-using Data.Entities.Draft;
-using SharedKernel.SystemEnum;
 namespace Data.Entities.CustomerEntity;
+
 public class CustomerAddress : ApplicationBaseEntity
 {
     public string Province { get; set; }

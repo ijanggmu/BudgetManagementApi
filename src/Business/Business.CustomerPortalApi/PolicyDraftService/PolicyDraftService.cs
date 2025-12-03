@@ -4,7 +4,6 @@ using Business.Common.JobHelper.CustomerPolicyJob;
 using Business.Common.PolicyCalculator;
 using Data.Context;
 using Data.Entities.CustomerEntity;
-using Data.Entities.Draft;
 using Data.Entities.ITIEntity;
 using Data.Entities.MotorEntity;
 using Data.Entities.PrivateVehicleEntity;
@@ -24,6 +23,7 @@ using SharedKernel.Helper;
 using SharedKernel.Operation;
 using SharedKernel.SystemEnum;
 using SharedKernel.SystemEnum.Payment;
+using Data.Entities.PolicyE2e;
 
 namespace Business.BeemaEdgeApi.PolicyDraftService;
 public class PolicyDraftService(ApplicationDataContext context, IUserProfileService profileService,

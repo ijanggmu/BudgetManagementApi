@@ -1,8 +1,8 @@
 using Data.Context;
 using Data.Entities.CustomerEntity;
-using Data.Entities.Draft;
 using Data.Entities.Identity;
 using Data.Entities.MotorEntity;
+using Data.Entities.PolicyE2e;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Models.BeemaEdgeApi.Customer.Policy;

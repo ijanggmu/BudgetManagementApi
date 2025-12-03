@@ -1,4 +1,4 @@
-using Data.Entities.Draft;
+using Data.Entities.PolicyE2e;
 using Models.Common.PolicyPayment;
 
 namespace Business.Common.PolicyPayment.PaymentGateway;

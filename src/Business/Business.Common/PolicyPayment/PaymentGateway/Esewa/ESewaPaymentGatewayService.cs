@@ -3,7 +3,7 @@ using System.Text.Json;
 using Business.Common.JobHelper;
 using Business.Common.JobHelper.CustomerPolicyJob;
 using Data.Context;
-using Data.Entities.Draft;
+using Data.Entities.PolicyE2e;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

@@ -1,5 +1,5 @@
 using System.Globalization;
-using Data.Entities.Draft;
+using Data.Entities.PolicyE2e;
 using Microsoft.Extensions.Logging;
 
 namespace Business.Common.PolicyPayment.PaymentGateway.ConnectIPS;

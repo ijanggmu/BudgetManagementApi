@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Data.Entities.BaseEntity;
 
 namespace Data.Entities.ITIEntity;
+
 public class ITIFamilyMember : ApplicationBaseEntity
 {
     public string Relation { get; set; }

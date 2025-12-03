@@ -1,5 +1,5 @@
 using Data.Entities.BaseEntity;
-using Data.Entities.Draft;
+using Data.Entities.PolicyE2e;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SharedKernel.SystemEnum.Payment;

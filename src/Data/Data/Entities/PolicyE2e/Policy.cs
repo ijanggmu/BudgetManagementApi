@@ -9,7 +9,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Models.Common.Policy.Policy;
 using SharedKernel.SystemEnum.Payment;
 
-namespace Data.Entities.Draft;
+namespace Data.Entities.PolicyE2e;
+
 public class PolicyDraftConfiguration : IEntityTypeConfiguration<PolicyDraft>
 {
     public void Configure(EntityTypeBuilder<PolicyDraft> builder)

@@ -1,5 +1,5 @@
 using Data.Entities.CustomerEntity;
-using Data.Entities.Draft;
+using Data.Entities.PolicyE2e;
 using Sieve.Services;
 
 namespace BeemaEdgeApi.Extensions.PaginationAndFilters.SieveConfiguration;

@@ -7,7 +7,6 @@ using Business.Common.DraftNumber;
 using Business.Common.PolicyCalculator;
 using Data.Context;
 using Data.Entities.CustomerEntity;
-using Data.Entities.Draft;
 using Data.Entities.ITIEntity;
 using Data.Entities.MotorEntity;
 using Infrastructure.Common.UserProfile;
@@ -23,6 +22,7 @@ using Models.WebApi.Merchant;
 using SharedKernel.Helper;
 using SharedKernel.Operation;
 using SharedKernel.SystemEnum;
+using Data.Entities.PolicyE2e;
 
 namespace Business.BeemaEdgeApi.Merchant;
 public class MerchantPolicyService(ICoreApiService coreApiService, ApplicationDataContext context, IUserProfileService profileService,

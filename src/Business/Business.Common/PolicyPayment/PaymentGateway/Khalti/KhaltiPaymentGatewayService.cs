@@ -1,12 +1,8 @@
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using Data.Entities.Draft;
+using Data.Entities.PolicyE2e;
 using Infrastructure.Common.Khalti;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Models.Common.PolicyPayment;
-using Org.BouncyCastle.Asn1.Ocsp;
 using SharedKernel.Config;
 
 namespace Business.Common.PolicyPayment.PaymentGateway.Khalti;
