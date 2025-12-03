@@ -92,13 +92,16 @@ services:
       VIRTUAL_HOST: seq.localtest.me
       LETSENCRYPT_HOST: seq.localtest.me
       LETSENCRYPT_EMAIL: your-email@domain.com
+    expose:
+      - "80" 
     ports:
-      - "80"    # UI
+      - "5431:80"    # UI
       - "5342:5341"  # Ingest
     volumes:
       - seq-data:/data
     networks:
       - internal
+      - proxy 
 
 # ----------------- VOLUMES -----------------
 volumes:
