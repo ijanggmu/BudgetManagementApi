@@ -1,6 +1,7 @@
-version: "3.8"
+version: "3.9"
 
 services:
+  # ----------------- NGINX PROXY -----------------
   nginx-proxy:
     image: jwilder/nginx-proxy
     container_name: nginx-proxy
@@ -32,6 +33,21 @@ services:
     depends_on:
       - nginx-proxy
 
+  # ----------------- POSTGRES -----------------
+  postgres:
+    image: postgres:15
+    container_name: beemapg
+    restart: always
+    environment:
+      POSTGRES_USER: beemauser
+      POSTGRES_PASSWORD: beemapass
+      POSTGRES_DB: beemadb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  # ----------------- CUSTOMER PORTAL API -----------------
   customerportalapi:
     container_name: customerportalapi
     restart: always
@@ -45,20 +61,24 @@ services:
       Serilog__WriteTo__0__Args__serverUrl: "http://seq:80"
 
       # Required for nginx-proxy + SSL
-      VIRTUAL_HOST: api.yourdomain.com
-      LETSENCRYPT_HOST: api.yourdomain.com
+      VIRTUAL_HOST: api.localtest.me   # Use localtest.me as dummy hostname
+      LETSENCRYPT_HOST: api.localtest.me
       LETSENCRYPT_EMAIL: your-email@domain.com
 
+      # PostgreSQL connection string
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=beemadb;Username=beemauser;Password=beemapass;Pooling=true;"
     expose:
       - "8080"
     volumes:
       - /root/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
     depends_on:
+      - postgres
       - seq
     networks:
       - proxy
       - internal
 
+  # ----------------- SEQ -----------------
   seq:
     container_name: seq
     image: datalust/seq:latest
@@ -74,9 +94,12 @@ services:
     networks:
       - internal
 
+# ----------------- VOLUMES -----------------
 volumes:
   seq-data:
+  pgdata:
 
+# ----------------- NETWORKS -----------------
 networks:
   proxy:
   internal:
