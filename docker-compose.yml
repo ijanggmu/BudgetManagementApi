@@ -16,13 +16,17 @@ services:
       - ./html:/usr/share/nginx/html
     networks:
       - proxy
+    labels:
+      com.github.nginx-proxy.nginx: "true"
 
+  # ----------------- LETSENCRYPT COMPANION -----------------
   letsencrypt:
     image: nginxproxy/acme-companion
     container_name: letsencrypt-companion
     restart: always
     environment:
       DEFAULT_EMAIL: "your-email@domain.com"
+      NGINX_PROXY_CONTAINER: "nginx-proxy"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/nginx/certs
@@ -61,7 +65,7 @@ services:
       Serilog__WriteTo__0__Args__serverUrl: "http://seq:80"
 
       # Required for nginx-proxy + SSL
-      VIRTUAL_HOST: api.localtest.me   # Use localtest.me as dummy hostname
+      VIRTUAL_HOST: api.localtest.me
       LETSENCRYPT_HOST: api.localtest.me
       LETSENCRYPT_EMAIL: your-email@domain.com
 
@@ -74,6 +78,7 @@ services:
     depends_on:
       - postgres
       - seq
+      - nginx-proxy
     networks:
       - proxy
       - internal
