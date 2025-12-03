@@ -4,6 +4,7 @@ services:
   nginx-proxy:
     image: jwilder/nginx-proxy
     container_name: nginx-proxy
+    restart: always
     ports:
       - "80:80"
       - "443:443"
@@ -12,46 +13,70 @@ services:
       - ./certs:/etc/nginx/certs
       - ./vhost.d:/etc/nginx/vhost.d
       - ./html:/usr/share/nginx/html
+    networks:
+      - proxy
 
   letsencrypt:
     image: nginxproxy/acme-companion
     container_name: letsencrypt-companion
+    restart: always
     environment:
-      - DEFAULT_EMAIL=your-email@domain.com
-    volumes_from:
-      - nginx-proxy
+      DEFAULT_EMAIL: "your-email@domain.com"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs:/etc/nginx/certs
+      - ./vhost.d:/etc/nginx/vhost.d
+      - ./html:/usr/share/nginx/html
+    networks:
+      - proxy
+    depends_on:
+      - nginx-proxy
+
   customerportalapi:
-    image: codehop/beemaedge-backend:beemaedge-backend
-    ports:
-      - "8080:8080"
+    container_name: customerportalapi
+    restart: always
     build:
       context: .
       dockerfile: src/Web/Dockerfile
     environment:
-      - ASPNETCORE_API_USER_SECRETS_ID=28040e26-cf45-47bd-958d-a99d40dfb352
-      - ASPNETCORE_ENVIRONMENT=Dev
-      - Seq__ServerUrl=http://seq:5341
-      - Serilog__WriteTo__0__Name=Seq
-      - Serilog__WriteTo__0__Args__serverUrl=http://seq:5341
+      ASPNETCORE_ENVIRONMENT: "Dev"
+      Seq__ServerUrl: "http://seq:80"
+      Serilog__WriteTo__0__Name: "Seq"
+      Serilog__WriteTo__0__Args__serverUrl: "http://seq:80"
+
+      # Required for nginx-proxy + SSL
+      VIRTUAL_HOST: api.yourdomain.com
+      LETSENCRYPT_HOST: api.yourdomain.com
+      LETSENCRYPT_EMAIL: your-email@domain.com
+
+    expose:
+      - "8080"
     volumes:
       - /root/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
     depends_on:
       - seq
-    restart: always
+    networks:
+      - proxy
+      - internal
 
   seq:
+    container_name: seq
     image: datalust/seq:latest
-    ports:
-      - "5341:80"     # Web UI
-      - "5342:5341"   # Ingest API (optional if only using web UI)
+    restart: always
     environment:
-      - ACCEPT_EULA=Y
-      - SEQ_FIRSTRUN_ADMINPASSWORD=S3cur3d@1990
+      ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_ADMINPASSWORD: "S3cur3d@1990"
+    ports:
+      - "5341:80"    # UI
+      - "5342:5341"  # Ingest
     volumes:
       - seq-data:/data
-    restart: always
+    networks:
+      - internal
 
 volumes:
   seq-data:
+
+networks:
+  proxy:
+  internal:
