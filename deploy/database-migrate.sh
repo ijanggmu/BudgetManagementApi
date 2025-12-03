@@ -75,3 +75,4 @@ fi
 print_info "All database migrations completed successfully!"
 
 
+

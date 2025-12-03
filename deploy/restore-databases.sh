@@ -116,3 +116,4 @@ restore_database "$HANGFIRE_DB_NAME" "$HANGFIRE_DB_HOST" "$HANGFIRE_DB_PORT" "$H
 print_info "All databases restored successfully!"
 
 
+

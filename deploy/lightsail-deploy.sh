@@ -168,3 +168,4 @@ print_info "Application should be available at: http://$INSTANCE_IP:8080"
 print_info "Seq UI should be available at: http://$INSTANCE_IP:5341"
 
 
+

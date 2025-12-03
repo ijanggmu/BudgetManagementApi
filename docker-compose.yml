@@ -1,6 +1,27 @@
 version: "3.8"
 
 services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./certs:/etc/nginx/certs
+      - ./vhost.d:/etc/nginx/vhost.d
+      - ./html:/usr/share/nginx/html
+
+  letsencrypt:
+    image: nginxproxy/acme-companion
+    container_name: letsencrypt-companion
+    environment:
+      - DEFAULT_EMAIL=your-email@domain.com
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
   customerportalapi:
     image: codehop/beemaedge-backend:beemaedge-backend
     ports:
