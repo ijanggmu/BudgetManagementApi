@@ -1,5 +1,8 @@
-# ----------------- BASE IMAGE -----------------
+# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+# This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+USER $APP_UID
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
@@ -10,41 +13,33 @@ RUN apt-get update && apt-get install -y \
 EXPOSE 8080
 EXPOSE 8081
 
-# ----------------- BUILD IMAGE -----------------
+
+# This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-
-# Copy only projects needed for Web API
 COPY ["src/Web/BeemaEdgeApi.csproj", "src/Web/"]
+COPY ["src/Business/Business.AdminPortalApi/Business.AdminPortalApi/Business.AdminPortalApi.csproj", "src/Business/Business.AdminPortalApi/Business.AdminPortalApi/"]
 COPY ["src/Data/Data/Data.csproj", "src/Data/Data/"]
-COPY ["src/Business/Business.Common/Business.Common.csproj", "src/Business/Business.Common/"]
+COPY ["src/Infrastructure/Infrastructure.Common/Infrastructure.Common.csproj", "src/Infrastructure/Infrastructure.Common/"]
 COPY ["src/Models/Models/Models.csproj", "src/Models/Models/"]
 COPY ["src/SharedKernel/SharedKernel/SharedKernel.csproj", "src/SharedKernel/SharedKernel/"]
-COPY ["src/Infrastructure/Infrastructure.Common/Infrastructure.Common.csproj", "src/Infrastructure/Infrastructure.Common/"]
+COPY ["src/Business/Business.Common/Business.Common.csproj", "src/Business/Business.Common/"]
+COPY ["src/Infrastructure/Infrastructure.CoreApi/Infrastructure.CoreApi/Infrastructure.CoreApi.csproj", "src/Infrastructure/Infrastructure.CoreApi/Infrastructure.CoreApi/"]
 COPY ["src/Business/Business.CustomerPortalApi/Business.BeemaEdgeApi.csproj", "src/Business/Business.CustomerPortalApi/"]
-
-# Restore dependencies only for Web API projects
-RUN dotnet restore "src/Web/BeemaEdgeApi.csproj"
-
-# Copy the source code
+RUN dotnet restore "./src/Web/BeemaEdgeApi.csproj"
 COPY . .
-
-# Build Web API
 WORKDIR "/src/src/Web"
-RUN dotnet build "BeemaEdgeApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./BeemaEdgeApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# ----------------- PUBLISH IMAGE -----------------
+# This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-WORKDIR "/src/src/Web"
-RUN dotnet publish "BeemaEdgeApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./BeemaEdgeApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# ----------------- FINAL IMAGE -----------------
+# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
-
-# Copy published files
 COPY --from=publish /app/publish .
 
 # Add fonts
@@ -56,5 +51,4 @@ RUN chmod 644 /usr/share/fonts/truetype/nirmala/Nirmala.ttf && fc-cache -f -v
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 RUN chown -R appuser:appuser /app
 USER appuser
-
 ENTRYPOINT ["dotnet", "BeemaEdgeApi.dll"]
