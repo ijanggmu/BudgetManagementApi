@@ -16,31 +16,20 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# Copy only projects needed for the Web API
-COPY ["BeemaEdge.sln", "."]
-COPY ["src/Web/BeemaEdgeApi.csproj", "src/Web/"]
-COPY ["src/Data/Data/Data.csproj", "src/Data/Data/"]
-COPY ["src/Business/Business.Common/Business.Common.csproj", "src/Business/Business.Common/"]
-COPY ["src/Models/Models/Models.csproj", "src/Models/Models/"]
-COPY ["src/SharedKernel/SharedKernel/SharedKernel.csproj", "src/SharedKernel/SharedKernel/"]
-COPY ["src/Infrastructure/Infrastructure.Common/Infrastructure.Common.csproj", "src/Infrastructure/Infrastructure.Common/"]
-COPY ["src/Business/Business.CustomerPortalApi/Business.BeemaEdgeApi.csproj", "src/Business/Business.CustomerPortalApi/"]
-COPY ["src/Infrastructure/Infrastructure.CoreApi/Infrastructure.CoreApi/Infrastructure.CoreApi.csproj", "src/Infrastructure/Infrastructure.CoreApi/"]
-COPY ["src/Business/Business.AdminPortalApi/Business.AdminPortalApi/Business.AdminPortalApi.csproj", "src/Business/Business.AdminPortalApi/"]
-
-# Restore dependencies
-RUN dotnet restore "BeemaEdge.sln"
-
-# Copy everything else (source code)
+# Copy the entire repo to ensure all projects exist for restore
 COPY . .
 
-# Build the project
+# Restore dependencies for the whole solution
+RUN dotnet restore "BeemaEdge.sln"
+
+# Build the Web API project
 WORKDIR "/src/src/Web"
 RUN dotnet build "BeemaEdgeApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # ----------------- PUBLISH IMAGE -----------------
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
+WORKDIR "/src/src/Web"
 RUN dotnet publish "BeemaEdgeApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # ----------------- FINAL IMAGE -----------------
@@ -51,14 +40,12 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 
 # ----------------- ADD FONTS -----------------
-# Copy fonts from build stage
 RUN mkdir -p /usr/share/fonts/truetype/nirmala
 COPY --from=build /src/src/Web/Assets/Fonts/Nirmala.ttf /usr/share/fonts/truetype/nirmala/Nirmala.ttf
 RUN chmod 644 /usr/share/fonts/truetype/nirmala/Nirmala.ttf \
     && fc-cache -f -v
 
 # ----------------- SECURITY -----------------
-# Non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 RUN chown -R appuser:appuser /app
 USER appuser
