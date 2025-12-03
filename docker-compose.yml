@@ -91,6 +91,9 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       SEQ_FIRSTRUN_ADMINPASSWORD: "S3cur3d@1990"
+      VIRTUAL_HOST: seq.localtest.me
+      LETSENCRYPT_HOST: seq.localtest.me
+      LETSENCRYPT_EMAIL: your-email@domain.com
     ports:
       - "5341:80"    # UI
       - "5342:5341"  # Ingest
