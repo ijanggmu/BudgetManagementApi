@@ -2,7 +2,6 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 
-# Install dependencies required by SkiaSharp and fonts
 RUN apt-get update && apt-get install -y \
     libfontconfig1 \
     fontconfig \
@@ -16,13 +15,22 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# Copy the entire repo to ensure all projects exist for restore
+# Copy only projects needed for Web API
+COPY ["src/Web/BeemaEdgeApi.csproj", "src/Web/"]
+COPY ["src/Data/Data/Data.csproj", "src/Data/Data/"]
+COPY ["src/Business/Business.Common/Business.Common.csproj", "src/Business/Business.Common/"]
+COPY ["src/Models/Models/Models.csproj", "src/Models/Models/"]
+COPY ["src/SharedKernel/SharedKernel/SharedKernel.csproj", "src/SharedKernel/SharedKernel/"]
+COPY ["src/Infrastructure/Infrastructure.Common/Infrastructure.Common.csproj", "src/Infrastructure/Infrastructure.Common/"]
+COPY ["src/Business/Business.CustomerPortalApi/Business.BeemaEdgeApi.csproj", "src/Business/Business.CustomerPortalApi/"]
+
+# Restore dependencies only for Web API projects
+RUN dotnet restore "src/Web/BeemaEdgeApi.csproj"
+
+# Copy the source code
 COPY . .
 
-# Restore dependencies for the whole solution
-RUN dotnet restore "BeemaEdge.sln"
-
-# Build the Web API project
+# Build Web API
 WORKDIR "/src/src/Web"
 RUN dotnet build "BeemaEdgeApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
@@ -39,16 +47,14 @@ WORKDIR /app
 # Copy published files
 COPY --from=publish /app/publish .
 
-# ----------------- ADD FONTS -----------------
+# Add fonts
 RUN mkdir -p /usr/share/fonts/truetype/nirmala
 COPY --from=build /src/src/Web/Assets/Fonts/Nirmala.ttf /usr/share/fonts/truetype/nirmala/Nirmala.ttf
-RUN chmod 644 /usr/share/fonts/truetype/nirmala/Nirmala.ttf \
-    && fc-cache -f -v
+RUN chmod 644 /usr/share/fonts/truetype/nirmala/Nirmala.ttf && fc-cache -f -v
 
-# ----------------- SECURITY -----------------
+# Security: non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 RUN chown -R appuser:appuser /app
 USER appuser
 
-# ----------------- ENTRYPOINT -----------------
 ENTRYPOINT ["dotnet", "BeemaEdgeApi.dll"]
