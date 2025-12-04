@@ -95,7 +95,6 @@ services:
     expose:
       - "80" 
     ports:
-      - "5431:80"    # UI
       - "5342:5341"  # Ingest
     volumes:
       - seq-data:/data
