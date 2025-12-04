@@ -65,7 +65,7 @@ services:
       # Required for nginx-proxy + SSL
       VIRTUAL_HOST: api.beemaedge.com
       LETSENCRYPT_HOST: api.beemaedge.com
-      LETSENCRYPT_EMAIL: your-email@domain.com
+      LETSENCRYPT_EMAIL: sthaejan00@gmail.com
 
       # PostgreSQL connection string
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=beemadb;Username=beemauser;Password=beemapass;Pooling=true;"
@@ -91,7 +91,7 @@ services:
       SEQ_FIRSTRUN_ADMINPASSWORD: "S3cur3d@1990"
       VIRTUAL_HOST: seq.beemaedge.com
       LETSENCRYPT_HOST: seq.beemaedge.com
-      LETSENCRYPT_EMAIL: your-email@domain.com
+      LETSENCRYPT_EMAIL: sthaejan00@gmail.com
     expose:
       - "80" 
     ports:
