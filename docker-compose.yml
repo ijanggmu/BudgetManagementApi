@@ -92,10 +92,9 @@ services:
       VIRTUAL_HOST: seq.beemaedge.com
       LETSENCRYPT_HOST: seq.beemaedge.com
       LETSENCRYPT_EMAIL: sthaejan00@gmail.com
-    expose:
-      - "80" 
     ports:
-      - "5342:5341"  # Ingest
+      - "5341:80"     # Web UI
+      - "5342:5341" 
     volumes:
       - seq-data:/data
     networks:
