@@ -18,8 +18,8 @@ public static class Extensions
         
         // Get logger for initial logging
         var tempServiceProvider = services.BuildServiceProvider();
-        var logger = tempServiceProvider.GetRequiredService<ILogger<Extensions>>();
         var loggerFactory = tempServiceProvider.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger("BeemaEdgeApi.Extensions.Cors");
         
         // Log loaded CORS URLs
         logger.LogInformation("CORS Configuration: Loaded {Count} allowed origins", allowedOrigins.Count);
