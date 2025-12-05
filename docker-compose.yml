@@ -49,9 +49,9 @@ services:
     networks:
       - internal
 
-  # ----------------- CUSTOMER PORTAL API -----------------
-  customerportalapi:
-    container_name: customerportalapi
+  # ----------------- Beema Edge API -----------------
+  beemaedgeapi:
+    container_name: beemaedgeapi
     restart: always
     build:
       context: .
@@ -81,6 +81,31 @@ services:
     networks:
       - proxy
       - internal
+
+  # ----------------- Beema Edge CMS (Next.js) -----------------
+  beemaedgecms:
+    container_name: beemaedgecms
+    restart: always
+    build:
+      context: /root/app/BeemaEdge/Frontend/beemaadminpanelfrontend   # 👈 Path to CMS project
+      dockerfile: Dockerfile            # Use your CMS Dockerfile
+    environment:
+      NODE_ENV: dev
+
+      # For nginx-proxy SSL routing
+      VIRTUAL_HOST: cms.beemaedge.com
+      LETSENCRYPT_HOST: cms.beemaedge.com
+      LETSENCRYPT_EMAIL: sthaejan00@gmail.com
+      VIRTUAL_PORT: 3000                # Next.js runs on 3000 by default
+
+    expose:
+      - "3000"
+
+    depends_on:
+      - nginx-proxy
+    networks:
+      - proxy
+
 
   # ----------------- SEQ -----------------
   seq:
