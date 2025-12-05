@@ -92,8 +92,6 @@ services:
     env_file:
       - /home/ubuntu/app/.secrets/.env.frontend.dev 
     environment:
-      NODE_ENV: dev
-
       # For nginx-proxy SSL routing
       VIRTUAL_HOST: cms.beemaedge.com
       LETSENCRYPT_HOST: cms.beemaedge.com
