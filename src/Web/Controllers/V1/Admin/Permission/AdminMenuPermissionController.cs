@@ -6,7 +6,6 @@ using Models.BeemaEdgeApi.Roles;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Permission;
 
-[Route("api/v1/admin/permissions")]
 public class AdminMenuPermissionController(IMenuPermissionService menuPermissionService) : BaseAdminApiController
 {
     /// <summary>
