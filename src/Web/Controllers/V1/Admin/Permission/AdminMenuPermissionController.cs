@@ -12,7 +12,7 @@ public class AdminMenuPermissionController(IMenuPermissionService menuPermission
     /// Get all menu items with permissions
     /// </summary>
     /// <returns>Menu structure with permissions</returns>
-    [HttpGet("menu")]
+    [HttpGet("GetMenu")]
     public IActionResult GetMenuAsync()
         => HandleResult(menuPermissionService.GetMenu());
 
