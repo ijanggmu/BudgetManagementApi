@@ -89,6 +89,8 @@ services:
     build:
       context: /home/ubuntu/app/BeemaEdge/Frontend/beemaadminpanelfrontend
       dockerfile: Dockerfile            # Use your CMS Dockerfile
+    env_file:
+      - /home/ubuntu/app/.secrets/.env.frontend.dev 
     environment:
       NODE_ENV: dev
 
