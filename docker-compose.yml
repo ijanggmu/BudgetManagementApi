@@ -87,7 +87,7 @@ services:
     container_name: beemaedgecms
     restart: always
     build:
-      context: /root/app/BeemaEdge/Frontend/beemaadminpanelfrontend   # 👈 Path to CMS project
+      context: /home/ubuntu/app/BeemaEdge/Frontend/beemaadminpanelfrontend
       dockerfile: Dockerfile            # Use your CMS Dockerfile
     environment:
       NODE_ENV: dev
