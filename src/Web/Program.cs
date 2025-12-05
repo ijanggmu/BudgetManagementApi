@@ -98,11 +98,12 @@ try
     {
         ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
     });
-    app.UseSecurityHeaders(app.Configuration, app.Environment);
+    // CORS must be early in the pipeline to handle OPTIONS preflight requests
+    app.UseCorsPolicy();
+    //app.UseSecurityHeaders(app.Configuration, app.Environment);
     app.UseRateLimit();
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseExceptionHandler();
-    app.UseCorsPolicy();
     app.UseOpenApi(app.Configuration);
     app.UseJobDashboard(app.Configuration);
     app.UseResponseCompression();
