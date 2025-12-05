@@ -66,6 +66,7 @@ services:
       VIRTUAL_HOST: api.beemaedge.com
       LETSENCRYPT_HOST: api.beemaedge.com
       LETSENCRYPT_EMAIL: sthaejan00@gmail.com
+      VIRTUAL_PORT: 8080
 
       # PostgreSQL connection string
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=beemadb;Username=beemauser;Password=beemapass;Pooling=true;"
