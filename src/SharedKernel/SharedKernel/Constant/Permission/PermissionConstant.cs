@@ -141,19 +141,16 @@ public static class CmsMenuConstant
 public enum MenuRank
 {
     Dashboard = 1,
-    Roles = 2,
-    Admins = 3,
-    AdminManagement = 4,
-    AdminLeads = 5,
-    AdminQuotations = 6,
-    Leads = 7,
-    Quotations = 8,
-    PremiumCalculation = 9,
-    Tenants = 10,
-    Fodo = 11,
-    Notifications = 12,
-    Logs = 13,
-    Config = 14
+    Tenants,
+    Roles,
+    AdminManagement,
+    Fodo,
+    AdminLeads,
+    AdminQuotations,
+    PremiumCalculation,
+    Notifications,
+    Logs,
+    Config
 }
 public class MenuItem
 {

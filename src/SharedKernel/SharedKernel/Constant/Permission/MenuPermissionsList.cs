@@ -45,25 +45,6 @@ public static partial class MenuPermissionsList
                 },
                 Children = null
             },
-            // 3. Admins
-            new MenuItem
-            {
-                MenuId = 3,
-                MenuName = MenuPermissionConstant.AdminsName,
-                MenuSlug = "/admins",
-                Icon = "UserOutlined",
-                Rank = (int)MenuRank.Admins,
-                Level = 1,
-                IsDisabled = false,
-                IsMenu = true,
-                ToHide = false,
-                HideChildren = false,
-                Permissions = new List<Permission>
-                {
-                    new Permission(MenuPermissionConstant.AdminsViewName, MenuPermissionConstant.AdminsView, false)
-                },
-                Children = null
-            },
             // 4. Admin Management
             new MenuItem
             {
@@ -118,44 +99,6 @@ public static partial class MenuPermissionsList
                 Permissions = new List<Permission>
                 {
                     new Permission(MenuPermissionConstant.AdminQuotationsViewName, MenuPermissionConstant.AdminQuotationsView, false)
-                },
-                Children = null
-            },
-            // 7. Leads
-            new MenuItem
-            {
-                MenuId = 7,
-                MenuName = MenuPermissionConstant.LeadsName,
-                MenuSlug = "/leads",
-                Icon = "Target",
-                Rank = (int)MenuRank.Leads,
-                Level = 1,
-                IsDisabled = false,
-                IsMenu = true,
-                ToHide = false,
-                HideChildren = false,
-                Permissions = new List<Permission>
-                {
-                    new Permission(MenuPermissionConstant.LeadsViewName, MenuPermissionConstant.LeadsView, false)
-                },
-                Children = null
-            },
-            // 8. Quotations
-            new MenuItem
-            {
-                MenuId = 8,
-                MenuName = MenuPermissionConstant.QuotationsName,
-                MenuSlug = "/quotations",
-                Icon = "FileText",
-                Rank = (int)MenuRank.Quotations,
-                Level = 1,
-                IsDisabled = false,
-                IsMenu = true,
-                ToHide = false,
-                HideChildren = false,
-                Permissions = new List<Permission>
-                {
-                    new Permission(MenuPermissionConstant.QuotationsViewName, MenuPermissionConstant.QuotationsView, false)
                 },
                 Children = null
             },

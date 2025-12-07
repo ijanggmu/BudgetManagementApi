@@ -13,7 +13,7 @@ public class SystemLogController(ISystemLogService systemLogService) : BaseAdmin
     /// </summary>
     /// <param name="searchModel">Pagination and filter parameters</param>
     /// <returns>Paginated list of system access logs</returns>
-    [HttpPost("access")]
-    public async Task<IActionResult> GetAccessLogAsync([FromBody] CommonPaginationRequestModel searchModel)
+    [HttpGet("access")]
+    public async Task<IActionResult> GetAccessLogAsync([FromQuery] CommonPaginationRequestModel searchModel)
         => HandleResult(await systemLogService.GetAllSystemAccessLogAsync(searchModel));
 }
