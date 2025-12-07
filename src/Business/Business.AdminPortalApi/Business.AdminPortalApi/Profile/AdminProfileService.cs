@@ -1,15 +1,11 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Data.Context;
-using Data.Entities.AdminEntity;
 using Data.Entities.Identity;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Models.Common;
 using Models.BeemaEdgeApi.Customer.CustomerIdentity;
+using Models.Common;
 using SharedKernel.Constant.ResponseConstant;
 using SharedKernel.Operation;
 
@@ -24,37 +20,38 @@ public class AdminProfileService(
 {
     public async Task<Result<AdminUserProfileResponseModel>> GetProfileAsync()
     {
-        try
-        {
-            var userId = userProfileService.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Result<AdminUserProfileResponseModel>.Failed(ResponseMessage.UserNotFound);
+        var userId = userProfileService.GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Result<AdminUserProfileResponseModel>.Failed(ResponseMessage.UserNotFound);
 
-            var admin = await dbContext.Admins
-                .Include(a => a.User)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(a => a.UserId == userId && !a.User.IsDeleted);
+        // Old-style LINQ query syntax with joins + projection
+        var profile = await
+            (from admin in dbContext.Admins.AsNoTracking()
+             join user in dbContext.Users.AsNoTracking()
+                 on admin.UserId equals user.Id
+             join userRole in dbContext.UserRoles.AsNoTracking()
+                 on user.Id equals userRole.UserId into urGroup
+             from ur in urGroup.DefaultIfEmpty()
+             join role in dbContext.Roles.AsNoTracking()
+                 on ur.RoleId equals role.Id into rGroup
+             from r in rGroup.DefaultIfEmpty()
+             where admin.UserId == userId && !user.IsDeleted
+             group r by new { admin.FullName, user.Email, user.PhoneNumber } into grp
+             select new AdminUserProfileResponseModel
+             {
+                 FullName = grp.Key.FullName,
+                 Email = grp.Key.Email,
+                 PhoneNumber = grp.Key.PhoneNumber,
+                 Roles = grp.Where(x => x != null).Select(x => x.Name).ToList()
+             })
+            .FirstOrDefaultAsync();
 
-            if (admin == null)
-                return Result<AdminUserProfileResponseModel>.Failed(ResponseMessage.UserNotFound);
+        if (profile == null)
+            return Result<AdminUserProfileResponseModel>.Failed(ResponseMessage.UserNotFound);
 
-            var profile = new AdminUserProfileResponseModel
-            {
-                FullName = admin.FullName,
-                Email = admin.User.Email,
-                PhoneNumber = admin.User.PhoneNumber,
-                Gender = null, // Add if Admin entity has these fields
-                MaritalStatus = null // Add if Admin entity has these fields
-            };
-
-            return Result<AdminUserProfileResponseModel>.Success(profile);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving admin profile: {Message}", ex.Message);
-            return Result<AdminUserProfileResponseModel>.Failed($"An error occurred while retrieving profile: {ex.Message}");
-        }
+        return Result<AdminUserProfileResponseModel>.Success(profile);
     }
+
 
     public async Task<Result<MessageResponseModel>> UpdateProfileAsync(UpdateProfileRequestModel requestModel)
     {
@@ -105,8 +102,7 @@ public class AdminProfileService(
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            logger.LogError(ex, "Error updating admin profile: {Message}", ex.Message);
-            return Result<MessageResponseModel>.Failed($"An error occurred while updating profile: {ex.Message}");
+            throw;
         }
     }
 }
