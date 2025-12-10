@@ -9,6 +9,10 @@ public static class MenuPermissionConstant
     public enum MenuCount
     {
         Dashboard,
+        Administration,
+        SalesMarketing,
+        Operations,
+        System,
         Roles,
         Admins,
         AdminManagement,
@@ -18,7 +22,7 @@ public static class MenuPermissionConstant
         Quotations,
         PremiumCalculation,
         Tenants,
-        Fodo,
+        MarketingExecutives,
         Notifications,
         Logs,
         Config
@@ -43,7 +47,7 @@ public static class MenuPermissionConstant
     #region Roles
     public const string RolesName = "Roles";
     public const string RolesViewName = "Roles View";
-    public const string RolesView = "2-1";
+    public const string RolesView = "18-2-1";
     #endregion
 
     #region Admins
@@ -55,19 +59,19 @@ public static class MenuPermissionConstant
     #region Admin Management
     public const string AdminManagementName = "Admin Management";
     public const string AdminManagementViewName = "Admin Management";
-    public const string AdminManagementView = "4-1";
+    public const string AdminManagementView = "18-4-1";
     #endregion
 
     #region Admin Leads
     public const string AdminLeadsName = "Admin Leads";
     public const string AdminLeadsViewName = "Admin Leads View";
-    public const string AdminLeadsView = "5-1";
+    public const string AdminLeadsView = "19-5-1";
     #endregion
 
     #region Admin Quotations
     public const string AdminQuotationsName = "Admin Quotations";
     public const string AdminQuotationsViewName = "Admin Quotations View";
-    public const string AdminQuotationsView = "6-1";
+    public const string AdminQuotationsView = "19-6-1";
     #endregion
 
     #region Leads
@@ -85,52 +89,80 @@ public static class MenuPermissionConstant
     #region Premium Calculation
     public const string PremiumCalculationName = "Premium Calculation";
     public const string PremiumCalculationViewName = "Premium Calculation";
-    public const string PremiumCalculationView = "9-1";
+    public const string PremiumCalculationView = "20-9-1";
 
     // Premium Calculation > Overview
     public const string PremiumOverviewName = "Overview";
     public const string PremiumOverviewViewName = "Premium Overview View";
-    public const string PremiumOverviewView = "9-10-1";
+    public const string PremiumOverviewView = "20-9-10-1";
 
     // Premium Calculation > Configurations
     public const string PremiumConfigurationsName = "Configurations";
     public const string PremiumConfigurationsViewName = "Premium Configurations View";
-    public const string PremiumConfigurationsView = "9-11-1";
+    public const string PremiumConfigurationsView = "20-9-11-1";
     #endregion
 
     #region Tenants
     public const string TenantsName = "Tenants";
     public const string TenantsViewName = "Tenants View";
-    public const string TenantsView = "12-1";
+    public const string TenantsView = "18-12-1";
     #endregion
 
-    #region Fodo
-    public const string FodoName = "Fodo";
-    public const string FodoViewName = "Fodo View";
-    public const string FodoView = "13-1";
+    #region Marketing Executives (formerly Fodo)
+    public const string MarketingExecutivesName = "Marketing Executives";
+    public const string MarketingExecutivesViewName = "Marketing Executives View";
+    public const string MarketingExecutivesView = "19-13-1";
+    // Keep Fodo for backward compatibility
+    public const string FodoName = "Marketing Executives";
+    public const string FodoViewName = "Marketing Executives View";
+    public const string FodoView = "19-13-1";
     #endregion
 
     #region Notifications
     public const string NotificationsName = "Notifications";
     public const string NotificationsViewName = "Notifications View";
-    public const string NotificationsView = "14-1";
+    public const string NotificationsView = "20-14-1";
     #endregion
 
     #region Logs
     public const string LogsName = "Logs";
     public const string LogsViewName = "Logs View";
-    public const string LogsView = "15-1";
+    public const string LogsView = "21-15-1";
 
     // Logs > System Log
     public const string SystemLogName = "System Log";
     public const string SystemLogViewName = "System Log View";
-    public const string SystemLogView = "15-16-1";
+    public const string SystemLogView = "21-15-16-1";
     #endregion
 
     #region Config
     public const string ConfigName = "Config";
     public const string ConfigViewName = "Config View";
-    public const string ConfigView = "17-1";
+    public const string ConfigView = "21-17-1";
+    #endregion
+
+    #region Administration (Parent Group)
+    public const string AdministrationName = "Administration";
+    public const string AdministrationViewName = "Administration";
+    public const string AdministrationView = "18-1";
+    #endregion
+
+    #region Sales & Marketing (Parent Group)
+    public const string SalesMarketingName = "Sales & Marketing";
+    public const string SalesMarketingViewName = "Sales & Marketing";
+    public const string SalesMarketingView = "19-1";
+    #endregion
+
+    #region Operations (Parent Group)
+    public const string OperationsName = "Operations";
+    public const string OperationsViewName = "Operations";
+    public const string OperationsView = "20-1";
+    #endregion
+
+    #region System (Parent Group)
+    public const string SystemName = "System";
+    public const string SystemViewName = "System";
+    public const string SystemView = "21-1";
     #endregion
 
 }
@@ -141,10 +173,15 @@ public static class CmsMenuConstant
 public enum MenuRank
 {
     Dashboard = 1,
+    Administration,
+    SalesMarketing,
+    Operations,
+    System,
+    // Child menus (for reference, not used in parent menus)
     Tenants,
     Roles,
     AdminManagement,
-    Fodo,
+    MarketingExecutives,
     AdminLeads,
     AdminQuotations,
     PremiumCalculation,
