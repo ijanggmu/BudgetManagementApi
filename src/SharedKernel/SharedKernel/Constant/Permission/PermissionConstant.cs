@@ -63,14 +63,14 @@ public static class MenuPermissionConstant
     #endregion
 
     #region Admin Leads
-    public const string AdminLeadsName = "Admin Leads";
-    public const string AdminLeadsViewName = "Admin Leads View";
+    public const string AdminLeadsName = "Leads";
+    public const string AdminLeadsViewName = "Leads View";
     public const string AdminLeadsView = "19-5-1";
     #endregion
 
     #region Admin Quotations
-    public const string AdminQuotationsName = "Admin Quotations";
-    public const string AdminQuotationsViewName = "Admin Quotations View";
+    public const string AdminQuotationsName = "Quotations";
+    public const string AdminQuotationsViewName = "Quotations View";
     public const string AdminQuotationsView = "19-6-1";
     #endregion
 

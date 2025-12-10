@@ -36,7 +36,7 @@ public static partial class MenuPermissionsList
             {
                 MenuId = 18,
                 MenuName = MenuPermissionConstant.AdministrationName,
-                MenuSlug = "",
+                MenuSlug = "Adminstration",
                 Icon = "SettingOutlined",
                 Rank = (int)MenuRank.Administration,
                 Level = 1,
@@ -117,7 +117,7 @@ public static partial class MenuPermissionsList
             {
                 MenuId = 19,
                 MenuName = MenuPermissionConstant.SalesMarketingName,
-                MenuSlug = "",
+                MenuSlug = "SalesMarketing",
                 Icon = "ShoppingOutlined",
                 Rank = (int)MenuRank.SalesMarketing,
                 Level = 1,
@@ -198,7 +198,7 @@ public static partial class MenuPermissionsList
             {
                 MenuId = 20,
                 MenuName = MenuPermissionConstant.OperationsName,
-                MenuSlug = "",
+                MenuSlug = "Operation",
                 Icon = "ToolOutlined",
                 Rank = (int)MenuRank.Operations,
                 Level = 1,
@@ -217,7 +217,7 @@ public static partial class MenuPermissionsList
                     {
                         MenuId = 9,
                         MenuName = MenuPermissionConstant.PremiumCalculationName,
-                        MenuSlug = "",
+                        MenuSlug = "Permium",
                         Icon = "Calculator",
                         Rank = 1,
                         Level = 2,
@@ -300,7 +300,7 @@ public static partial class MenuPermissionsList
             {
                 MenuId = 21,
                 MenuName = MenuPermissionConstant.SystemName,
-                MenuSlug = "",
+                MenuSlug = "System",
                 Icon = "DatabaseOutlined",
                 Rank = (int)MenuRank.System,
                 Level = 1,
@@ -319,7 +319,7 @@ public static partial class MenuPermissionsList
                     {
                         MenuId = 15,
                         MenuName = MenuPermissionConstant.LogsName,
-                        MenuSlug = "",
+                        MenuSlug = "logs",
                         Icon = "HistoryOutlined",
                         Rank = 1,
                         Level = 2,
