@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.Common.TenantDomain;
@@ -39,10 +40,25 @@ public class QuotationController(IQuotationService quotes) : BaseFoDoApiControll
         return HandleResult(await quotes.DeleteAsync(id));
     }
 
+    /// <summary>
+    /// Generate and download quotation PDF
+    /// </summary>
+    /// <param name="id">Quotation ID</param>
+    /// <returns>PDF file</returns>
     [HttpGet("{id}/pdf")]
     public async Task<IActionResult> GetPdfAsync(string id)
     {
-        return HandleResult(await quotes.GeneratePdfAsync(id));
+        var result = await quotes.GeneratePdfAsync(id);
+        if (!result.IsSuccess || result.Data == null)
+            return HandleResult(result);
+
+        var quotation = await quotes.GetByIdAsync(id);
+        var quotationNumber = quotation.IsSuccess && quotation.Data != null 
+            ? quotation.Data.Number 
+            : id;
+
+        var fileName = $"Quotation_{quotationNumber}_{DateTime.UtcNow:yyyyMMdd}.pdf";
+        return File(result.Data, "application/pdf", fileName);
     }
 }
 

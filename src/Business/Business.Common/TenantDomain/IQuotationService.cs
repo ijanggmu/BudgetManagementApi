@@ -12,7 +12,7 @@ public interface IQuotationService
     Task<Result<QuotationResponseDto>> CreateAsync(CreateQuotationDto dto);
     Task<Result<List<QuotationResponseDto>>> ListAsync(CommonPaginationRequestModel? requestModel = null);
     Task<Result<QuotationResponseDto>> GetByIdAsync(string id);
-    Task<Result<string>> GeneratePdfAsync(string id);
+    Task<Result<byte[]>> GeneratePdfAsync(string id);
     Task<Result<List<QuotationResponseDto>>> GetByLeadIdAsync(string leadId);
     Task<Result<List<QuotationResponseDto>>> GetQuotationsForAdminAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null);
     Task<Result<QuotationResponseDto>> GetQuotationDetailsForAdminAsync(string id);

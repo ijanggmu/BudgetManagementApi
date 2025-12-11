@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Business.AdminPortalApi.ExcelExport;
+using Business.AdminPortalApi.PdfGeneration;
 using Data.Context;
 using Data.Entities.Identity;
 using Data.Entities.Tenant;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;
+using SharedKernel.Models.Tenancy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -27,6 +29,8 @@ public class QuotationService : IQuotationService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<QuotationService> _logger;
     private readonly IExcelExportService _excelExportService;
+    private readonly IQuotationPdfService _pdfService;
+    private readonly ITenantContext _tenantContext;
 
     public QuotationService(
         ApplicationDataContext db,
@@ -35,7 +39,9 @@ public class QuotationService : IQuotationService
         IUserProfileService userProfileService,
         UserManager<ApplicationUser> userManager,
         ILogger<QuotationService> logger,
-        IExcelExportService excelExportService)
+        IExcelExportService excelExportService,
+        IQuotationPdfService pdfService,
+        ITenantContext tenantContext)
     {
         _db = db;
         _numbers = numbers;
@@ -44,6 +50,8 @@ public class QuotationService : IQuotationService
         _userManager = userManager;
         _logger = logger;
         _excelExportService = excelExportService;
+        _pdfService = pdfService;
+        _tenantContext = tenantContext;
     }
 
     private static QuotationResponseDto MapToDto(Quotation quotation)
@@ -148,20 +156,59 @@ public class QuotationService : IQuotationService
         return Result<QuotationResponseDto>.Success(MapToDto(quotation));
     }
 
-    public async Task<Result<string>> GeneratePdfAsync(string id)
+    public async Task<Result<byte[]>> GeneratePdfAsync(string id)
     {
-        var quote = await _db.Set<Quotation>().FirstOrDefaultAsync(q => q.Id == id);
-        if (quote == null)
-            return Result<string>.Failed("Quotation not found.");
+        try
+        {
+            var quote = await _db.Set<Quotation>()
+                .Include(q => q.Items)
+                .FirstOrDefaultAsync(q => q.Id == id);
 
-        // Placeholder for PDF generation logic
-        // In real app, use DinkToPdf or similar, upload to S3, return URL
-        var pdfUrl = $"https://storage.example.com/quotes/{id}.pdf";
+            if (quote == null)
+                return Result<byte[]>.Failed("Quotation not found.");
 
-        quote.PdfUrl = pdfUrl;
-        await _db.SaveChangesAsync();
+            // Get quotation DTO
+            var quotationDto = MapToDto(quote);
 
-        return Result<string>.Success(pdfUrl);
+            // Get prospect and contact information
+            var prospect = await _db.Set<Prospect>()
+                .Include(p => p.PrimaryContact)
+                .FirstOrDefaultAsync(p => p.Id == quote.ProspectId);
+
+            var prospectName = prospect?.PrimaryContact?.FullName ?? "Customer";
+            var prospectEmail = prospect?.PrimaryContact?.Email;
+            var prospectPhone = prospect?.PrimaryContact?.Phone;
+
+            // Get tenant and branding information
+            string? companyName = null;
+            string? logoUrl = null;
+
+            if (_tenantContext.TenantId != null)
+            {
+                var tenant = await _db.Set<Tenant>()
+                    .Include(t => t.Branding)
+                    .FirstOrDefaultAsync(t => t.Id == _tenantContext.TenantId);
+
+                companyName = tenant?.Name;
+                logoUrl = tenant?.Branding?.LogoUrl;
+            }
+
+            // Generate PDF
+            var pdfBytes = await _pdfService.GenerateQuotationPdfAsync(
+                quotationDto,
+                prospectName,
+                prospectEmail,
+                prospectPhone,
+                companyName,
+                logoUrl);
+
+            return Result<byte[]>.Success(pdfBytes);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating PDF for quotation {QuotationId}: {Message}", id, ex.Message);
+            return Result<byte[]>.Failed($"An error occurred while generating PDF: {ex.Message}");
+        }
     }
 
     public async Task<Result<List<QuotationResponseDto>>> GetByLeadIdAsync(string leadId)

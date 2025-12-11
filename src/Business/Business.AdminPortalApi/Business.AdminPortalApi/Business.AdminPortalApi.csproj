@@ -4,8 +4,13 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
-
+  
+  <ItemGroup>
+  <PackageReference Include="PdfSharp" Version="8.0.0" />
+  <PackageReference Include="PdfSharp.Charting" Version="8.0.0" />
+  <PackageReference Include="MigraDoc.DocumentObjectModel" Version="8.0.0" />
+  <PackageReference Include="MigraDoc.Rendering" Version="8.0.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Data\Data\Data.csproj" />
