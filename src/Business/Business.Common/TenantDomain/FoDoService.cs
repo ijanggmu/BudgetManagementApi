@@ -196,7 +196,7 @@ public class FodoService(
                 return Result<FodoResponseDto>.Failed(createUserResult.Errors.FirstOrDefault()?.Description ?? "Failed to create user.");
 
             // Add Agent role
-            var roleResult = await userManager.AddToRoleAsync(user, SystemRoles.Agent);
+            var roleResult = await userManager.AddToRoleAsync(user, SystemRoles.FoDo);
             if (!roleResult.Succeeded)
             {
                 await transaction.RollbackAsync();

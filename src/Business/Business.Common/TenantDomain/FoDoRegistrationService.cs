@@ -77,7 +77,7 @@ public class FodoRegistrationService(
                 return Result<MessageResponseModel>.Failed(identityResult.Errors.Select(x => x.Description)
                     .FirstOrDefault());
 
-            var roleResult = await userManager.AddToRoleAsync(user, SystemRoles.Agent);
+            var roleResult = await userManager.AddToRoleAsync(user, SystemRoles.FoDo);
 
             if (!roleResult.Succeeded)
             {

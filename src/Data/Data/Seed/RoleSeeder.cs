@@ -27,26 +27,10 @@ public static class RoleSeeder
                                 new ApplicationRole
                                 {
                                     Id = Guid.NewGuid().ToString(),
-                                    Name = SystemRoles.Individual,
-                                    Description = SystemRoles.Individual,
-                                    RoleLevel = SystemRoles.CustomerLevel,
-                                    RoleType = SystemRoles.Individual
-                                },
-                                 new ApplicationRole
-                                {
-                                    Id = Guid.NewGuid().ToString(),
-                                    Name = SystemRoles.Corporate,
-                                    Description = SystemRoles.Corporate,
-                                    RoleLevel = SystemRoles.CorporateLevel,
-                                    RoleType = SystemRoles.Corporate
-                                },
-                                  new ApplicationRole
-                                {
-                                    Id = Guid.NewGuid().ToString(),
-                                    Name = SystemRoles.Agent,
-                                    Description = SystemRoles.Agent,
-                                    RoleLevel = SystemRoles.AgentLevel, 
-                                    RoleType = SystemRoles.Agent
+                                    Name = SystemRoles.FoDo,
+                                    Description = SystemRoles.FoDo,
+                                    RoleLevel = SystemRoles.FoDoLevel,
+                                    RoleType = SystemRoles.FoDo
                                 }
                             };
 

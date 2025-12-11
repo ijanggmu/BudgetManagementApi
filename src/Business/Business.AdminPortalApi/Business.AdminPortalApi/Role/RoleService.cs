@@ -20,7 +20,7 @@ public class RoleService(
 {
     public Result<List<string>> GetAllSystemRoles()
     {
-        return Result<List<string>>.Success(SystemRoles.GetAllDefaultRolesExceptSuperAdminAndCustomer());
+        return Result<List<string>>.Success(SystemRoles.GetAllDefaultRolesExceptSuperAdmin());
     }
 
     public async Task<Result<List<string>>> GetAllRoleNamesAsync() => Result<List<string>>.Success(await roleManager.Roles

@@ -19,7 +19,7 @@ public record ComputeQuotationDto(DateOnly AsOf, IDictionary<string, object> Inp
 
 // Tenant DTOs
 public record CreateTenantDto(string Name, string Slug, CreateCompanyBrandingDto CompanyBranding, CreateTenantAdminDto AdminUser, bool IsActive = true, int ThemeVersion = 1);
-public record CreateTenantAdminDto(string Email, string Username, string FullName);
+public record CreateTenantAdminDto(string Email, string Username, string FullName, string Password);
 public record CreateCompanyBrandingDto(string LogoUrl = default!,    // CDN/blob URL
      string PaletteJson = "{}",    // AA contrast enforced
      string TypographyJson = "{}",

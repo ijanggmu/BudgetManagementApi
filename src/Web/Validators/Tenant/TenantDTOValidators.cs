@@ -24,6 +24,10 @@ public class CreateTenantDtoValidator : AbstractValidator<CreateTenantDto>
         RuleFor(x => x.AdminUser.FullName)
             .NotEmpty().WithMessage("Admin full name is required.")
             .MaximumLength(200).WithMessage("Admin full name must not exceed 200 characters.");
+        RuleFor(x => x.AdminUser.Password)
+            .NotEmpty().WithMessage("Admin password is required.")
+            .MinimumLength(6).WithMessage("Password must be at least 6 characters.")
+            .MaximumLength(100).WithMessage("Password must not exceed 100 characters.");
     }
 }
 

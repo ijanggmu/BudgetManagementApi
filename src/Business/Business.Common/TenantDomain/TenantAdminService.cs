@@ -32,9 +32,6 @@ public class TenantAdminService : ITenantAdminService
     private readonly IHostEnvironment _hostEnvironment;
     private readonly IExcelExportService _excelExportService;
 
-    // Static password for development environment
-    private const string DevelopmentPassword = "Admin@123";
-
     public TenantAdminService(
         ApplicationDataContext db,
         ISieveExtension sieveExtension,
@@ -152,35 +149,20 @@ public class TenantAdminService : ITenantAdminService
 
             await _db.CompanyBrandings.AddAsync(companyBranding);
 
-            // Determine if we're in development environment
-            var isDevelopment = _hostEnvironment.IsDevelopment()
-                || _hostEnvironment.EnvironmentName.Equals("Development", StringComparison.OrdinalIgnoreCase)
-                || _hostEnvironment.EnvironmentName.Equals("Dev", StringComparison.OrdinalIgnoreCase);
-
-            // Create admin user
+            // Create admin user with password from frontend
             var adminUser = new ApplicationUser
             {
                 Id = Guid.NewGuid().ToString(),
                 UserName = dto.AdminUser.Username,
                 Email = dto.AdminUser.Email,
-                EmailConfirmed = isDevelopment, // Auto-confirm in development, require activation in production
+                EmailConfirmed = true, // Auto-confirm since password is provided
                 IsDisabled = false,
                 TenantId = tenant.Id // Set tenant ID for the user
             };
 
-            // Create user with or without password based on environment
-            IdentityResult createUserResult;
-            if (isDevelopment)
-            {
-                // In development: create user with static password
-                createUserResult = await _userManager.CreateAsync(adminUser, DevelopmentPassword);
-                _logger.LogInformation("Development mode: Created tenant admin user {Username} with static password", dto.AdminUser.Username);
-            }
-            else
-            {
-                // In production: create user without password (will be set during activation)
-                createUserResult = await _userManager.CreateAsync(adminUser);
-            }
+            // Create user with password from frontend
+            var createUserResult = await _userManager.CreateAsync(adminUser, dto.AdminUser.Password);
+            _logger.LogInformation("Created tenant admin user {Username} with password from frontend", dto.AdminUser.Username);
 
             if (!createUserResult.Succeeded)
             {
@@ -209,67 +191,47 @@ public class TenantAdminService : ITenantAdminService
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            // Only send activation email in production environments
-            if (!isDevelopment)
+            // Send welcome email to admin user
+            try
             {
-                // Generate password reset token for activation (valid for 7 days)
-                var activationToken = await _userManager.GeneratePasswordResetTokenAsync(adminUser);
-                var encodedToken = WebUtility.UrlEncode(activationToken);
-
                 // Get frontend URL from configuration
                 var frontendUrl = _configuration["FrontEndUrlOptions:AgentPortal"]
                     ?? _configuration["FrontendUrl:AgentPortal"]
                     ?? "https://localhost:3000";
 
-                // Build activation link
-                var activationLink = $"{frontendUrl.TrimEnd('/')}/activate-account?token={encodedToken}&email={WebUtility.UrlEncode(adminUser.Email)}";
+                var emailBody = $@"
+                    <html>
+                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                            <h2 style='color: #2c3e50;'>Welcome to {dto.Name}!</h2>
+                            <p>Hello {dto.AdminUser.FullName},</p>
+                            <p>Your tenant admin account has been created successfully. You can now log in with your credentials.</p>
+                            <p style='margin: 30px 0;'>
+                                <a href='{frontendUrl.TrimEnd('/')}/login' 
+                                   style='background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;'>
+                                    Login to Your Account
+                                </a>
+                            </p>
+                            <p style='color: #7f8c8d; font-size: 12px;'>
+                                If you did not request this account, please contact support.
+                            </p>
+                        </div>
+                    </body>
+                    </html>";
 
-                // Send activation email
-                try
-                {
-                    var emailBody = $@"
-                        <html>
-                        <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-                            <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                                <h2 style='color: #2c3e50;'>Welcome to {dto.Name}!</h2>
-                                <p>Hello {dto.AdminUser.FullName},</p>
-                                <p>Your tenant admin account has been created successfully. To activate your account and set your password, please click the link below:</p>
-                                <p style='margin: 30px 0;'>
-                                    <a href='{activationLink}' 
-                                       style='background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;'>
-                                        Activate Account & Set Password
-                                    </a>
-                                </p>
-                                <p style='color: #7f8c8d; font-size: 12px;'>
-                                    This link will expire in 7 days. If you did not request this account, please contact support.
-                                </p>
-                                <p style='color: #7f8c8d; font-size: 12px; margin-top: 30px;'>
-                                    If the button doesn't work, copy and paste this link into your browser:<br/>
-                                    <a href='{activationLink}' style='color: #3498db; word-break: break-all;'>{activationLink}</a>
-                                </p>
-                            </div>
-                        </body>
-                        </html>";
+                var mailRequest = new MailRequest(
+                    to: new Collection<string> { adminUser.Email },
+                    subject: $"Welcome to {dto.Name} - Admin Account Created",
+                    emailType: "TenantAdminWelcome",
+                    body: emailBody
+                );
 
-                    var mailRequest = new MailRequest(
-                        to: new Collection<string> { adminUser.Email },
-                        subject: $"Activate Your {dto.Name} Admin Account",
-                        emailType: "TenantAdminActivation",
-                        body: emailBody
-                    );
-
-                    _mailService.QueueEmail(mailRequest, CancellationToken.None);
-                }
-                catch (Exception ex)
-                {
-                    // Log error but don't fail the tenant creation
-                    _logger.LogError(ex, "Failed to send activation email to {Email}", adminUser.Email);
-                }
+                _mailService.QueueEmail(mailRequest, CancellationToken.None);
             }
-            else
+            catch (Exception ex)
             {
-                _logger.LogInformation("Development mode: Skipping activation email for tenant admin {Email}. Password: {Password}",
-                    adminUser.Email, DevelopmentPassword);
+                // Log error but don't fail the tenant creation
+                _logger.LogError(ex, "Failed to send welcome email to {Email}", adminUser.Email);
             }
 
             // Reload tenant with branding to get the version

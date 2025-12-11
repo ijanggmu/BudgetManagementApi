@@ -26,27 +26,11 @@ public static class UserSeeder
         },
         new
         {
-            UserName = "9999999999",
-            Email = "supercustomer@hei.com",
-            Role = SystemRoles.Individual,
-            FullName = "Super Customer",
-            EntityType = "Customer"
-        },
-        new
-        {
             UserName = "superfodo",
             Email = "superfodo@hei.com",
             Role = SystemRoles.FoDo,
             FullName = "Super FoDo",
             EntityType = "FoDo"
-        },
-        new
-        {
-            UserName = "supercorporate",
-            Email = "supercorportae@hei.com",
-            Role = SystemRoles.Corporate,
-            FullName = "Super Corporate",
-            EntityType = "Corporate"
         }
     };
 
@@ -85,24 +69,10 @@ public static class UserSeeder
                         UserId = newUser.Id
                     });
                     break;
-                case "Customer":
-                    await context.Customers.AddAsync(new Customer
-                    {
-                        FullName = userInfo.FullName,
-                        UserId = newUser.Id
-                    });
-                    break;
-                case "Agent":
+                case "FoDo":
                     await context.Fodos.AddAsync(new Entities.FodoEntity.Fodo
                     {
                         FullName = userInfo.FullName,
-                        UserId = newUser.Id
-                    });
-                    break;
-                case "Corporate":
-                    await context.Corporates.AddAsync(new Corporate
-                    {
-                        CorporateName = userInfo.FullName,
                         UserId = newUser.Id
                     });
                     break;
