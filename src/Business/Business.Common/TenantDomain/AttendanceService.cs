@@ -23,15 +23,16 @@ using SharedKernel.Operation;
 
 namespace Business.Common.TenantDomain;
 
-public class AttendanceService : IAttendanceService
+public class AttendanceService(
+    ApplicationDataContext db,
+    IHttpClientFactory httpClientFactory,
+    ISieveExtension sieveExtension,
+    IUserProfileService userProfileService,
+    UserManager<ApplicationUser> userManager,
+    ILogger<AttendanceService> logger,
+    IConfiguration configuration,
+    IExcelExportService excelExportService) : IAttendanceService
 {
-    private readonly ApplicationDataContext _db;
-
-    public AttendanceService(ApplicationDataContext db)
-    {
-        _db = db;
-    }
-
     public async Task<Result<AttendanceEntry>> CheckInAsync(string userId, double lat, double lng, string? remarks = null)
     {
         var entry = new AttendanceEntry
@@ -44,8 +45,12 @@ public class AttendanceService : IAttendanceService
             Remarks = remarks
         };
 
-        _db.Add(entry);
-        await _db.SaveChangesAsync();
+        db.Add(entry);
+        await db.SaveChangesAsync();
+
+        // Sync to tenant API in background (fire and forget)
+        _ = Task.Run(async () => await SyncAttendanceToTenantApiAsync(entry, userId));
+
         return Result<AttendanceEntry>.Success(entry);
     }
 
@@ -61,8 +66,12 @@ public class AttendanceService : IAttendanceService
             Remarks = remarks
         };
 
-        _db.Add(entry);
-        await _db.SaveChangesAsync();
+        db.Add(entry);
+        await db.SaveChangesAsync();
+
+        // Sync to tenant API in background (fire and forget)
+        _ = Task.Run(async () => await SyncAttendanceToTenantApiAsync(entry, userId));
+
         return Result<AttendanceEntry>.Success(entry);
     }
 
@@ -71,7 +80,7 @@ public class AttendanceService : IAttendanceService
         var startDate = date.Date;
         var endDate = startDate.AddDays(1);
 
-        var entries = await _db.Set<AttendanceEntry>()
+        var entries = await db.Set<AttendanceEntry>()
             .AsNoTracking()
             .Where(a => a.UserId == userId && a.Timestamp >= startDate && a.Timestamp < endDate)
             .OrderBy(a => a.Timestamp)
@@ -85,12 +94,252 @@ public class AttendanceService : IAttendanceService
         var startDate = new DateTime(year, month, 1);
         var endDate = startDate.AddMonths(1);
 
-        var entries = await _db.Set<AttendanceEntry>()
+        var entries = await db.Set<AttendanceEntry>()
             .AsNoTracking()
             .Where(a => a.UserId == userId && a.Timestamp >= startDate && a.Timestamp < endDate)
             .OrderBy(a => a.Timestamp)
             .ToListAsync();
 
         return Result<List<AttendanceEntry>>.Success(entries);
+    }
+
+    public async Task<Result<List<AttendanceResponseDto>>> GetAttendanceForAdminAsync(
+        CommonPaginationRequestModel requestModel,
+        string? userId = null,
+        string? type = null,
+        DateTime? from = null,
+        DateTime? to = null,
+        string? tenantId = null)
+    {
+        try
+        {
+            var currentUserId = userProfileService.GetUserId();
+            if (string.IsNullOrEmpty(currentUserId))
+                return Result<List<AttendanceResponseDto>>.Failed("User not authenticated.");
+
+            var user = await userManager.FindByIdAsync(currentUserId);
+            if (user == null || user.IsDeleted || user.IsDisabled)
+                return Result<List<AttendanceResponseDto>>.Failed("User not found or inactive.");
+
+            var userRoles = await db.UserRoles
+                .Where(ur => ur.UserId == currentUserId && !ur.IsDeleted)
+                .Join(db.Roles.Where(r => !r.IsDeleted),
+                    ur => ur.RoleId,
+                    r => r.Id,
+                    (ur, r) => r.Name)
+                .ToListAsync();
+
+            var isSuperAdmin = userRoles.Contains(SystemRoles.SuperAdmin);
+            var isAdmin = userRoles.Contains(SystemRoles.Admin);
+
+            if (!isSuperAdmin && !isAdmin)
+                return Result<List<AttendanceResponseDto>>.Failed("Access denied. Admin or SuperAdmin role required.");
+
+            // Build query
+            IQueryable<AttendanceEntry> query = db.Set<AttendanceEntry>()
+                .AsNoTracking();
+
+            // For SuperAdmin, ignore tenant filter to see all
+            if (isSuperAdmin)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(userId))
+            {
+                query = query.Where(a => a.UserId == userId);
+            }
+
+            if (!string.IsNullOrEmpty(type))
+            {
+                query = query.Where(a => a.Type == type);
+            }
+
+            if (from.HasValue)
+            {
+                query = query.Where(a => a.Timestamp >= from.Value);
+            }
+
+            if (to.HasValue)
+            {
+                query = query.Where(a => a.Timestamp <= to.Value);
+            }
+
+            if (!string.IsNullOrEmpty(tenantId) && isSuperAdmin)
+            {
+                query = query.Where(a => a.TenantId == tenantId);
+            }
+
+            // Apply Sieve filtering and pagination
+            var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
+            var attendanceEntries = await result
+                .OrderByDescending(a => a.Timestamp)
+                .ToListAsync();
+
+            // Get user information
+            var userIds = attendanceEntries.Select(a => a.UserId).Distinct().ToList();
+            var users = await db.Users
+                .Where(u => userIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u);
+
+            // Get FoDo information
+            var fodos = await db.Fodos
+                .Where(f => userIds.Contains(f.UserId) && !f.IsDeleted)
+                .ToDictionaryAsync(f => f.UserId, f => f);
+
+            // Get tenant names
+            var tenantIds = attendanceEntries.Where(a => !string.IsNullOrEmpty(a.TenantId))
+                .Select(a => a.TenantId)
+                .Distinct()
+                .ToList();
+            var tenants = await db.Set<Data.Entities.Tenant.Tenant>()
+                .Where(t => tenantIds.Contains(t.Id))
+                .ToDictionaryAsync(t => t.Id, t => t.Name);
+
+            // Map to DTOs
+            var dtos = attendanceEntries.Select(entry =>
+            {
+                var userInfo = users.ContainsKey(entry.UserId) ? users[entry.UserId] : null;
+                var fodo = fodos.ContainsKey(entry.UserId) ? fodos[entry.UserId] : null;
+                var tenantName = !string.IsNullOrEmpty(entry.TenantId) && tenants.ContainsKey(entry.TenantId)
+                    ? tenants[entry.TenantId]
+                    : null;
+
+                return new AttendanceResponseDto(
+                    entry.Id,
+                    entry.UserId,
+                    userInfo?.UserName,
+                    fodo?.FullName ?? userInfo?.UserName,
+                    entry.Type,
+                    entry.Latitude,
+                    entry.Longitude,
+                    entry.Timestamp,
+                    entry.Remarks,
+                    entry.TenantId,
+                    tenantName,
+                    entry.CreatedOn
+                );
+            }).ToList();
+
+            var pagination = new Pagination
+            {
+                TotalItems = totalCount,
+                TotalPages = totalPage,
+                PageSize = requestModel.PageSize,
+                CurrentPage = requestModel.PageNumber
+            };
+
+            return Result<List<AttendanceResponseDto>>.Success(dtos, pagination);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving attendance for admin: {Message}", ex.Message);
+            return Result<List<AttendanceResponseDto>>.Failed($"An error occurred while retrieving attendance: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<byte[]>> ExportToExcelAsync(
+        string? userId = null,
+        string? type = null,
+        DateTime? from = null,
+        DateTime? to = null,
+        string? tenantId = null)
+    {
+        try
+        {
+            var requestModel = new CommonPaginationRequestModel { PageNumber = 1, PageSize = int.MaxValue };
+            var result = await GetAttendanceForAdminAsync(requestModel, userId, type, from, to, tenantId);
+
+            if (!result.IsSuccess || result.Data == null)
+                return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve attendance data.");
+
+            var columnMappings = new Dictionary<string, string>
+            {
+                { "Id", "ID" },
+                { "UserId", "User ID" },
+                { "UserName", "Username" },
+                { "FullName", "Full Name" },
+                { "Type", "Type" },
+                { "Latitude", "Latitude" },
+                { "Longitude", "Longitude" },
+                { "Timestamp", "Timestamp" },
+                { "Remarks", "Remarks" },
+                { "TenantId", "Tenant ID" },
+                { "TenantName", "Tenant Name" },
+                { "CreatedOn", "Created On" }
+            };
+
+            var excelData = await excelExportService.ExportToExcelAsync(result.Data, "Attendance", columnMappings);
+            return Result<byte[]>.Success(excelData);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error exporting attendance to Excel: {Message}", ex.Message);
+            return Result<byte[]>.Failed($"An error occurred while exporting: {ex.Message}");
+        }
+    }
+
+    private async Task SyncAttendanceToTenantApiAsync(AttendanceEntry entry, string userId)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(entry.TenantId))
+                return;
+
+            // Get tenant attendance API URL from configuration
+            // Format: "TenantAttendanceApi:{tenantId}" or use a default pattern
+            var apiUrlKey = $"TenantAttendanceApi:{entry.TenantId}";
+            var apiUrl = configuration[apiUrlKey];
+
+            if (string.IsNullOrEmpty(apiUrl))
+            {
+                // Try to get from tenant entity if it has AttendanceApiUrl property
+                // For now, we'll use a default pattern or skip if not configured
+                logger.LogDebug("Attendance API URL not configured for tenant {TenantId}", entry.TenantId);
+                return;
+            }
+
+            // Get user and FoDo information
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var fodo = await db.Fodos.FirstOrDefaultAsync(f => f.UserId == userId && !f.IsDeleted);
+
+            var syncDto = new TenantAttendanceSyncDto(
+                entry.UserId,
+                user?.UserName,
+                fodo?.FullName ?? user?.UserName,
+                entry.Type,
+                entry.Latitude,
+                entry.Longitude,
+                entry.Timestamp,
+                entry.Remarks
+            );
+
+            using var httpClient = httpClientFactory.CreateClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+            var json = JsonSerializer.Serialize(syncDto, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsync(apiUrl, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                logger.LogInformation("Successfully synced attendance {AttendanceId} to tenant API", entry.Id);
+            }
+            else
+            {
+                logger.LogWarning("Failed to sync attendance {AttendanceId} to tenant API. Status: {Status}", 
+                    entry.Id, response.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error syncing attendance {AttendanceId} to tenant API: {Message}", entry.Id, ex.Message);
+            // Don't throw - this is a background operation
+        }
     }
 }

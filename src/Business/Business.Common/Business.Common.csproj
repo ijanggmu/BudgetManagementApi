@@ -12,6 +12,8 @@
     <PackageReference Include="Otp.NET" Version="1.4.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.2" />
     <PackageReference Include="NPOI" Version="2.7.1" />
+      <PackageReference Include="PDFsharp" Version="6.2.3" />
+      <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.3" />
   </ItemGroup>
 
   <ItemGroup>

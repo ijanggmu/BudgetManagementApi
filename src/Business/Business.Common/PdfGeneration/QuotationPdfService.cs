@@ -7,7 +7,6 @@ using MigraDoc.DocumentObjectModel;
 using MigraDoc.DocumentObjectModel.Tables;
 using MigraDoc.Rendering;
 using Models.WebApi.TenantDTOs;
-using NPOI.XWPF.UserModel;
 using PdfSharp.Pdf;
 
 namespace Business.AdminPortalApi.PdfGeneration;

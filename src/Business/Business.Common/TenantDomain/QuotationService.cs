@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Business.AdminPortalApi.ExcelExport;
 using Business.AdminPortalApi.PdfGeneration;
 using Data.Context;
@@ -9,13 +5,13 @@ using Data.Entities.Identity;
 using Data.Entities.Tenant;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;
-using SharedKernel.Models.Tenancy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
 using SharedKernel.Constant.Roles;
+using SharedKernel.Models.Tenancy;
 using SharedKernel.Operation;
 
 namespace Business.Common.TenantDomain;
