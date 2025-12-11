@@ -18,4 +18,5 @@ public interface ILeadService
     Task<Result<List<LeadResponseDto>>> GetLeadsForAdminAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null);
     Task<Result<LeadResponseDto>> GetLeadDetailsForAdminAsync(string id);
     Task<Result<List<LeadResponseDto>>> GetLeadsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null);
+    Task<Result<byte[]>> ExportToExcelAsync(string? status = null, DateTime? from = null, DateTime? to = null, string? tenantId = null);
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Business.AdminPortalApi.ExcelExport;
 using Data.Context;
 using Data.Entities.Identity;
 using Data.Entities.Tenant;
@@ -25,6 +26,7 @@ public class QuotationService : IQuotationService
     private readonly IUserProfileService _userProfileService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<QuotationService> _logger;
+    private readonly IExcelExportService _excelExportService;
 
     public QuotationService(
         ApplicationDataContext db,
@@ -32,7 +34,8 @@ public class QuotationService : IQuotationService
         ISieveExtension sieveExtension,
         IUserProfileService userProfileService,
         UserManager<ApplicationUser> userManager,
-        ILogger<QuotationService> logger)
+        ILogger<QuotationService> logger,
+        IExcelExportService excelExportService)
     {
         _db = db;
         _numbers = numbers;
@@ -40,6 +43,7 @@ public class QuotationService : IQuotationService
         _userProfileService = userProfileService;
         _userManager = userManager;
         _logger = logger;
+        _excelExportService = excelExportService;
     }
 
     private static QuotationResponseDto MapToDto(Quotation quotation)
@@ -489,6 +493,59 @@ public class QuotationService : IQuotationService
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Error deleting quotation {QuotationId}: {Message}", id, ex.Message);
             return Result<bool>.Failed($"An error occurred while deleting quotation: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<byte[]>> ExportToExcelAsync(string? status = null, DateTime? from = null, DateTime? to = null, string? tenantId = null)
+    {
+        try
+        {
+            var requestModel = new CommonPaginationRequestModel { PageNumber = 1, PageSize = int.MaxValue };
+            var result = string.IsNullOrEmpty(tenantId)
+                ? await GetQuotationsForAdminAsync(requestModel, status, from, to)
+                : await GetQuotationsByTenantIdAsync(tenantId, requestModel, status, from, to);
+
+            if (!result.IsSuccess || result.Data == null)
+                return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve quotation data.");
+
+            var columnMappings = new Dictionary<string, string>
+            {
+                { "Id", "ID" },
+                { "Number", "Quotation Number" },
+                { "Status", "Status" },
+                { "ProductId", "Product ID" },
+                { "ProspectId", "Prospect ID" },
+                { "TotalPremium", "Total Premium" },
+                { "DiscountPercent", "Discount %" },
+                { "ValidUntil", "Valid Until" },
+                { "PdfUrl", "PDF URL" },
+                { "CreatedOn", "Created On" },
+                { "Items", "Items Count" }
+            };
+
+            // Flatten the data for export
+            var exportData = result.Data.Select(quotation => new
+            {
+                quotation.Id,
+                quotation.Number,
+                quotation.Status,
+                quotation.ProductId,
+                quotation.ProspectId,
+                TotalPremium = quotation.TotalPremium?.ToString("F2") ?? "",
+                DiscountPercent = quotation.DiscountPercent?.ToString("F2") ?? "",
+                ValidUntil = quotation.ValidUntil?.ToString("yyyy-MM-dd") ?? "",
+                PdfUrl = quotation.PdfUrl ?? "",
+                quotation.CreatedOn,
+                ItemsCount = quotation.Items?.Count ?? 0
+            }).ToList();
+
+            var excelData = await _excelExportService.ExportToExcelAsync(exportData, "Quotations", columnMappings);
+            return Result<byte[]>.Success(excelData);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting quotations to Excel: {Message}", ex.Message);
+            return Result<byte[]>.Failed($"An error occurred while exporting: {ex.Message}");
         }
     }
 }

@@ -1,3 +1,4 @@
+using Business.AdminPortalApi.ExcelExport;
 using Business.Common.TenantDomain;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,6 +8,7 @@ public static class TenantDomainServicesExtension
 {
     public static IServiceCollection AddTenantDomainServices(this IServiceCollection services)
     {
+        services.AddScoped<IExcelExportService, ExcelExportService>();
         services.AddScoped<IBrandingService, BrandingService>();
         services.AddScoped<ILeadService, LeadService>();
         services.AddScoped<IQuotationNumberGenerator, QuotationNumberGenerator>();

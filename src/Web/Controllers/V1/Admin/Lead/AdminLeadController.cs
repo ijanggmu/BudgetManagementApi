@@ -57,5 +57,28 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
     {
         return HandleResult(await leadService.GetLeadsByTenantIdAsync(tenantId, requestModel, status, from, to));
     }
+
+    /// <summary>
+    /// Export leads to Excel
+    /// </summary>
+    /// <param name="status">Optional: Filter by lead status</param>
+    /// <param name="from">Optional: Filter leads created from this date</param>
+    /// <param name="to">Optional: Filter leads created until this date</param>
+    /// <param name="tenantId">Optional: Tenant ID filter (SuperAdmin only)</param>
+    /// <returns>Excel file</returns>
+    [HttpGet("export")]
+    public async Task<IActionResult> ExportToExcelAsync(
+        [FromQuery] string? status = null,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromQuery] string? tenantId = null)
+    {
+        var result = await leadService.ExportToExcelAsync(status, from, to, tenantId);
+        if (!result.IsSuccess || result.Data == null)
+            return HandleResult(result);
+
+        var fileName = $"Leads_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx";
+        return File(result.Data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
 }
 

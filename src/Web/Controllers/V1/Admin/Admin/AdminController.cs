@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.Common.TenantDomain;
@@ -54,5 +55,21 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAsync(string id)
         => HandleResult(await adminService.DeleteAsync(id));
+
+    /// <summary>
+    /// Export all admins to Excel
+    /// </summary>
+    /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
+    /// <returns>Excel file</returns>
+    [HttpGet("export")]
+    public async Task<IActionResult> ExportToExcelAsync([FromQuery] string? tenantId = null)
+    {
+        var result = await adminService.ExportToExcelAsync(tenantId);
+        if (!result.IsSuccess || result.Data == null)
+            return HandleResult(result);
+
+        var fileName = $"Admins_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx";
+        return File(result.Data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
 }
 

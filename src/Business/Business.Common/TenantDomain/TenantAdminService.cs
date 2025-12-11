@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Net;
+using Business.AdminPortalApi.ExcelExport;
 using Business.Common.Mail;
 using Common.Mail;
 using Data.Context;
@@ -29,6 +30,7 @@ public class TenantAdminService : ITenantAdminService
     private readonly IConfiguration _configuration;
     private readonly ILogger<TenantAdminService> _logger;
     private readonly IHostEnvironment _hostEnvironment;
+    private readonly IExcelExportService _excelExportService;
 
     // Static password for development environment
     private const string DevelopmentPassword = "Admin@123";
@@ -40,7 +42,8 @@ public class TenantAdminService : ITenantAdminService
         IMailService mailService,
         IConfiguration configuration,
         ILogger<TenantAdminService> logger,
-        IHostEnvironment hostEnvironment)
+        IHostEnvironment hostEnvironment,
+        IExcelExportService excelExportService)
     {
         _db = db;
         _sieveExtension = sieveExtension;
@@ -49,6 +52,7 @@ public class TenantAdminService : ITenantAdminService
         _configuration = configuration;
         _logger = logger;
         _hostEnvironment = hostEnvironment;
+        _excelExportService = excelExportService;
     }
 
     public async Task<Result<List<TenantsResponseDto>>> ListAsync(CommonPaginationRequestModel? requestModel = null)
@@ -379,6 +383,36 @@ public class TenantAdminService : ITenantAdminService
         {
             _logger.LogError(ex, "Error retrieving tenants for dropdown: {Message}", ex.Message);
             return Result<List<TenantDropdownDto>>.Failed($"An error occurred while retrieving tenants: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<byte[]>> ExportToExcelAsync()
+    {
+        try
+        {
+            var requestModel = new CommonPaginationRequestModel { PageNumber = 1, PageSize = int.MaxValue };
+            var result = await ListAsync(requestModel);
+
+            if (!result.IsSuccess || result.Data == null)
+                return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve tenant data.");
+
+            var columnMappings = new Dictionary<string, string>
+            {
+                { "Id", "ID" },
+                { "Name", "Name" },
+                { "Slug", "Slug" },
+                { "IsActive", "Is Active" },
+                { "ThemeVersion", "Theme Version" },
+                { "CreatedOn", "Created On" }
+            };
+
+            var excelData = await _excelExportService.ExportToExcelAsync(result.Data, "Tenants", columnMappings);
+            return Result<byte[]>.Success(excelData);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting tenants to Excel: {Message}", ex.Message);
+            return Result<byte[]>.Failed($"An error occurred while exporting: {ex.Message}");
         }
     }
 }

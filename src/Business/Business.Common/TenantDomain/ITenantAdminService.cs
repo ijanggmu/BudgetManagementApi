@@ -14,4 +14,5 @@ public interface ITenantAdminService
     Task<Result<TenantsResponseDto>> UpdateAsync(string id, UpdateTenantDto dto);
     Task<Result<bool>> DeleteAsync(string id);
     Task<Result<List<TenantDropdownDto>>> GetTenantsForDropdownAsync();
+    Task<Result<byte[]>> ExportToExcelAsync();
 }

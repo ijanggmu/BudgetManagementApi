@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Business.AdminPortalApi.ExcelExport;
 using Data.Context;
 using Data.Entities.Identity;
 using Data.Entities.Tenant;
@@ -25,19 +26,22 @@ public class LeadService : ILeadService
     private readonly ILogger<LeadService> _logger;
     private readonly IUserProfileService _userProfileService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IExcelExportService _excelExportService;
 
     public LeadService(
         ApplicationDataContext db,
         ISieveExtension sieveExtension,
         ILogger<LeadService> logger,
         IUserProfileService userProfileService,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        IExcelExportService excelExportService)
     {
         _db = db;
         _sieveExtension = sieveExtension;
         _logger = logger;
         _userProfileService = userProfileService;
         _userManager = userManager;
+        _excelExportService = excelExportService;
     }
 
     private static LeadResponseDto MapToDto(Lead lead)
@@ -485,6 +489,52 @@ public class LeadService : ILeadService
         {
             _logger.LogError(ex, "Error retrieving leads by tenantId: {Message}", ex.Message);
             return Result<List<LeadResponseDto>>.Failed($"An error occurred while retrieving leads: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<byte[]>> ExportToExcelAsync(string? status = null, DateTime? from = null, DateTime? to = null, string? tenantId = null)
+    {
+        try
+        {
+            var requestModel = new CommonPaginationRequestModel { PageNumber = 1, PageSize = int.MaxValue };
+            var result = string.IsNullOrEmpty(tenantId)
+                ? await GetLeadsForAdminAsync(requestModel, status, from, to)
+                : await GetLeadsByTenantIdAsync(tenantId, requestModel, status, from, to);
+
+            if (!result.IsSuccess || result.Data == null)
+                return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve lead data.");
+
+            var columnMappings = new Dictionary<string, string>
+            {
+                { "Id", "ID" },
+                { "ProspectId", "Prospect ID" },
+                { "Status", "Status" },
+                { "Source", "Source" },
+                { "OwnerUserId", "Owner User ID" },
+                { "CreatedOn", "Created On" }
+            };
+
+            // Flatten the data for export (include prospect and contact info)
+            var exportData = result.Data.Select(lead => new
+            {
+                lead.Id,
+                lead.ProspectId,
+                lead.Status,
+                lead.Source,
+                OwnerUserId = lead.OwnerUserId?.ToString() ?? "",
+                lead.CreatedOn,
+                ProspectName = lead.Prospect?.PrimaryContact?.FullName ?? "",
+                ProspectEmail = lead.Prospect?.PrimaryContact?.Email ?? "",
+                ProspectPhone = lead.Prospect?.PrimaryContact?.Phone ?? ""
+            }).ToList();
+
+            var excelData = await _excelExportService.ExportToExcelAsync(exportData, "Leads", columnMappings);
+            return Result<byte[]>.Success(excelData);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting leads to Excel: {Message}", ex.Message);
+            return Result<byte[]>.Failed($"An error occurred while exporting: {ex.Message}");
         }
     }
 }

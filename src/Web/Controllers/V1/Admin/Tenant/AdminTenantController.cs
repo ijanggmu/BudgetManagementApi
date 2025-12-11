@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.Common.TenantDomain;
@@ -47,5 +48,20 @@ public class AdminTenantController(ITenantAdminService service) : BaseAdminApiCo
     public async Task<IActionResult> GetTenantsForDropdownAsync()
     {
         return HandleResult(await service.GetTenantsForDropdownAsync());
+    }
+
+    /// <summary>
+    /// Export all tenants to Excel
+    /// </summary>
+    /// <returns>Excel file</returns>
+    [HttpGet("export")]
+    public async Task<IActionResult> ExportToExcelAsync()
+    {
+        var result = await service.ExportToExcelAsync();
+        if (!result.IsSuccess || result.Data == null)
+            return HandleResult(result);
+
+        var fileName = $"Tenants_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx";
+        return File(result.Data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 }

@@ -11,5 +11,6 @@ public interface IAdminService
     Task<Result<AdminResponseDto>> CreateAsync(CreateAdminDto dto);
     Task<Result<AdminResponseDto>> UpdateAsync(string id, UpdateAdminDto dto);
     Task<Result<bool>> DeleteAsync(string id);
+    Task<Result<byte[]>> ExportToExcelAsync(string? tenantId = null);
 }
 

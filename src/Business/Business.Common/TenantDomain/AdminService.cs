@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using Business.AdminPortalApi.ExcelExport;
 using Data.Context;
 using Data.Entities.AdminEntity;
 using Data.Entities.Identity;
@@ -20,7 +21,8 @@ public class AdminService(
     UserManager<ApplicationUser> userManager,
     RoleManager<ApplicationRole> roleManager,
     IUserProfileService userProfileService,
-    ISieveExtension sieveExtension)
+    ISieveExtension sieveExtension,
+    IExcelExportService excelExportService)
     : IAdminService
 {
     public async Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(string? tenantId = null)
@@ -463,6 +465,39 @@ public class AdminService(
         {
             await transaction.RollbackAsync();
             return Result<bool>.Failed($"An error occurred: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<byte[]>> ExportToExcelAsync(string? tenantId = null)
+    {
+        try
+        {
+            var result = await GetAdminsForAdminAsync(tenantId);
+            if (!result.IsSuccess || result.Data == null)
+                return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve admin data.");
+
+            var columnMappings = new Dictionary<string, string>
+            {
+                { "Id", "ID" },
+                { "FullName", "Full Name" },
+                { "Email", "Email" },
+                { "PhoneNumber", "Phone Number" },
+                { "Username", "Username" },
+                { "UserId", "User ID" },
+                { "TenantId", "Tenant ID" },
+                { "TenantName", "Tenant Name" },
+                { "Roles", "Roles" },
+                { "IsDisabled", "Is Disabled" },
+                { "EmailConfirmed", "Email Confirmed" },
+                { "CreatedOn", "Created On" }
+            };
+
+            var excelData = await excelExportService.ExportToExcelAsync(result.Data, "Admins", columnMappings);
+            return Result<byte[]>.Success(excelData);
+        }
+        catch (Exception ex)
+        {
+            return Result<byte[]>.Failed($"An error occurred while exporting: {ex.Message}");
         }
     }
 }

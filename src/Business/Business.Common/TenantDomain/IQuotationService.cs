@@ -19,4 +19,5 @@ public interface IQuotationService
     Task<Result<List<QuotationResponseDto>>> GetQuotationsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null);
     Task<Result<QuotationResponseDto>> UpdateAsync(string id, UpdateQuotationDto dto);
     Task<Result<bool>> DeleteAsync(string id);
+    Task<Result<byte[]>> ExportToExcelAsync(string? status = null, DateTime? from = null, DateTime? to = null, string? tenantId = null);
 }

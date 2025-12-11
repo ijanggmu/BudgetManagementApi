@@ -57,5 +57,28 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     {
         return HandleResult(await quotationService.GetQuotationsByTenantIdAsync(tenantId, requestModel, status, from, to));
     }
+
+    /// <summary>
+    /// Export quotations to Excel
+    /// </summary>
+    /// <param name="status">Optional: Filter by quotation status</param>
+    /// <param name="from">Optional: Filter quotations created from this date</param>
+    /// <param name="to">Optional: Filter quotations created until this date</param>
+    /// <param name="tenantId">Optional: Tenant ID filter (SuperAdmin only)</param>
+    /// <returns>Excel file</returns>
+    [HttpGet("export")]
+    public async Task<IActionResult> ExportToExcelAsync(
+        [FromQuery] string? status = null,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromQuery] string? tenantId = null)
+    {
+        var result = await quotationService.ExportToExcelAsync(status, from, to, tenantId);
+        if (!result.IsSuccess || result.Data == null)
+            return HandleResult(result);
+
+        var fileName = $"Quotations_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx";
+        return File(result.Data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
 }
 
