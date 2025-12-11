@@ -15,7 +15,7 @@ public class AdminMenuPermissionController(IMenuPermissionService menuPermission
     /// </summary>
     /// <returns>Menu structure with permissions</returns>
     [HttpGet("GetMenu")]
-    [Permission(MenuPermissionConstant.RolesView)]
+    [Permission(MenuPermissionConstant.DashboardView)]
     public IActionResult GetMenuAsync()
         => HandleResult(menuPermissionService.GetMenu());
 
@@ -25,7 +25,7 @@ public class AdminMenuPermissionController(IMenuPermissionService menuPermission
     /// <param name="roleId">Role ID</param>
     /// <returns>Menu permissions for the specified role</returns>
     [HttpGet("role/{roleId}")]
-    [Permission(MenuPermissionConstant.RolesView)]
+    [Permission(MenuPermissionConstant.MenuView)]
     public IActionResult GetByRoleIdAsync(string roleId)
         => HandleResult(menuPermissionService.GetAllMenuByRoleId(roleId));
 
@@ -35,7 +35,7 @@ public class AdminMenuPermissionController(IMenuPermissionService menuPermission
     /// <param name="managementViewModel">Permission management data</param>
     /// <returns>Success message</returns>
     [HttpPost]
-    [Permission(MenuPermissionConstant.RolesView)]
+    [Permission(MenuPermissionConstant.MenuUpdate)]
     public async Task<IActionResult> AssignAsync([FromBody] PermissionManagementViewModel managementViewModel)
         => HandleResult(await menuPermissionService.AssignRolePermissionAsync(managementViewModel));
 }

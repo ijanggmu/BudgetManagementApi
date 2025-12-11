@@ -84,7 +84,11 @@ public static class MenuPermissionConstant
     public const string RolesUpdate = "18-2-3";
     public const string RolesDelete = "18-2-4";
     public const string RolesExport = "18-2-5";
-    
+
+    public const string MenuView = "18-3-1";
+    public const string MenuViewName = "Menu View";
+    public const string MenuUpdate = "18-3-3";
+
     public const string AdminManagementView = "18-4-1";
     public const string AdminManagementViewName = "Admin Management";
     public const string AdminManagementCreate = "18-4-2";

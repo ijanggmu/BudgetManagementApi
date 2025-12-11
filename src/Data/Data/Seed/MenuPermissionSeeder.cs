@@ -6,6 +6,7 @@ using SharedKernel.Constant.Permission;
 using static SharedKernel.Constant.Permission.MenuPermissionsList;
 
 namespace Data.Seed;
+
 public static class MenuPermissionSeeder
 {
     public async static Task SeedPermissionsForRole(ApplicationDataContext dbContext)
@@ -50,33 +51,35 @@ public static class MenuPermissionSeeder
             return;
 
         var roleClaim = await dbContext.RoleClaims.FirstOrDefaultAsync(x => x.RoleId == roleId);
-        
+
         // Tenant Admin permissions: Sales & Marketing, Operations, System sections with full CRUD+Export
         var tenantAdminPermissions = new List<string>
         {
             // Sales & Marketing section - Full CRUD+Export
             MenuPermissionConstant.SalesMarketingView
         };
-        
+
         // Add all CRUD+Export permissions for Marketing Executives
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.MarketingExecutives.GetAllValues());
-        
+
         // Add all CRUD+Export permissions for Admin Leads
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.AdminLeads.GetAllValues());
-        
+
         // Add all CRUD+Export permissions for Admin Quotations
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.AdminQuotations.GetAllValues());
-        
+
         // Operations section
         tenantAdminPermissions.Add(MenuPermissionConstant.OperationsView);
         tenantAdminPermissions.Add(MenuPermissionConstant.NotificationsView);
-        
+
         // System section
         tenantAdminPermissions.Add(MenuPermissionConstant.SystemView);
         tenantAdminPermissions.Add(MenuPermissionConstant.LogsView);
         tenantAdminPermissions.Add(MenuPermissionConstant.SystemLogView);
         tenantAdminPermissions.Add(MenuPermissionConstant.ConfigView);
-        
+        tenantAdminPermissions.Add(MenuPermissionConstant.MenuView);
+        tenantAdminPermissions.Add(MenuPermissionConstant.MenuUpdate);
+
         tenantAdminPermissions = tenantAdminPermissions.Distinct().ToList();
 
         if (roleClaim == null)
@@ -108,7 +111,7 @@ public static class MenuPermissionSeeder
             return;
 
         var roleClaim = await dbContext.RoleClaims.FirstOrDefaultAsync(x => x.RoleId == roleId);
-        
+
         // FoDo permissions: Only Sales & Marketing section (NO admin access)
         // FoDo can manage their own leads and quotations through FoDo endpoints
         // They CANNOT access Admin endpoints (AdminLeadController, AdminQuotationController, etc.)
@@ -122,7 +125,7 @@ public static class MenuPermissionSeeder
             // They are protected by role-based authorization (BaseFoDoApiController)
             // FoDo users can only access their own data through FoDo endpoints, not Admin endpoints
         };
-        
+
         fodoPermissions = fodoPermissions.Distinct().ToList();
 
         if (roleClaim == null)

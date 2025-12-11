@@ -13,7 +13,7 @@ public static class MenuPermissionDefinitions
     // Administration Section
     public static readonly MenuPermissionSet Administration = PermissionHelper.GeneratePermissions(
         "18", "Administration", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-    
+
     public static readonly MenuPermissionSet Tenants = PermissionHelper.GeneratePermissions("18-12", "Tenants");
     public static readonly MenuPermissionSet Roles = PermissionHelper.GeneratePermissions("18-2", "Roles");
     public static readonly MenuPermissionSet AdminManagement = PermissionHelper.GeneratePermissions("18-4", "Admin Management");
@@ -21,7 +21,7 @@ public static class MenuPermissionDefinitions
     // Sales & Marketing Section
     public static readonly MenuPermissionSet SalesMarketing = PermissionHelper.GeneratePermissions(
         "19", "Sales & Marketing", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-    
+
     public static readonly MenuPermissionSet MarketingExecutives = PermissionHelper.GeneratePermissions("19-13", "Marketing Executives");
     public static readonly MenuPermissionSet AdminLeads = PermissionHelper.GeneratePermissions("19-5", "Leads");
     public static readonly MenuPermissionSet AdminQuotations = PermissionHelper.GeneratePermissions("19-6", "Quotations");
@@ -29,13 +29,13 @@ public static class MenuPermissionDefinitions
     // Operations Section
     public static readonly MenuPermissionSet Operations = PermissionHelper.GeneratePermissions(
         "20", "Operations", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-    
+
     public static readonly MenuPermissionSet PremiumCalculation = PermissionHelper.GeneratePermissions(
         "20-9", "Premium Calculation", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-    
+
     public static readonly MenuPermissionSet PremiumOverview = PermissionHelper.GeneratePermissions(
         "20-9-10", "Premium Overview", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-    
+
     public static readonly MenuPermissionSet PremiumConfigurations = PermissionHelper.GeneratePermissions("20-9-11", "Premium Configurations");
     public static readonly MenuPermissionSet Notifications = PermissionHelper.GeneratePermissions(
         "20-14", "Notifications", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
@@ -43,13 +43,13 @@ public static class MenuPermissionDefinitions
     // System Section
     public static readonly MenuPermissionSet System = PermissionHelper.GeneratePermissions(
         "21", "System", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-    
+
     public static readonly MenuPermissionSet Logs = PermissionHelper.GeneratePermissions(
         "21-15", "Logs", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-    
+
     public static readonly MenuPermissionSet SystemLog = PermissionHelper.GeneratePermissions(
         "21-15-16", "System Log", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-    
+
     public static readonly MenuPermissionSet Config = PermissionHelper.GeneratePermissions(
         "21-17", "Config", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
 
