@@ -77,8 +77,7 @@ public static class MenuPermissionSeeder
         tenantAdminPermissions.Add(MenuPermissionConstant.LogsView);
         tenantAdminPermissions.Add(MenuPermissionConstant.SystemLogView);
         tenantAdminPermissions.Add(MenuPermissionConstant.ConfigView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.MenuView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.MenuUpdate);
+        tenantAdminPermissions.Add(MenuPermissionConstant.DashboardView);
 
         tenantAdminPermissions = tenantAdminPermissions.Distinct().ToList();
 
