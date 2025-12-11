@@ -1,9 +1,11 @@
 using System;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Mvc;
 using Models.Common;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Attendance;
 
@@ -20,6 +22,7 @@ public class AdminAttendanceController(IAttendanceService attendanceService) : B
     /// <param name="tenantId">Optional: Filter by tenant ID (SuperAdmin only)</param>
     /// <returns>Paginated list of attendance records</returns>
     [HttpGet]
+    [Permission(MenuPermissionConstant.OperationsView)]
     public async Task<IActionResult> GetAttendanceAsync(
         [FromQuery] CommonPaginationRequestModel requestModel,
         [FromQuery] string? userId = null,
@@ -42,6 +45,7 @@ public class AdminAttendanceController(IAttendanceService attendanceService) : B
     /// <param name="tenantId">Optional: Filter by tenant ID (SuperAdmin only)</param>
     /// <returns>Excel file</returns>
     [HttpGet("export")]
+    [Permission(MenuPermissionConstant.OperationsView)] // Note: Export permission can be added if needed
     public async Task<IActionResult> ExportToExcelAsync(
         [FromQuery] string? userId = null,
         [FromQuery] string? type = null,

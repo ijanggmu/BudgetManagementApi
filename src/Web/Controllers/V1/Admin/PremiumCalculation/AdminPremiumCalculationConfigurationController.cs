@@ -1,9 +1,11 @@
 using System;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.PremiumCalculation.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Models.WebApi.Admin.PremiumCalculation;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.PremiumCalculation;
 
@@ -15,6 +17,7 @@ public class AdminPremiumCalculationConfigurationController(
     /// Get all premium calculation configurations
     /// </summary>
     [HttpGet]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
     public async Task<IActionResult> ListAsync([FromQuery] string? portfolioAlias = null, [FromQuery] string? fiscalYear = null)
     {
         return HandleResult(await service.GetAllConfigurationsAsync(portfolioAlias, fiscalYear));
@@ -24,6 +27,7 @@ public class AdminPremiumCalculationConfigurationController(
     /// Get premium calculation configuration by ID
     /// </summary>
     [HttpGet("{id}")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
     public async Task<IActionResult> GetAsync(string id)
     {
         return HandleResult(await service.GetConfigurationByIdAsync(id));
@@ -33,6 +37,7 @@ public class AdminPremiumCalculationConfigurationController(
     /// Get premium calculation configuration by portfolio and fiscal year
     /// </summary>
     [HttpGet("portfolio/{portfolioAlias}/fiscal-year/{fiscalYear}")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
     public async Task<IActionResult> GetByPortfolioAndFiscalYearAsync(
         string portfolioAlias, 
         string fiscalYear, 
@@ -45,6 +50,7 @@ public class AdminPremiumCalculationConfigurationController(
     /// Create a new premium calculation configuration
     /// </summary>
     [HttpPost]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreatePremiumCalculationConfigurationDto dto)
     {
         return HandleResult(await service.CreateConfigurationAsync(dto));
@@ -54,6 +60,7 @@ public class AdminPremiumCalculationConfigurationController(
     /// Update premium calculation configuration
     /// </summary>
     [HttpPut("{id}")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsUpdate)]
     public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdatePremiumCalculationConfigurationDto dto)
     {
         return HandleResult(await service.UpdateConfigurationAsync(id, dto));
@@ -63,6 +70,7 @@ public class AdminPremiumCalculationConfigurationController(
     /// Delete premium calculation configuration (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsDelete)]
     public async Task<IActionResult> DeleteAsync(string id)
     {
         return HandleResult(await service.DeleteConfigurationAsync(id));
@@ -72,6 +80,7 @@ public class AdminPremiumCalculationConfigurationController(
     /// Activate a premium calculation configuration
     /// </summary>
     [HttpPost("{id}/activate")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
     public async Task<IActionResult> ActivateAsync(string id, [FromBody] string fiscalYear)
     {
         return HandleResult(await service.ActivateConfigurationAsync(id, fiscalYear));
@@ -81,6 +90,7 @@ public class AdminPremiumCalculationConfigurationController(
     /// Clone configuration for a new fiscal year
     /// </summary>
     [HttpPost("{id}/clone")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
     public async Task<IActionResult> CloneAsync(string id, [FromBody] string newFiscalYear)
     {
         return HandleResult(await service.CloneConfigurationAsync(id, newFiscalYear));
@@ -90,6 +100,7 @@ public class AdminPremiumCalculationConfigurationController(
     /// Validate configuration
     /// </summary>
     [HttpPost("{id}/validate")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
     public async Task<IActionResult> ValidateAsync(string id)
     {
         return HandleResult(await service.ValidateConfigurationAsync(id));

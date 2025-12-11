@@ -1,9 +1,11 @@
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.BeemaEdgeApi.Role;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Roles;
 using Models.Common;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Role;
 
@@ -14,6 +16,7 @@ public class AdminRoleController(IRoleService roleService) : BaseAdminApiControl
     /// </summary>
     /// <returns>List of role types</returns>
     [HttpGet("types")]
+    [Permission(MenuPermissionConstant.RolesView)]
     public IActionResult GetTypesAsync()
         => HandleResult(roleService.GetAllSystemRoles());
 
@@ -22,6 +25,7 @@ public class AdminRoleController(IRoleService roleService) : BaseAdminApiControl
     /// </summary>
     /// <returns>List of role names</returns>
     [HttpGet("names")]
+    [Permission(MenuPermissionConstant.RolesView)]
     public async Task<IActionResult> GetNamesAsync()
         => HandleResult(await roleService.GetAllRoleNamesAsync());
 
@@ -31,6 +35,7 @@ public class AdminRoleController(IRoleService roleService) : BaseAdminApiControl
     /// <param name="requestModel">Pagination and filter parameters</param>
     /// <returns>Paginated list of roles</returns>
     [HttpPost]
+    [Permission(MenuPermissionConstant.RolesView)]
     public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel)
         => HandleResult(await roleService.GetAllRolesAsync(requestModel));
 
@@ -40,6 +45,7 @@ public class AdminRoleController(IRoleService roleService) : BaseAdminApiControl
     /// <param name="model">Role creation data</param>
     /// <returns>Success message</returns>
     [HttpPost("create")]
+    [Permission(MenuPermissionConstant.RolesCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateRoleRequestModel model)
         => HandleResult(await roleService.CreateRoleAsync(model));
 
@@ -49,6 +55,7 @@ public class AdminRoleController(IRoleService roleService) : BaseAdminApiControl
     /// <param name="id">Role ID</param>
     /// <returns>Role details</returns>
     [HttpGet("{id}")]
+    [Permission(MenuPermissionConstant.RolesView)]
     public async Task<IActionResult> GetAsync(string id)
         => HandleResult(await roleService.GetRoleByIdAsync(id));
 
@@ -59,6 +66,7 @@ public class AdminRoleController(IRoleService roleService) : BaseAdminApiControl
     /// <param name="roleModel">Role update data</param>
     /// <returns>Success message</returns>
     [HttpPut("{id}")]
+    [Permission(MenuPermissionConstant.RolesUpdate)]
     public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateRoleRequestModel roleModel)
     {
         // Ensure the RoleId in the model matches the route parameter
@@ -72,6 +80,7 @@ public class AdminRoleController(IRoleService roleService) : BaseAdminApiControl
     /// <param name="id">Role ID</param>
     /// <returns>Success message</returns>
     [HttpDelete("{id}")]
+    [Permission(MenuPermissionConstant.RolesDelete)]
     public async Task<IActionResult> DeleteAsync(string id)
         => HandleResult(await roleService.DeleteRoleAsync(id));
 }

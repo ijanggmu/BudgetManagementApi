@@ -63,10 +63,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        Permissions = new List<Permission>
-                        {
-                            new Permission(MenuPermissionConstant.TenantsViewName, MenuPermissionConstant.TenantsView, false)
-                        },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Tenants, false),
                         Children = null
                     },
                     // 18-2. Administration > Roles
@@ -82,10 +79,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        Permissions = new List<Permission>
-                        {
-                            new Permission(MenuPermissionConstant.RolesViewName, MenuPermissionConstant.RolesView, false)
-                        },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Roles, false),
                         Children = null
                     },
                     // 18-4. Administration > Admin Management
@@ -101,10 +95,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        Permissions = new List<Permission>
-                        {
-                            new Permission(MenuPermissionConstant.AdminManagementViewName, MenuPermissionConstant.AdminManagementView, false)
-                        },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminManagement, false),
                         Children = null
                     }
                 }
@@ -144,10 +135,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        Permissions = new List<Permission>
-                        {
-                            new Permission(MenuPermissionConstant.MarketingExecutivesViewName, MenuPermissionConstant.MarketingExecutivesView, false)
-                        },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutives, false),
                         Children = null
                     },
                     // 19-5. Sales & Marketing > Admin Leads
@@ -163,10 +151,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        Permissions = new List<Permission>
-                        {
-                            new Permission(MenuPermissionConstant.AdminLeadsViewName, MenuPermissionConstant.AdminLeadsView, false)
-                        },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminLeads, false),
                         Children = null
                     },
                     // 19-6. Sales & Marketing > Admin Quotations
@@ -182,10 +167,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        Permissions = new List<Permission>
-                        {
-                            new Permission(MenuPermissionConstant.AdminQuotationsViewName, MenuPermissionConstant.AdminQuotationsView, false)
-                        },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminQuotations, false),
                         Children = null
                     }
                 }
@@ -263,10 +245,7 @@ public static partial class MenuPermissionsList
                                 IsMenu = true,
                                 ToHide = false,
                                 HideChildren = false,
-                                Permissions = new List<Permission>
-                                {
-                                    new Permission(MenuPermissionConstant.PremiumConfigurationsViewName, MenuPermissionConstant.PremiumConfigurationsView, false)
-                                },
+                                Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.PremiumConfigurations, false),
                                 Children = null
                             }
                         }

@@ -1,9 +1,11 @@
 using System;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Mvc;
 using Models.WebApi.TenantDTOs;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Admin;
 
@@ -16,6 +18,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
     /// <returns>List of admins</returns>
     [HttpGet]
+    [Permission(MenuPermissionConstant.AdminManagementView)]
     public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null)
         => HandleResult(await adminService.GetAdminsForAdminAsync(tenantId));
 
@@ -25,6 +28,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <param name="id">Admin ID</param>
     /// <returns>Admin details</returns>
     [HttpGet("{id}")]
+    [Permission(MenuPermissionConstant.AdminManagementView)]
     public async Task<IActionResult> GetAsync(string id)
         => HandleResult(await adminService.GetAdminByIdAsync(id));
 
@@ -34,6 +38,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <param name="dto">Admin creation data</param>
     /// <returns>Created admin details</returns>
     [HttpPost]
+    [Permission(MenuPermissionConstant.AdminManagementCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateAdminDto dto)
         => HandleResult(await adminService.CreateAsync(dto));
 
@@ -44,6 +49,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <param name="dto">Admin update data</param>
     /// <returns>Updated admin details</returns>
     [HttpPut("{id}")]
+    [Permission(MenuPermissionConstant.AdminManagementUpdate)]
     public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateAdminDto dto)
         => HandleResult(await adminService.UpdateAsync(id, dto));
 
@@ -53,6 +59,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <param name="id">Admin ID</param>
     /// <returns>Success message</returns>
     [HttpDelete("{id}")]
+    [Permission(MenuPermissionConstant.AdminManagementDelete)]
     public async Task<IActionResult> DeleteAsync(string id)
         => HandleResult(await adminService.DeleteAsync(id));
 
@@ -62,6 +69,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
     /// <returns>Excel file</returns>
     [HttpGet("export")]
+    [Permission(MenuPermissionConstant.AdminManagementExport)]
     public async Task<IActionResult> ExportToExcelAsync([FromQuery] string? tenantId = null)
     {
         var result = await adminService.ExportToExcelAsync(tenantId);

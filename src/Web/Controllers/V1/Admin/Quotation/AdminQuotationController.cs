@@ -1,9 +1,11 @@
 using System;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Mvc;
 using Models.Common;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Quotation;
 
@@ -18,6 +20,7 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     /// <param name="to">Optional: Filter quotations created until this date</param>
     /// <returns>Paginated list of quotations</returns>
     [HttpGet]
+    [Permission(MenuPermissionConstant.AdminQuotationsView)]
     public async Task<IActionResult> GetQuotationsAsync(
         [FromQuery] CommonPaginationRequestModel requestModel,
         [FromQuery] string? status = null,
@@ -33,6 +36,7 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     /// <param name="id">Quotation ID</param>
     /// <returns>Quotation details with items</returns>
     [HttpGet("{id}")]
+    [Permission(MenuPermissionConstant.AdminQuotationsView)]
     public async Task<IActionResult> GetQuotationDetailsAsync(string id)
     {
         return HandleResult(await quotationService.GetQuotationDetailsForAdminAsync(id));
@@ -48,6 +52,7 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     /// <param name="to">Optional: Filter quotations created until this date</param>
     /// <returns>Paginated list of quotations for the specified tenant</returns>
     [HttpGet("tenant/{tenantId}")]
+    [Permission(MenuPermissionConstant.AdminQuotationsView)]
     public async Task<IActionResult> GetQuotationsByTenantIdAsync(
         string tenantId,
         [FromQuery] CommonPaginationRequestModel requestModel,
@@ -67,6 +72,7 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     /// <param name="tenantId">Optional: Tenant ID filter (SuperAdmin only)</param>
     /// <returns>Excel file</returns>
     [HttpGet("export")]
+    [Permission(MenuPermissionConstant.AdminQuotationsExport)]
     public async Task<IActionResult> ExportToExcelAsync(
         [FromQuery] string? status = null,
         [FromQuery] DateTime? from = null,

@@ -1,8 +1,10 @@
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.BeemaEdgeApi.Permission;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Roles;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Permission;
 
@@ -13,6 +15,7 @@ public class AdminMenuPermissionController(IMenuPermissionService menuPermission
     /// </summary>
     /// <returns>Menu structure with permissions</returns>
     [HttpGet("GetMenu")]
+    [Permission(MenuPermissionConstant.RolesView)]
     public IActionResult GetMenuAsync()
         => HandleResult(menuPermissionService.GetMenu());
 
@@ -22,6 +25,7 @@ public class AdminMenuPermissionController(IMenuPermissionService menuPermission
     /// <param name="roleId">Role ID</param>
     /// <returns>Menu permissions for the specified role</returns>
     [HttpGet("role/{roleId}")]
+    [Permission(MenuPermissionConstant.RolesView)]
     public IActionResult GetByRoleIdAsync(string roleId)
         => HandleResult(menuPermissionService.GetAllMenuByRoleId(roleId));
 
@@ -31,6 +35,7 @@ public class AdminMenuPermissionController(IMenuPermissionService menuPermission
     /// <param name="managementViewModel">Permission management data</param>
     /// <returns>Success message</returns>
     [HttpPost]
+    [Permission(MenuPermissionConstant.RolesView)]
     public async Task<IActionResult> AssignAsync([FromBody] PermissionManagementViewModel managementViewModel)
         => HandleResult(await menuPermissionService.AssignRolePermissionAsync(managementViewModel));
 }

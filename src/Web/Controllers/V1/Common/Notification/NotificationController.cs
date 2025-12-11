@@ -1,9 +1,11 @@
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Mvc;
 using Models.Common;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Common.Notification;
 
@@ -11,6 +13,7 @@ namespace BeemaEdgeApi.Controllers.V1.Common.Notification;
 public class NotificationController(INotificationUserService notificationService, IUserProfileService userProfileService) : BaseCommonApiController
 {
     [HttpGet]
+    [Permission(MenuPermissionConstant.NotificationsView)]
     public async Task<IActionResult> GetMyNotificationsAsync([FromQuery] CommonPaginationRequestModel requestModel)
     {
         var userId = userProfileService.GetUserId();
@@ -20,6 +23,7 @@ public class NotificationController(INotificationUserService notificationService
     }
 
     [HttpPatch("{id}/read")]
+    [Permission(MenuPermissionConstant.NotificationsView)]
     public async Task<IActionResult> MarkAsReadAsync(string id)
     {
         var userId = userProfileService.GetUserId();

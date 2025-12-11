@@ -136,7 +136,7 @@ public class QuotationPdfService : IQuotationPdfService
         style.Font.Bold = true;
         style.Font.Color = Colors.White;
         style.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        style.Shading.Color = Colors.DarkBlue;
+        //style.Shading.Color = Colors.DarkBlue;
     }
 
     private async Task AddHeader(Section section, string? companyName, string? logoUrl)

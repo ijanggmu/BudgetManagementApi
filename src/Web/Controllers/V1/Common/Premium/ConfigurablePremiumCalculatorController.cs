@@ -1,10 +1,12 @@
 using System;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Microsoft.AspNetCore.Mvc;
 using Models.Common.Policy.Calculation;
 using Models.Common.Policy.Policy;
 using Models.WebApi.Common.Premium;
+using SharedKernel.Constant.Permission;
 using SharedKernel.Operation;
 using UnderwritingService.Calculation.PremiumCalculation.Abstract;
 
@@ -23,6 +25,7 @@ public class ConfigurablePremiumCalculatorController(
     /// <param name="model">Policy creation model with PortfolioAlias, FiscalYear, and other policy details</param>
     /// <returns>Premium calculation result</returns>
     [HttpPost("calculate")]
+    [Permission(MenuPermissionConstant.PremiumOverviewView)]
     public async Task<IActionResult> CalculatePremium([FromBody] CreatePolicyViewModel model)
     {
         try
@@ -67,6 +70,7 @@ public class ConfigurablePremiumCalculatorController(
     /// <param name="request">Request containing endorsement model and original premium calculation</param>
     /// <returns>Adjusted premium calculation result</returns>
     [HttpPost("calculate-endorsement")]
+    [Permission(MenuPermissionConstant.PremiumOverviewView)]
     public async Task<IActionResult> CalculateEndorsementPremium(
         [FromBody] CalculateEndorsementPremiumRequestDto request)
     {

@@ -1,8 +1,10 @@
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.PremiumCalculation.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Models.WebApi.Admin.PremiumCalculation;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.PremiumCalculation;
 
@@ -14,6 +16,7 @@ public class AdminPremiumCalculationRateTableController(
     /// Get all rate tables for a configuration
     /// </summary>
     [HttpGet("configuration/{configurationId}")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
     public async Task<IActionResult> GetByConfigurationAsync(string configurationId)
     {
         return HandleResult(await service.GetRateTablesByConfigurationIdAsync(configurationId));
@@ -23,6 +26,7 @@ public class AdminPremiumCalculationRateTableController(
     /// Get rate table by ID
     /// </summary>
     [HttpGet("{id}")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
     public async Task<IActionResult> GetAsync(string id)
     {
         return HandleResult(await service.GetRateTableByIdAsync(id));
@@ -32,6 +36,7 @@ public class AdminPremiumCalculationRateTableController(
     /// Create a new rate table
     /// </summary>
     [HttpPost("configuration/{configurationId}")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsCreate)]
     public async Task<IActionResult> CreateAsync(string configurationId, [FromBody] CreatePremiumCalculationRateTableDto dto)
     {
         return HandleResult(await service.CreateRateTableAsync(configurationId, dto));
@@ -41,6 +46,7 @@ public class AdminPremiumCalculationRateTableController(
     /// Update a rate table
     /// </summary>
     [HttpPut("{id}")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsUpdate)]
     public async Task<IActionResult> UpdateAsync(string id, [FromBody] CreatePremiumCalculationRateTableDto dto)
     {
         return HandleResult(await service.UpdateRateTableAsync(id, dto));
@@ -50,6 +56,7 @@ public class AdminPremiumCalculationRateTableController(
     /// Delete a rate table
     /// </summary>
     [HttpDelete("{id}")]
+    [Permission(MenuPermissionConstant.PremiumConfigurationsDelete)]
     public async Task<IActionResult> DeleteAsync(string id)
     {
         return HandleResult(await service.DeleteRateTableAsync(id));

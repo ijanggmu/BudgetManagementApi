@@ -1,9 +1,11 @@
 using System;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Mvc;
 using Models.Common;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Lead;
 
@@ -18,6 +20,7 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
     /// <param name="to">Optional: Filter leads created until this date</param>
     /// <returns>Paginated list of leads</returns>
     [HttpGet]
+    [Permission(MenuPermissionConstant.AdminLeadsView)]
     public async Task<IActionResult> GetLeadsAsync(
         [FromQuery] CommonPaginationRequestModel requestModel,
         [FromQuery] string? status = null,
@@ -33,6 +36,7 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
     /// <param name="id">Lead ID</param>
     /// <returns>Lead details with prospect and contact information</returns>
     [HttpGet("{id}")]
+    [Permission(MenuPermissionConstant.AdminLeadsView)]
     public async Task<IActionResult> GetLeadDetailsAsync(string id)
     {
         return HandleResult(await leadService.GetLeadDetailsForAdminAsync(id));
@@ -48,6 +52,7 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
     /// <param name="to">Optional: Filter leads created until this date</param>
     /// <returns>Paginated list of leads for the specified tenant</returns>
     [HttpGet("tenant/{tenantId}")]
+    [Permission(MenuPermissionConstant.AdminLeadsView)]
     public async Task<IActionResult> GetLeadsByTenantIdAsync(
         string tenantId,
         [FromQuery] CommonPaginationRequestModel requestModel,
@@ -67,6 +72,7 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
     /// <param name="tenantId">Optional: Tenant ID filter (SuperAdmin only)</param>
     /// <returns>Excel file</returns>
     [HttpGet("export")]
+    [Permission(MenuPermissionConstant.AdminLeadsExport)]
     public async Task<IActionResult> ExportToExcelAsync(
         [FromQuery] string? status = null,
         [FromQuery] DateTime? from = null,
