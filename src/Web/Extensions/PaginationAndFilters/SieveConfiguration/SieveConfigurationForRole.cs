@@ -1,7 +1,4 @@
-using Data.Entities.AdminEntity;
-using Data.Entities.CustomerEntity;
 using Data.Entities.Identity;
-using Data.Entities.MerchantEntity;
 using Sieve.Services;
 
 namespace CustomerPortalApi.Extensions.PaginationAndFilters.SieveConfiguration;
