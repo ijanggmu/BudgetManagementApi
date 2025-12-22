@@ -28,7 +28,7 @@ IUserProfileService ipersonAccessor,
 ITotpService totpService,
 StringCipherService stringCipherService) : IAdminAuthService
 {
-    public async Task<Result<LoginCustomerResponseModel>> LoginAsync(AdminLoginRequestModel requestModel)
+    public async Task<Result<LoginAdminResponseModel>> LoginAsync(AdminLoginRequestModel requestModel)
     {
 
         var admin = await dbContext.Admins
@@ -39,7 +39,7 @@ StringCipherService stringCipherService) : IAdminAuthService
                 .FirstOrDefaultAsync();
 
         if (admin == null || admin.User == null)
-            return Result<LoginCustomerResponseModel>.Failed("Username or password is invalid.");
+            return Result<LoginAdminResponseModel>.Failed("Username or password is invalid.");
 
         var user = admin.User;
 
@@ -53,7 +53,7 @@ StringCipherService stringCipherService) : IAdminAuthService
                                       .AnyAsync();
 
         if (!isAdminRoledUser)
-            return Result<LoginCustomerResponseModel>.Failed("Username or password is invalid.");
+            return Result<LoginAdminResponseModel>.Failed("Username or password is invalid.");
 
         var identityResult =
              await signInManager.CheckPasswordSignInAsync(user, requestModel.Password, lockoutOnFailure: false);
@@ -65,18 +65,18 @@ StringCipherService stringCipherService) : IAdminAuthService
         }
 
         if (identityResult.IsLockedOut)
-            return Result<LoginCustomerResponseModel>.Failed("Too many login attempts. Please try again in a while.");
+            return Result<LoginAdminResponseModel>.Failed("Too many login attempts. Please try again in a while.");
 
         if (user.IsDisabled)
-            return Result<LoginCustomerResponseModel>.Failed("User is disabled. Please contact administrator.");
+            return Result<LoginAdminResponseModel>.Failed("User is disabled. Please contact administrator.");
 
         if (identityResult.IsNotAllowed)
-            return Result<LoginCustomerResponseModel>.Failed("User is not allowed to login. Please contact administrator.");
+            return Result<LoginAdminResponseModel>.Failed("User is not allowed to login. Please contact administrator.");
 
         if (!identityResult.Succeeded)
-            return Result<LoginCustomerResponseModel>.Failed("Username or password is invalid.");
+            return Result<LoginAdminResponseModel>.Failed("Username or password is invalid.");
 
-        var responseModel = new LoginCustomerResponseModel
+        var responseModel = new LoginAdminResponseModel
         {
             IsTwoFactorEnabled = user.TwoFactorEnabled
         };
@@ -133,13 +133,15 @@ StringCipherService stringCipherService) : IAdminAuthService
                         Version = tenant.Branding.Version
                     };
                 }
+                return Result<LoginAdminResponseModel>.Success(responseModel, statusCode: HttpStatusCode.OK);
+
             }
 
-            return Result<LoginCustomerResponseModel>.Success(responseModel, statusCode: HttpStatusCode.NoContent);
+            return Result<LoginAdminResponseModel>.Success(responseModel, statusCode: HttpStatusCode.NoContent);
 
         }
 
-        return Result<LoginCustomerResponseModel>.Success(responseModel);
+        return Result<LoginAdminResponseModel>.Success(responseModel);
 
     }
     public async Task<Result<MessageResponseModel>> Login2FaAsync(Verify2FaAdminRequestModel requestModel)
