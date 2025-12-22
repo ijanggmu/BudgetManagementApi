@@ -31,7 +31,8 @@ public class FodoAuthService(
     IUserProfileService ipersonAccessor,
     ITotpService totpService,
     OtpGeneratorService otpGeneratorService,
-    ISmsService smsService)
+    ISmsService smsService,
+    IAttendanceService attendanceService)
     : IFodoAuthService
 {
     public async Task<Result<LoginCustomerResponseModel>> LoginAsync(AgentLoginRequestModel requestModel)
@@ -124,6 +125,17 @@ public class FodoAuthService(
                 }
             }
 
+            // Check if user has attendance today (for MarketingExecutive)
+            var userRoles = await userManager.GetRolesAsync(user);
+            if (userRoles.Contains(SharedKernel.Constant.Roles.SystemRoles.MarketingExecutive))
+            {
+                var attendanceResult = await attendanceService.HasAttendanceTodayAsync(user.Id);
+                if (attendanceResult.IsSuccess)
+                {
+                    responseModel.HasAttendanceToday = attendanceResult.Data;
+                }
+            }
+
             return Result<LoginCustomerResponseModel>.Success(responseModel, statusCode: HttpStatusCode.NoContent);
         }
 
@@ -170,6 +182,10 @@ public class FodoAuthService(
 
         dbContext.Users.Update(user);
         await dbContext.SaveChangesAsync();
+
+        // Note: For 2FA login, attendance status is not included in response
+        // as it returns MessageResponseModel, not LoginCustomerResponseModel
+        // Frontend should check attendance status after successful 2FA login
 
         return Result<MessageResponseModel>.Success(new MessageResponseModel("Login successful."));
     }

@@ -4,10 +4,12 @@ public static class SystemRoles
     public const string SuperAdmin = "SuperAdmin";
     public const string Admin = "Admin";
     public const string FoDo = "FoDo";
+    public const string MarketingExecutive = "MarketingExecutive";
 
     public const int SuperAdminLevel = 999;
     public const int AdminLevel = 500;
     public const int FoDoLevel = 300;
+    public const int MarketingExecutiveLevel = 300;
 
     public static List<string> GetDefaultAllRoles()
     {
@@ -15,7 +17,8 @@ public static class SystemRoles
             {
                 SuperAdmin,
                 Admin,
-                FoDo
+                FoDo,
+                MarketingExecutive
             };
     }
 
@@ -24,7 +27,8 @@ public static class SystemRoles
         return new List<string>
             {
                 Admin,
-                FoDo
+                FoDo,
+                MarketingExecutive
             };
     }
 
@@ -32,7 +36,8 @@ public static class SystemRoles
             {
                 SuperAdmin,
                 Admin,
-                FoDo
+                FoDo,
+                MarketingExecutive
             };
 }
 

@@ -31,6 +31,14 @@ public static class RoleSeeder
                                     Description = SystemRoles.FoDo,
                                     RoleLevel = SystemRoles.FoDoLevel,
                                     RoleType = SystemRoles.FoDo
+                                },
+                                new ApplicationRole
+                                {
+                                    Id = Guid.NewGuid().ToString(),
+                                    Name = SystemRoles.MarketingExecutive,
+                                    Description = SystemRoles.MarketingExecutive,
+                                    RoleLevel = SystemRoles.MarketingExecutiveLevel,
+                                    RoleType = SystemRoles.MarketingExecutive
                                 }
                             };
 

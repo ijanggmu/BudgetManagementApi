@@ -14,6 +14,7 @@ public interface IAttendanceService
     Task<Result<AttendanceEntry>> CheckOutAsync(string userId, double lat, double lng, string? remarks = null);
     Task<Result<List<AttendanceEntry>>> GetDailyAsync(string userId, DateTime date);
     Task<Result<List<AttendanceEntry>>> GetMonthlyAsync(string userId, int year, int month);
+    Task<Result<bool>> HasAttendanceTodayAsync(string userId);
     
     // Admin methods
     Task<Result<List<AttendanceResponseDto>>> GetAttendanceForAdminAsync(

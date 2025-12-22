@@ -65,6 +65,7 @@ public class LoginCustomerResponseModel
     public bool IsTwoFactorEnabled { get; set; }
     public bool IsPhoneNumberConfirmed { get; set; }
     public BrandingResponseModel? Branding { get; set; }
+    public bool? HasAttendanceToday { get; set; }
 }
 
 public class BrandingResponseModel

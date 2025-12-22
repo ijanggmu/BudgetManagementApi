@@ -103,6 +103,21 @@ public class AttendanceService(
         return Result<List<AttendanceEntry>>.Success(entries);
     }
 
+    public async Task<Result<bool>> HasAttendanceTodayAsync(string userId)
+    {
+        var today = DateTime.UtcNow.Date;
+        var tomorrow = today.AddDays(1);
+
+        var hasAttendance = await db.Set<AttendanceEntry>()
+            .AsNoTracking()
+            .AnyAsync(a => a.UserId == userId && 
+                          a.Timestamp >= today && 
+                          a.Timestamp < tomorrow && 
+                          a.Type == "CheckIn");
+
+        return Result<bool>.Success(hasAttendance);
+    }
+
     public async Task<Result<List<AttendanceResponseDto>>> GetAttendanceForAdminAsync(
         CommonPaginationRequestModel requestModel,
         string? userId = null,
