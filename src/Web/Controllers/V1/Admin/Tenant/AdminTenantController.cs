@@ -12,7 +12,7 @@ namespace BeemaEdgeApi.Controllers.V1.Admin.Tenants;
 
 public class AdminTenantController(ITenantAdminService service) : BaseAdminApiController
 {
-    [HttpGet]
+    [HttpPost]
     [Permission(MenuPermissionConstant.TenantsView)]
     public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel? requestModel)
     {
@@ -26,7 +26,7 @@ public class AdminTenantController(ITenantAdminService service) : BaseAdminApiCo
         return HandleResult(await service.GetByIdAsync(id));
     }
 
-    [HttpPost]
+    [HttpPost("Create")]
     [Permission(MenuPermissionConstant.TenantsCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateTenantDto dto)
     {

@@ -6,7 +6,7 @@ public class SieveConfigurationForMerchant : ISieveConfiguration
 {
     public void Configure(SievePropertyMapper mapper)
     {
-        mapper.Property<Vendor>(p => p.CreatedOn)
+        mapper.Property<Fodo>(p => p.CreatedOn)
            .CanFilter()
            .CanSort();
 

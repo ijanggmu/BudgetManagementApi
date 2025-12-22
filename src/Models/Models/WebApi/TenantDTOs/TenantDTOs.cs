@@ -27,7 +27,7 @@ public record CreateCompanyBrandingDto(string LogoUrl = default!,    // CDN/blob
 
 public record UpdateTenantDto(string? Name, string? Slug, bool? IsActive, int? ThemeVersion);
 public record TenantsResponseDto(string Id, string Name, string Slug, bool IsActive, int ThemeVersion, DateTime CreatedOn);
-public record TenantResponseDto(string Id, string Name, string Slug, bool IsActive,int ThemeVersion, DateTime CreatedOn);
+public record TenantResponseDto(string Id, string Name, string Slug, bool IsActive, int ThemeVersion, DateTime CreatedOn);
 
 // Tenant Login DTOs
 public record TenantLoginRequestDto(string Slug, string Username, string Password);
