@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
@@ -22,9 +23,9 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     [HttpPost]
     [Permission(MenuPermissionConstant.AdminQuotationsView)]
     public async Task<IActionResult> GetQuotationsAsync(
-        [FromBody] CommonPaginationRequestModel requestModel)
+        [FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await quotationService.GetQuotationsForAdminAsync(requestModel));
+        return HandleResult(await quotationService.GetQuotationsForAdminAsync(requestModel, cancellationToken));
     }
 
     /// <summary>
@@ -34,9 +35,9 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     /// <returns>Quotation details with items</returns>
     [HttpGet("{id}")]
     [Permission(MenuPermissionConstant.AdminQuotationsView)]
-    public async Task<IActionResult> GetQuotationDetailsAsync(string id)
+    public async Task<IActionResult> GetQuotationDetailsAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await quotationService.GetQuotationDetailsForAdminAsync(id));
+        return HandleResult(await quotationService.GetQuotationDetailsForAdminAsync(id, cancellationToken));
     }
 
     /// <summary>
@@ -52,29 +53,25 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     [Permission(MenuPermissionConstant.AdminQuotationsView)]
     public async Task<IActionResult> GetQuotationsByTenantIdAsync(
         string tenantId,
-        [FromQuery] CommonPaginationRequestModel requestModel
-        )
+        [FromQuery] CommonPaginationRequestModel requestModel,
+        CancellationToken cancellationToken = default)
     {
-        return HandleResult(await quotationService.GetQuotationsByTenantIdAsync(tenantId, requestModel));
+        return HandleResult(await quotationService.GetQuotationsByTenantIdAsync(tenantId, requestModel, cancellationToken));
     }
 
     /// <summary>
     /// Export quotations to Excel
     /// </summary>
-    /// <param name="status">Optional: Filter by quotation status</param>
-    /// <param name="from">Optional: Filter quotations created from this date</param>
-    /// <param name="to">Optional: Filter quotations created until this date</param>
-    /// <param name="tenantId">Optional: Tenant ID filter (SuperAdmin only)</param>
+    /// <param name="requestModel">Pagination and filter parameters</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Excel file</returns>
-    [HttpGet("export")]
+    [HttpPost("export")]
     [Permission(MenuPermissionConstant.AdminQuotationsExport)]
     public async Task<IActionResult> ExportToExcelAsync(
-        [FromQuery] string? status = null,
-        [FromQuery] DateTime? from = null,
-        [FromQuery] DateTime? to = null,
-        [FromQuery] string? tenantId = null)
+        [FromBody] CommonPaginationRequestModel requestModel,
+        CancellationToken cancellationToken = default)
     {
-        var result = await quotationService.ExportToExcelAsync(status, from, to, tenantId);
+        var result = await quotationService.ExportToExcelAsync(requestModel, cancellationToken);
         if (!result.IsSuccess || result.Data == null)
             return HandleResult(result);
 

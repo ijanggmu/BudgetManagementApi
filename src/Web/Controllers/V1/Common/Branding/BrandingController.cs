@@ -3,6 +3,7 @@ using BeemaEdgeApi.Controllers.V1.BaseController;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Business.Common.TenantDomain;
+using System.Threading;
 
 namespace BeemaEdgeApi.Controllers.V1.Common.Branding;
 
@@ -14,8 +15,8 @@ public class BrandingController(IBrandingService brandingService) : BaseCommonAp
     /// <returns>Branding information</returns>
     [AllowAnonymous]
     [HttpGet]
-    public async Task<IActionResult> GetAsync()
-        => HandleResult(await brandingService.GetAsync());
+    public async Task<IActionResult> GetAsync(CancellationToken cancellationToken = default)
+        => HandleResult(await brandingService.GetAsync(cancellationToken));
 }
 
 

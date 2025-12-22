@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.Common.TenantDomain;
@@ -14,12 +15,12 @@ public class AdminBrandingController(IBrandingService brandingService) : BaseAdm
     /// <param name="tenantId">Optional: Tenant ID (SuperAdmin only)</param>
     /// <returns>Branding information</returns>
     [HttpGet]
-    public async Task<IActionResult> GetAsync([FromQuery] string? tenantId = null)
+    public async Task<IActionResult> GetAsync([FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrEmpty(tenantId))
-            return HandleResult(await brandingService.GetByTenantIdAsync(tenantId));
+            return HandleResult(await brandingService.GetByTenantIdAsync(tenantId, cancellationToken));
         
-        return HandleResult(await brandingService.GetAsync());
+        return HandleResult(await brandingService.GetAsync(cancellationToken));
     }
 
     /// <summary>
@@ -28,8 +29,8 @@ public class AdminBrandingController(IBrandingService brandingService) : BaseAdm
     /// <param name="dto">Branding update data</param>
     /// <returns>Updated branding information</returns>
     [HttpPut]
-    public async Task<IActionResult> UpdateAsync([FromBody] UpdateBrandingDto dto)
-        => HandleResult(await brandingService.UpdateAsync(dto));
+    public async Task<IActionResult> UpdateAsync([FromBody] UpdateBrandingDto dto, CancellationToken cancellationToken = default)
+        => HandleResult(await brandingService.UpdateAsync(dto, cancellationToken));
 }
 
 

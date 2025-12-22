@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
@@ -17,8 +18,8 @@ public class AdminFodoController(IFodoService fodoService) : BaseAdminApiControl
     /// <returns>List of fodos</returns>
     [HttpPost]
     [Permission(MenuPermissionConstant.MarketingExecutivesView)]
-    public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null)
-        => HandleResult(await fodoService.GetFodosForAdminAsync(tenantId));
+    public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoService.GetFodosForAdminAsync(tenantId, cancellationToken));
 
     /// <summary>
     /// Get fodo by ID
@@ -27,8 +28,8 @@ public class AdminFodoController(IFodoService fodoService) : BaseAdminApiControl
     /// <returns>Fodo details</returns>
     [HttpGet("{id}")]
     [Permission(MenuPermissionConstant.MarketingExecutivesView)]
-    public async Task<IActionResult> GetAsync(string id)
-        => HandleResult(await fodoService.GetFodoByIdAsync(id));
+    public async Task<IActionResult> GetAsync(string id, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoService.GetFodoByIdAsync(id, cancellationToken));
 
     /// <summary>
     /// Create a new fodo (Field Officer/Door Office Marketing)
@@ -37,8 +38,8 @@ public class AdminFodoController(IFodoService fodoService) : BaseAdminApiControl
     /// <returns>Created fodo details</returns>
     [HttpPost("create")]
     [Permission(MenuPermissionConstant.MarketingExecutivesCreate)]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateFodoDto dto)
-        => HandleResult(await fodoService.CreateAsync(dto));
+    public async Task<IActionResult> CreateAsync([FromBody] CreateFodoDto dto, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoService.CreateAsync(dto, cancellationToken));
 
     /// <summary>
     /// Update fodo
@@ -48,8 +49,8 @@ public class AdminFodoController(IFodoService fodoService) : BaseAdminApiControl
     /// <returns>Updated fodo details</returns>
     [HttpPut("{id}")]
     [Permission(MenuPermissionConstant.MarketingExecutivesUpdate)]
-    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateFodoDto dto)
-        => HandleResult(await fodoService.UpdateAsync(id, dto));
+    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateFodoDto dto, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoService.UpdateAsync(id, dto, cancellationToken));
 
     /// <summary>
     /// Delete fodo (soft delete)
@@ -58,6 +59,6 @@ public class AdminFodoController(IFodoService fodoService) : BaseAdminApiControl
     /// <returns>Success message</returns>
     [HttpDelete("{id}")]
     [Permission(MenuPermissionConstant.MarketingExecutivesDelete)]
-    public async Task<IActionResult> DeleteAsync(string id)
-        => HandleResult(await fodoService.DeleteAsync(id));
+    public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoService.DeleteAsync(id, cancellationToken));
 }

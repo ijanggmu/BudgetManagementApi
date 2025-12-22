@@ -1,4 +1,5 @@
 using System.Net;
+using System.Threading;
 using Data.Context;
 using Data.Entities.Tenant;
 using Infrastructure.Common.UserProfile;
@@ -24,9 +25,9 @@ public class PremiumCalculationRateTableService : IPremiumCalculationRateTableSe
         _userProfileService = userProfileService;
     }
 
-    public async Task<Result<List<PremiumCalculationRateTableDto>>> GetRateTablesByConfigurationIdAsync(string configurationId)
+    public async Task<Result<List<PremiumCalculationRateTableDto>>> GetRateTablesByConfigurationIdAsync(string configurationId, CancellationToken cancellationToken = default)
     {
-        var config = await _configService.GetConfigurationByIdAsync(configurationId);
+        var config = await _configService.GetConfigurationByIdAsync(configurationId, cancellationToken);
         if (!config.IsSuccess)
         {
             return Result<List<PremiumCalculationRateTableDto>>.Failed(
@@ -39,11 +40,11 @@ public class PremiumCalculationRateTableService : IPremiumCalculationRateTableSe
         return Result<List<PremiumCalculationRateTableDto>>.Success(config.Data.RateTables);
     }
 
-    public async Task<Result<PremiumCalculationRateTableDto>> GetRateTableByIdAsync(string id)
+    public async Task<Result<PremiumCalculationRateTableDto>> GetRateTableByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var rateTable = await _db.PremiumCalculationRateTables
             .Where(t => t.Id == id && !t.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (rateTable == null)
         {
@@ -59,10 +60,10 @@ public class PremiumCalculationRateTableService : IPremiumCalculationRateTableSe
 
     public async Task<Result<PremiumCalculationRateTableDto>> CreateRateTableAsync(
         string configurationId, 
-        CreatePremiumCalculationRateTableDto dto)
+        CreatePremiumCalculationRateTableDto dto, CancellationToken cancellationToken = default)
     {
         // Verify configuration exists
-        var config = await _configService.GetConfigurationByIdAsync(configurationId);
+        var config = await _configService.GetConfigurationByIdAsync(configurationId, cancellationToken);
         if (!config.IsSuccess)
         {
             return Result<PremiumCalculationRateTableDto>.Failed(
@@ -76,7 +77,7 @@ public class PremiumCalculationRateTableService : IPremiumCalculationRateTableSe
         var exists = await _db.PremiumCalculationRateTables
             .AnyAsync(t => t.ConfigurationId == configurationId && 
                           t.TableName == dto.TableName && 
-                          !t.IsDeleted);
+                          !t.IsDeleted, cancellationToken);
 
         if (exists)
         {
@@ -94,18 +95,18 @@ public class PremiumCalculationRateTableService : IPremiumCalculationRateTableSe
         };
 
         _db.PremiumCalculationRateTables.Add(rateTable);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<PremiumCalculationRateTableDto>.Success(MapToDto(rateTable));
     }
 
     public async Task<Result<PremiumCalculationRateTableDto>> UpdateRateTableAsync(
         string id, 
-        CreatePremiumCalculationRateTableDto dto)
+        CreatePremiumCalculationRateTableDto dto, CancellationToken cancellationToken = default)
     {
         var rateTable = await _db.PremiumCalculationRateTables
             .Where(t => t.Id == id && !t.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (rateTable == null)
         {
@@ -121,16 +122,16 @@ public class PremiumCalculationRateTableService : IPremiumCalculationRateTableSe
         rateTable.DataJson = dto.DataJson;
         rateTable.LookupKey = dto.LookupKey;
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<PremiumCalculationRateTableDto>.Success(MapToDto(rateTable));
     }
 
-    public async Task<Result<bool>> DeleteRateTableAsync(string id)
+    public async Task<Result<bool>> DeleteRateTableAsync(string id, CancellationToken cancellationToken = default)
     {
         var rateTable = await _db.PremiumCalculationRateTables
             .Where(t => t.Id == id && !t.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (rateTable == null)
         {
@@ -142,7 +143,7 @@ public class PremiumCalculationRateTableService : IPremiumCalculationRateTableSe
         }
 
         rateTable.IsDeleted = true;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<bool>.Success(true);
     }

@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
 using SharedKernel.Operation;
@@ -6,11 +8,11 @@ namespace Business.Common.TenantDomain;
 
 public interface IAdminService
 {
-    Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(string? tenantId = null);
-    Task<Result<AdminResponseDto>> GetAdminByIdAsync(string id);
-    Task<Result<AdminResponseDto>> CreateAsync(CreateAdminDto dto);
-    Task<Result<AdminResponseDto>> UpdateAsync(string id, UpdateAdminDto dto);
-    Task<Result<bool>> DeleteAsync(string id);
-    Task<Result<byte[]>> ExportToExcelAsync(string? tenantId = null);
+    Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(string? tenantId = null, CancellationToken cancellationToken = default);
+    Task<Result<AdminResponseDto>> GetAdminByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<Result<AdminResponseDto>> CreateAsync(CreateAdminDto dto, CancellationToken cancellationToken = default);
+    Task<Result<AdminResponseDto>> UpdateAsync(string id, UpdateAdminDto dto, CancellationToken cancellationToken = default);
+    Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default);
+    Task<Result<byte[]>> ExportToExcelAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default);
 }
 

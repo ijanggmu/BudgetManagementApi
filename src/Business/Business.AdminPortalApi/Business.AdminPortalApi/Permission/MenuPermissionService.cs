@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Threading;
 using Data.Context;
 using Data.Entities.Identity;
 using Infrastructure.Common.UserProfile;
@@ -130,15 +131,15 @@ public class MenuPermissionService : IMenuPermissionService
         }
     }
 
-    public async Task<Result<MessageResponseModel>> AssignRolePermissionAsync(PermissionManagementViewModel requestModel)
+    public async Task<Result<MessageResponseModel>> AssignRolePermissionAsync(PermissionManagementViewModel requestModel, CancellationToken cancellationToken = default)
     {
         var roleId = requestModel.RoleId;
 
-        var hasRole = await _context.Roles.AnyAsync(x => x.Id == roleId);
+        var hasRole = await _context.Roles.AnyAsync(x => x.Id == roleId, cancellationToken);
         if (!hasRole)
             return Result<MessageResponseModel>.Failed("Role not found.");
 
-        var roleClaim = await _context.RoleClaims.Where(x => x.RoleId == roleId).FirstOrDefaultAsync();
+        var roleClaim = await _context.RoleClaims.Where(x => x.RoleId == roleId).FirstOrDefaultAsync(cancellationToken);
 
         if (roleClaim == null)
         {
@@ -154,7 +155,7 @@ public class MenuPermissionService : IMenuPermissionService
             _context.RoleClaims.Update(roleClaim);
         }
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         return Result<MessageResponseModel>.Success(new MessageResponseModel("Permissions of role added successfully!"));
     }

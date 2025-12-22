@@ -1,3 +1,4 @@
+using System.Threading;
 using Business.Common.StringCipher;
 using Business.Common.Totp;
 using Data.Context;
@@ -23,7 +24,7 @@ public class CustomerTwoFactorService(
     StringCipherService stringCipherService)
     : ICustomerTwoFactorService
 {
-    public async Task<Result<TwoFaResponseModel>> Set2FaAsync()
+    public async Task<Result<TwoFaResponseModel>> Set2FaAsync(CancellationToken cancellationToken = default)
     {
         var userId = ipersonAccessor.GetUserId();
         var roleId = ipersonAccessor.GetRoleId();
@@ -31,7 +32,7 @@ public class CustomerTwoFactorService(
 
         var user = await userManager.FindByIdAsync(userId);
 
-        if (!await dbContext.Roles.AnyAsync(x => roleIds.Contains(x.Name) && x.RoleType == SystemRoles.FoDo))
+        if (!await dbContext.Roles.AnyAsync(x => roleIds.Contains(x.Name) && x.RoleType == SystemRoles.FoDo, cancellationToken))
             return Result<TwoFaResponseModel>.Failed(ResponseMessage.UserNotFound);
 
         var qrCode = await totpService.GenerateTotpQrCode(user);
@@ -42,7 +43,7 @@ public class CustomerTwoFactorService(
             Message = "2FA QR code generated. Scan using your authenticator app."
         });
     }
-    public async Task<Result<TwoFaValidateResponseModel>> ValidateTotpCodeAsync(string code)
+    public async Task<Result<TwoFaValidateResponseModel>> ValidateTotpCodeAsync(string code, CancellationToken cancellationToken = default)
     {
         var userId = ipersonAccessor.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
@@ -55,11 +56,11 @@ public class CustomerTwoFactorService(
 
         if (totpService.ValidateTotpCode(user.TotpToken, code))
         {
-            var (pinCodes, pinCodesHash) = await GenerateBackupCodes();
+            var (pinCodes, pinCodesHash) = await GenerateBackupCodes(cancellationToken);
             user.UserTotpBackUpCodes = pinCodesHash;
             user.TwoFactorEnabled = true;
             dbContext.Users.Update(user);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             return Result<TwoFaValidateResponseModel>.Success(new TwoFaValidateResponseModel()
             {
@@ -70,7 +71,7 @@ public class CustomerTwoFactorService(
         else
             return Result<TwoFaValidateResponseModel>.Failed(ResponseMessage.Invalid2FACode);
     }
-    private async Task<(string[] pinCodes, List<UserTotpBackUpCode> pinCodesHash)> GenerateBackupCodes()
+    private async Task<(string[] pinCodes, List<UserTotpBackUpCode> pinCodesHash)> GenerateBackupCodes(CancellationToken cancellationToken = default)
     {
         var pinCodes = PincodeGeneratorHelper.GenerateMultiplePincodes(6, 10);
 
@@ -87,7 +88,7 @@ public class CustomerTwoFactorService(
 
         return (pinCodes, pinCodesHash);
     }
-    public async Task<Result<MessageResponseModel>> Disable2FaAsync()
+    public async Task<Result<MessageResponseModel>> Disable2FaAsync(CancellationToken cancellationToken = default)
     {
         var userId = ipersonAccessor.GetUserId();
 
@@ -103,7 +104,7 @@ public class CustomerTwoFactorService(
 
         return Result<MessageResponseModel>.Success(new MessageResponseModel("2FA disabled successfully."));
     }
-    public async Task<Result<List<UserTotpBackUpCodeResponseModel>>> Generate2FaBackUpCodesAsync()
+    public async Task<Result<List<UserTotpBackUpCodeResponseModel>>> Generate2FaBackUpCodesAsync(CancellationToken cancellationToken = default)
     {
         var userId = ipersonAccessor.GetUserId();
 
@@ -112,7 +113,7 @@ public class CustomerTwoFactorService(
             .Where(x => x.User.Id == userId && !x.User.IsDeleted &&
                         x.User.TotpSecurityStamp != null)
             .Select(x => x.User)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (user == null)
             return Result<List<UserTotpBackUpCodeResponseModel>>.Failed("Customer not found or 2 FA not enabled.");
@@ -133,12 +134,12 @@ public class CustomerTwoFactorService(
         user.UserTotpBackUpCodes = pinCodesHash;
 
         dbContext.Users.Update(user);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result<List<UserTotpBackUpCodeResponseModel>>.Success(pinCodes.Select(x =>
             new UserTotpBackUpCodeResponseModel { CodeHash = x, CreatedOn = timeNow.ToUtcString() }).ToList());
     }
-    public async Task<Result<List<UserTotpBackUpCodeResponseModel>>> GetAll2FaBackUpCodesAsync()
+    public async Task<Result<List<UserTotpBackUpCodeResponseModel>>> GetAll2FaBackUpCodesAsync(CancellationToken cancellationToken = default)
     {
         var userId = ipersonAccessor.GetUserId();
 
@@ -147,7 +148,7 @@ public class CustomerTwoFactorService(
             .Where(x => x.User.Id == userId && !x.User.IsDeleted &&
                         x.User.TotpSecurityStamp != null)
             .Select(x => x.User.UserTotpBackUpCodes)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (backUpCodesHashed == null)
             return Result<List<UserTotpBackUpCodeResponseModel>>.Failed("Customer not found or 2 FA not enabled.");

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
@@ -18,9 +19,9 @@ public class AdminPremiumCalculationConfigurationController(
     /// </summary>
     [HttpGet]
     [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
-    public async Task<IActionResult> ListAsync([FromQuery] string? portfolioAlias = null, [FromQuery] string? fiscalYear = null)
+    public async Task<IActionResult> ListAsync([FromQuery] string? portfolioAlias = null, [FromQuery] string? fiscalYear = null, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.GetAllConfigurationsAsync(portfolioAlias, fiscalYear));
+        return HandleResult(await service.GetAllConfigurationsAsync(portfolioAlias, fiscalYear, cancellationToken));
     }
 
     /// <summary>
@@ -28,9 +29,9 @@ public class AdminPremiumCalculationConfigurationController(
     /// </summary>
     [HttpGet("{id}")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
-    public async Task<IActionResult> GetAsync(string id)
+    public async Task<IActionResult> GetAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.GetConfigurationByIdAsync(id));
+        return HandleResult(await service.GetConfigurationByIdAsync(id, cancellationToken));
     }
 
     /// <summary>
@@ -41,9 +42,10 @@ public class AdminPremiumCalculationConfigurationController(
     public async Task<IActionResult> GetByPortfolioAndFiscalYearAsync(
         string portfolioAlias, 
         string fiscalYear, 
-        [FromQuery] DateTime? effectiveDate = null)
+        [FromQuery] DateTime? effectiveDate = null,
+        CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.GetConfigurationAsync(portfolioAlias, fiscalYear, effectiveDate));
+        return HandleResult(await service.GetConfigurationAsync(portfolioAlias, fiscalYear, effectiveDate, cancellationToken));
     }
 
     /// <summary>
@@ -51,9 +53,9 @@ public class AdminPremiumCalculationConfigurationController(
     /// </summary>
     [HttpPost]
     [Permission(MenuPermissionConstant.PremiumConfigurationsCreate)]
-    public async Task<IActionResult> CreateAsync([FromBody] CreatePremiumCalculationConfigurationDto dto)
+    public async Task<IActionResult> CreateAsync([FromBody] CreatePremiumCalculationConfigurationDto dto, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.CreateConfigurationAsync(dto));
+        return HandleResult(await service.CreateConfigurationAsync(dto, cancellationToken));
     }
 
     /// <summary>
@@ -61,9 +63,9 @@ public class AdminPremiumCalculationConfigurationController(
     /// </summary>
     [HttpPut("{id}")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsUpdate)]
-    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdatePremiumCalculationConfigurationDto dto)
+    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdatePremiumCalculationConfigurationDto dto, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.UpdateConfigurationAsync(id, dto));
+        return HandleResult(await service.UpdateConfigurationAsync(id, dto, cancellationToken));
     }
 
     /// <summary>
@@ -71,9 +73,9 @@ public class AdminPremiumCalculationConfigurationController(
     /// </summary>
     [HttpDelete("{id}")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsDelete)]
-    public async Task<IActionResult> DeleteAsync(string id)
+    public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.DeleteConfigurationAsync(id));
+        return HandleResult(await service.DeleteConfigurationAsync(id, cancellationToken));
     }
 
     /// <summary>
@@ -81,9 +83,9 @@ public class AdminPremiumCalculationConfigurationController(
     /// </summary>
     [HttpPost("{id}/activate")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
-    public async Task<IActionResult> ActivateAsync(string id, [FromBody] string fiscalYear)
+    public async Task<IActionResult> ActivateAsync(string id, [FromBody] string fiscalYear, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.ActivateConfigurationAsync(id, fiscalYear));
+        return HandleResult(await service.ActivateConfigurationAsync(id, fiscalYear, cancellationToken));
     }
 
     /// <summary>
@@ -91,9 +93,9 @@ public class AdminPremiumCalculationConfigurationController(
     /// </summary>
     [HttpPost("{id}/clone")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
-    public async Task<IActionResult> CloneAsync(string id, [FromBody] string newFiscalYear)
+    public async Task<IActionResult> CloneAsync(string id, [FromBody] string newFiscalYear, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.CloneConfigurationAsync(id, newFiscalYear));
+        return HandleResult(await service.CloneConfigurationAsync(id, newFiscalYear, cancellationToken));
     }
 
     /// <summary>
@@ -101,9 +103,9 @@ public class AdminPremiumCalculationConfigurationController(
     /// </summary>
     [HttpPost("{id}/validate")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
-    public async Task<IActionResult> ValidateAsync(string id)
+    public async Task<IActionResult> ValidateAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.ValidateConfigurationAsync(id));
+        return HandleResult(await service.ValidateConfigurationAsync(id, cancellationToken));
     }
 }
 

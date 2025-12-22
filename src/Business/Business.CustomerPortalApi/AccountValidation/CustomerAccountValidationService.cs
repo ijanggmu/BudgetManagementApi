@@ -1,3 +1,4 @@
+using System.Threading;
 using Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Models.BeemaEdgeApi.Customer.CustomerIdentity;
@@ -7,10 +8,10 @@ namespace Business.BeemaEdgeApi.AccountValidation;
 
 public class CustomerAccountValidationService(ApplicationDataContext dbContext) : ICustomerAccountValidationService
 {
-    public async Task<Result<AvailabilityResponseModel>> IsUsernameTakenAsync(string username)
+    public async Task<Result<AvailabilityResponseModel>> IsUsernameTakenAsync(string username, CancellationToken cancellationToken = default)
     {
         var exists = await dbContext.Users
-            .AnyAsync(u => u.UserName == username);
+            .AnyAsync(u => u.UserName == username, cancellationToken);
 
         return Result<AvailabilityResponseModel>.Success(new AvailabilityResponseModel
         {
@@ -18,10 +19,10 @@ public class CustomerAccountValidationService(ApplicationDataContext dbContext) 
         });
     }
 
-    public async Task<Result<AvailabilityResponseModel>> IsEmailTakenAsync(string email)
+    public async Task<Result<AvailabilityResponseModel>> IsEmailTakenAsync(string email, CancellationToken cancellationToken = default)
     {
         var exists = await dbContext.Users
-            .AnyAsync(u => u.NormalizedEmail == email.ToUpper());
+            .AnyAsync(u => u.NormalizedEmail == email.ToUpper(), cancellationToken);
 
         return Result<AvailabilityResponseModel>.Success(new AvailabilityResponseModel
         {
@@ -29,10 +30,10 @@ public class CustomerAccountValidationService(ApplicationDataContext dbContext) 
         });
     }
 
-    public async Task<Result<AvailabilityResponseModel>> IsPhoneNumberTakenAsync(string phoneNumber)
+    public async Task<Result<AvailabilityResponseModel>> IsPhoneNumberTakenAsync(string phoneNumber, CancellationToken cancellationToken = default)
     {
         var exists = await dbContext.Users
-            .AnyAsync(u => u.PhoneNumber == phoneNumber);
+            .AnyAsync(u => u.PhoneNumber == phoneNumber, cancellationToken);
 
         return Result<AvailabilityResponseModel>.Success(new AvailabilityResponseModel
         {

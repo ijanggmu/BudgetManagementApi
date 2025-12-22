@@ -28,7 +28,7 @@ IUserProfileService ipersonAccessor,
 ITotpService totpService,
 StringCipherService stringCipherService) : IAdminAuthService
 {
-    public async Task<Result<LoginAdminResponseModel>> LoginAsync(AdminLoginRequestModel requestModel)
+    public async Task<Result<LoginAdminResponseModel>> LoginAsync(AdminLoginRequestModel requestModel,CancellationToken ct)
     {
 
         var admin = await dbContext.Admins
@@ -36,7 +36,7 @@ StringCipherService stringCipherService) : IAdminAuthService
                 .Where(x => x.User.UserName == requestModel.Username
                 && !x.User.IsDeleted
                 && !x.IsDeleted)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(ct);
 
         if (admin == null || admin.User == null)
             return Result<LoginAdminResponseModel>.Failed("Username or password is invalid.");
@@ -50,7 +50,7 @@ StringCipherService stringCipherService) : IAdminAuthService
                                       && (r.Name == SystemRoles.Admin || r.Name == SystemRoles.SuperAdmin)
                                       && !ur.IsDeleted
                                       select ur)
-                                      .AnyAsync();
+                                      .AnyAsync(ct);
 
         if (!isAdminRoledUser)
             return Result<LoginAdminResponseModel>.Failed("Username or password is invalid.");
@@ -92,7 +92,7 @@ StringCipherService stringCipherService) : IAdminAuthService
             user.TotpTokenEnd = DateTime.UtcNow.AddHours(1);
 
             dbContext.Users.Update(user);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(ct);
             responseModel.Token = token;
         }
 
@@ -144,11 +144,11 @@ StringCipherService stringCipherService) : IAdminAuthService
         return Result<LoginAdminResponseModel>.Success(responseModel);
 
     }
-    public async Task<Result<MessageResponseModel>> Login2FaAsync(Verify2FaAdminRequestModel requestModel)
+    public async Task<Result<MessageResponseModel>> Login2FaAsync(Verify2FaAdminRequestModel requestModel,CancellationToken ct)
     {
         var user = await dbContext.Users
             .Where(x => x.TotpToken == requestModel.Token)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
 
         if (user == null || user.IsDeleted || user.TotpTokenEnd < DateTimeOffset.UtcNow)
             return Result<MessageResponseModel>.Failed(ResponseMessage.Invalid2FACode);
@@ -201,7 +201,7 @@ StringCipherService stringCipherService) : IAdminAuthService
         var Admin = await dbContext.Customers
             .Include(x => x.User)
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.UserId == user.Id);
+            .FirstOrDefaultAsync(x => x.UserId == user.Id, ct);
 
         if (Admin == null)
             return Result<MessageResponseModel>.Failed(ResponseMessage.Invalid2FACode);
@@ -235,13 +235,13 @@ StringCipherService stringCipherService) : IAdminAuthService
         }
 
         dbContext.Users.Update(user);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(ct);
 
         ipersonAccessor.SetAuthCookiesInClient(result, user.UserName);
 
         return Result<MessageResponseModel>.Success(new MessageResponseModel("Login successfully."), statusCode: HttpStatusCode.NoContent);
     }
-    public async Task<Result<MessageResponseModel>> RefreshTokenAsync()
+    public async Task<Result<MessageResponseModel>> RefreshTokenAsync(CancellationToken ct)
     {
         var refreshToken = ipersonAccessor.GetRefreshToken();
 
@@ -280,7 +280,7 @@ StringCipherService stringCipherService) : IAdminAuthService
             var newAccessToken = tokenService.CreateToken(userInfo.User, roleNames);
             var newRefreshToken = await tokenService.CreateRefreshToken(userInfo.User);
 
-            await transaction.CommitAsync();
+            await transaction.CommitAsync(ct);
 
             var result = new TokenModel
             {
@@ -295,12 +295,12 @@ StringCipherService stringCipherService) : IAdminAuthService
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(ct);
             throw;
         }
     }
 
-    public async Task<Result<MessageResponseModel>> LogoutAsync(HttpResponse response)
+    public async Task<Result<MessageResponseModel>> LogoutAsync(HttpResponse response,CancellationToken ct)
     {
         var refreshToken = ipersonAccessor.GetRefreshToken();
         var username = ipersonAccessor.GetUsername();
@@ -308,7 +308,7 @@ StringCipherService stringCipherService) : IAdminAuthService
         if (!string.IsNullOrEmpty(refreshToken) && !string.IsNullOrEmpty(username))
         {
             var user = await dbContext.Users
-                .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken && u.UserName == username);
+                .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken && u.UserName == username, ct);
 
             if (user != null)
             {
@@ -316,7 +316,7 @@ StringCipherService stringCipherService) : IAdminAuthService
                 user.RefreshToken = null;
                 user.RefreshTokenExpiryDateTime = null;
                 dbContext.Users.Update(user);
-                await dbContext.SaveChangesAsync();
+                await dbContext.SaveChangesAsync(ct);
             }
         }
 

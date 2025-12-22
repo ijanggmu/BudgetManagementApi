@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using AdminPortalApi.Controllers.V1.SystemLog;
 using BeemaEdgeApi.Controllers.V1.BaseController;
@@ -17,6 +18,6 @@ public class SystemLogController(ISystemLogService systemLogService) : BaseAdmin
     /// <returns>Paginated list of system access logs</returns>
     [HttpGet("access")]
     [Permission(MenuPermissionConstant.SystemLogView)]
-    public async Task<IActionResult> GetAccessLogAsync([FromQuery] CommonPaginationRequestModel searchModel)
-        => HandleResult(await systemLogService.GetAllSystemAccessLogAsync(searchModel));
+    public async Task<IActionResult> GetAccessLogAsync([FromQuery] CommonPaginationRequestModel searchModel, CancellationToken cancellationToken = default)
+        => HandleResult(await systemLogService.GetAllSystemAccessLogAsync(searchModel, cancellationToken));
 }

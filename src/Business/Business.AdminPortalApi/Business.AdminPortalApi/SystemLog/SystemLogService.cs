@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Data.Context;
 using Data.Entities.Audit.UserActivites;
@@ -43,7 +44,7 @@ public class SystemLogService : ISystemLogService
         _sieveExtension = sieveExtension;
         _auditContext = auditContext;
     }
-    public async Task<Result<List<AccessLogResponseModel>>> GetAllSystemAccessLogAsync(CommonPaginationRequestModel searchModel)
+    public async Task<Result<List<AccessLogResponseModel>>> GetAllSystemAccessLogAsync(CommonPaginationRequestModel searchModel, CancellationToken cancellationToken = default)
     {
         var query = _auditContext.UserActivities;
 
@@ -71,7 +72,7 @@ public class SystemLogService : ISystemLogService
             EndAt = x.EndAt.ToString(),
             RequestHeader = x.RequestHeader,
 
-        }).ToListAsync();
+        }).ToListAsync(cancellationToken);
 
         return Result<List<AccessLogResponseModel>>.Success(response, new Pagination
         {

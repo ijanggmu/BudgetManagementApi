@@ -1,9 +1,11 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Mvc;
+using Models.Common;
 using Models.WebApi.TenantDTOs;
 using SharedKernel.Constant.Permission;
 
@@ -19,8 +21,8 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <returns>List of admins</returns>
     [HttpGet]
     [Permission(MenuPermissionConstant.AdminManagementView)]
-    public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null)
-        => HandleResult(await adminService.GetAdminsForAdminAsync(tenantId));
+    public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
+        => HandleResult(await adminService.GetAdminsForAdminAsync(tenantId, cancellationToken));
 
     /// <summary>
     /// Get admin by ID
@@ -29,8 +31,8 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <returns>Admin details</returns>
     [HttpGet("{id}")]
     [Permission(MenuPermissionConstant.AdminManagementView)]
-    public async Task<IActionResult> GetAsync(string id)
-        => HandleResult(await adminService.GetAdminByIdAsync(id));
+    public async Task<IActionResult> GetAsync(string id, CancellationToken cancellationToken = default)
+        => HandleResult(await adminService.GetAdminByIdAsync(id, cancellationToken));
 
     /// <summary>
     /// Create a new admin user
@@ -39,8 +41,8 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <returns>Created admin details</returns>
     [HttpPost]
     [Permission(MenuPermissionConstant.AdminManagementCreate)]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateAdminDto dto)
-        => HandleResult(await adminService.CreateAsync(dto));
+    public async Task<IActionResult> CreateAsync([FromBody] CreateAdminDto dto, CancellationToken cancellationToken = default)
+        => HandleResult(await adminService.CreateAsync(dto, cancellationToken));
 
     /// <summary>
     /// Update admin user
@@ -50,8 +52,8 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <returns>Updated admin details</returns>
     [HttpPut("{id}")]
     [Permission(MenuPermissionConstant.AdminManagementUpdate)]
-    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateAdminDto dto)
-        => HandleResult(await adminService.UpdateAsync(id, dto));
+    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateAdminDto dto, CancellationToken cancellationToken = default)
+        => HandleResult(await adminService.UpdateAsync(id, dto, cancellationToken));
 
     /// <summary>
     /// Delete admin user (soft delete)
@@ -60,19 +62,22 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <returns>Success message</returns>
     [HttpDelete("{id}")]
     [Permission(MenuPermissionConstant.AdminManagementDelete)]
-    public async Task<IActionResult> DeleteAsync(string id)
-        => HandleResult(await adminService.DeleteAsync(id));
+    public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        => HandleResult(await adminService.DeleteAsync(id, cancellationToken));
 
     /// <summary>
     /// Export all admins to Excel
     /// </summary>
-    /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
+    /// <param name="requestModel">Pagination and filter parameters</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Excel file</returns>
-    [HttpGet("Export")]
+    [HttpPost("export")]
     [Permission(MenuPermissionConstant.AdminManagementExport)]
-    public async Task<IActionResult> ExportToExcelAsync([FromQuery] string? tenantId = null)
+    public async Task<IActionResult> ExportToExcelAsync(
+        [FromBody] CommonPaginationRequestModel requestModel,
+        CancellationToken cancellationToken = default)
     {
-        var result = await adminService.ExportToExcelAsync(tenantId);
+        var result = await adminService.ExportToExcelAsync(requestModel, cancellationToken);
         if (!result.IsSuccess || result.Data == null)
             return HandleResult(result);
 

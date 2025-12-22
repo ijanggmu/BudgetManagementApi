@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.AdminPortalApi.AdminPassword;
@@ -16,8 +17,8 @@ public class AdminPasswordController(IAdminPasswordService adminPasswordService)
     /// <param name="requestModel">Password change data</param>
     /// <returns>Success message</returns>
     [HttpPut("change")]
-    public async Task<IActionResult> ChangeAsync([FromBody] ChangePasswordRequestModel requestModel)
-        => HandleResult(await adminPasswordService.ChangePasswordAsync(requestModel));
+    public async Task<IActionResult> ChangeAsync([FromBody] ChangePasswordRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await adminPasswordService.ChangePasswordAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Request password reset OTP (forgot password)
@@ -26,8 +27,8 @@ public class AdminPasswordController(IAdminPasswordService adminPasswordService)
     /// <returns>Success message with OTP sent notification</returns>
     [AllowAnonymous]
     [HttpPost("forget")]
-    public async Task<IActionResult> ForgetAsync([FromBody] ForgetPasswordRequestModel requestModel)
-        => HandleResult(await adminPasswordService.ForgetPasswordAsync(requestModel));
+    public async Task<IActionResult> ForgetAsync([FromBody] ForgetPasswordRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await adminPasswordService.ForgetPasswordAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Set password for user who doesn't have a password yet
@@ -35,8 +36,8 @@ public class AdminPasswordController(IAdminPasswordService adminPasswordService)
     /// <param name="requestModel">Password data</param>
     /// <returns>Success message</returns>
     [HttpPost("set")]
-    public async Task<IActionResult> SetAsync([FromBody] ChangePasswordRequestModel requestModel)
-        => HandleResult(await adminPasswordService.SetPasswordAsync(requestModel));
+    public async Task<IActionResult> SetAsync([FromBody] ChangePasswordRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await adminPasswordService.SetPasswordAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Reset password using OTP token
@@ -45,7 +46,7 @@ public class AdminPasswordController(IAdminPasswordService adminPasswordService)
     /// <returns>Success message</returns>
     [AllowAnonymous]
     [HttpPost("reset")]
-    public async Task<IActionResult> ResetAsync([FromBody] ResetPasswordRequestModel requestModel)
-        => HandleResult(await adminPasswordService.ResetPasswordWithOtpAsync(requestModel));
+    public async Task<IActionResult> ResetAsync([FromBody] ResetPasswordRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await adminPasswordService.ResetPasswordWithOtpAsync(requestModel, cancellationToken));
 }
 

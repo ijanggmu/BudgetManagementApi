@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Threading;
 using Data.Context;
 using Data.Entities.Identity;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
@@ -32,13 +33,13 @@ public class RoleService : IRoleService
         return Result<List<string>>.Success(SystemRoles.GetAllDefaultRolesExceptSuperAdmin());
     }
 
-    public async Task<Result<List<string>>> GetAllRoleNamesAsync() => Result<List<string>>.Success(await _roleManager.Roles
+    public async Task<Result<List<string>>> GetAllRoleNamesAsync(CancellationToken cancellationToken = default) => Result<List<string>>.Success(await _roleManager.Roles
                                                                     .AsNoTracking()
                                                                     .Where(a => !a.IsDeleted)
                                                                     .OrderByDescending(x => x.CreatedOn)
                                                                     .Select(x => x.Name)
-                                                                    .ToListAsync());
-    public async Task<Result<List<RoleResponseModel>>> GetAllRolesAsync(CommonPaginationRequestModel requestModel)
+                                                                    .ToListAsync(cancellationToken));
+    public async Task<Result<List<RoleResponseModel>>> GetAllRolesAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         Expression<Func<ApplicationRole, bool>> predicate = c => !c.IsDeleted;
 
@@ -55,7 +56,7 @@ public class RoleService : IRoleService
             RoleDescription = x.Description,
             RoleType = x.RoleType,
             TotalUserAssignedWithRole = _context.UserRoles.Where(y => y.RoleId == x.Id).Count()
-        }).ToListAsync();
+        }).ToListAsync(cancellationToken);
 
 
         var pagination = new Pagination
@@ -68,11 +69,11 @@ public class RoleService : IRoleService
         return Result<List<RoleResponseModel>>.Success(customers, pagination);
     }
 
-    public async Task<Result<MessageResponseModel>> CreateRoleAsync(CreateRoleRequestModel model)
+    public async Task<Result<MessageResponseModel>> CreateRoleAsync(CreateRoleRequestModel model, CancellationToken cancellationToken = default)
     {
 
         var roleNameLower = model.RoleName.Trim().ToLower();
-        var existingRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleNameLower && r.IsDeleted);
+        var existingRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleNameLower && r.IsDeleted, cancellationToken);
 
         if (existingRole != null)
         {
@@ -82,7 +83,7 @@ public class RoleService : IRoleService
             return Result<MessageResponseModel>.Success(new MessageResponseModel("Role created successfully."));
         }
 
-        var checkIfRoleNameExists = await _context.Roles.AnyAsync(r => r.Name.ToLower() == roleNameLower && !r.IsDeleted);
+        var checkIfRoleNameExists = await _context.Roles.AnyAsync(r => r.Name.ToLower() == roleNameLower && !r.IsDeleted, cancellationToken);
         if (checkIfRoleNameExists)
             return Result<MessageResponseModel>.Failed("Role already exists.");
 
@@ -108,9 +109,9 @@ public class RoleService : IRoleService
 
     }
 
-    public async Task<Result<RoleResponseModel>> GetRoleByIdAsync(string roleId)
+    public async Task<Result<RoleResponseModel>> GetRoleByIdAsync(string roleId, CancellationToken cancellationToken = default)
     {
-        var role = await _roleManager.Roles.Where(x => x.Id == roleId && !x.IsDeleted).FirstOrDefaultAsync();
+        var role = await _roleManager.Roles.Where(x => x.Id == roleId && !x.IsDeleted).FirstOrDefaultAsync(cancellationToken);
         if (role == null)
             return Result<RoleResponseModel>.Failed("Role not found.");
 
@@ -123,14 +124,14 @@ public class RoleService : IRoleService
         });
     }
 
-    public async Task<Result<MessageResponseModel>> UpdateRoleAsync(UpdateRoleRequestModel roleModel)
+    public async Task<Result<MessageResponseModel>> UpdateRoleAsync(UpdateRoleRequestModel roleModel, CancellationToken cancellationToken = default)
     {
 
-        var role = await _roleManager.Roles.Where(x => x.Id == roleModel.RoleId).FirstOrDefaultAsync();
+        var role = await _roleManager.Roles.Where(x => x.Id == roleModel.RoleId).FirstOrDefaultAsync(cancellationToken);
         var modelNameWhiteSpaceRemoved = string.Concat(roleModel.RoleName.Where(c => !char.IsWhiteSpace(c)));
         var checkIfRoleNameExists = await _roleManager.Roles
             .AnyAsync(r => r.Name.ToLower() == roleModel.RoleName.Trim().ToLower() ||
-                           r.Name.ToLower() == modelNameWhiteSpaceRemoved.ToLower());
+                           r.Name.ToLower() == modelNameWhiteSpaceRemoved.ToLower(), cancellationToken);
         var nameNotChanged = role.Name.ToLower() == roleModel.RoleName.ToLower();
 
         if (role != null)
@@ -154,12 +155,12 @@ public class RoleService : IRoleService
     }
 
 
-    public async Task<Result<MessageResponseModel>> DeleteRoleAsync(string roleId)
+    public async Task<Result<MessageResponseModel>> DeleteRoleAsync(string roleId, CancellationToken cancellationToken = default)
     {
-        var transaction = await _context.Database.BeginTransactionAsync();
+        var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var role = await _context.Roles.FindAsync(roleId);
+            var role = await _context.Roles.FindAsync(new object[] { roleId }, cancellationToken);
 
             if (role == null)
                 return Result<MessageResponseModel>.Failed("Invalid Role.");
@@ -171,24 +172,24 @@ public class RoleService : IRoleService
                 return Result<MessageResponseModel>.Failed("Role cannot be deleted.");
             }
 
-            var userexists = await _context.UserRoles.AnyAsync(x => x.RoleId == role.Id);
+            var userexists = await _context.UserRoles.AnyAsync(x => x.RoleId == role.Id, cancellationToken);
             if (userexists)
                 return Result<MessageResponseModel>.Failed("Role is assigned to a user.");
 
-            var roleClaims = await _context.RoleClaims.Where(x => x.RoleId == role.Id).ToListAsync();
+            var roleClaims = await _context.RoleClaims.Where(x => x.RoleId == role.Id).ToListAsync(cancellationToken);
 
             _context.RoleClaims.RemoveRange(roleClaims);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             await _roleManager.DeleteAsync(role);
 
-            await transaction.CommitAsync();
+            await transaction.CommitAsync(cancellationToken);
 
             return Result<MessageResponseModel>.Success(new MessageResponseModel("Role deleted successfully."));
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             throw;
         }
     }

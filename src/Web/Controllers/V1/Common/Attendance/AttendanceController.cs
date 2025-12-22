@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.Common.TenantDomain;
@@ -13,41 +14,41 @@ namespace BeemaEdgeApi.Controllers.V1.Common.Attendance;
 public class AttendanceController(IAttendanceService service, IUserProfileService userProfileService) : BaseCommonApiController
 {
     [HttpPost("check-in")]
-    public async Task<IActionResult> CheckIn([FromBody] AttendanceDto dto)
+    public async Task<IActionResult> CheckIn([FromBody] AttendanceDto dto, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
-        return HandleResult(await service.CheckInAsync(userId, dto.Latitude, dto.Longitude, dto.Remarks));
+        return HandleResult(await service.CheckInAsync(userId, dto.Latitude, dto.Longitude, dto.Remarks, cancellationToken));
     }
 
     [HttpPost("check-out")]
-    public async Task<IActionResult> CheckOut([FromBody] AttendanceDto dto)
+    public async Task<IActionResult> CheckOut([FromBody] AttendanceDto dto, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
-        return HandleResult(await service.CheckOutAsync(userId, dto.Latitude, dto.Longitude, dto.Remarks));
+        return HandleResult(await service.CheckOutAsync(userId, dto.Latitude, dto.Longitude, dto.Remarks, cancellationToken));
     }
 
     [HttpGet("daily")]
-    public async Task<IActionResult> GetDaily([FromQuery] DateTime? date)
+    public async Task<IActionResult> GetDaily([FromQuery] DateTime? date, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
         var targetDate = date ?? DateTime.UtcNow.Date;
-        return HandleResult(await service.GetDailyAsync(userId, targetDate));
+        return HandleResult(await service.GetDailyAsync(userId, targetDate, cancellationToken));
     }
 
     [HttpGet("monthly")]
-    public async Task<IActionResult> GetMonthly([FromQuery] int? year, [FromQuery] int? month)
+    public async Task<IActionResult> GetMonthly([FromQuery] int? year, [FromQuery] int? month, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
         var targetYear = year ?? DateTime.UtcNow.Year;
         var targetMonth = month ?? DateTime.UtcNow.Month;
-        return HandleResult(await service.GetMonthlyAsync(userId, targetYear, targetMonth));
+        return HandleResult(await service.GetMonthlyAsync(userId, targetYear, targetMonth, cancellationToken));
     }
 }

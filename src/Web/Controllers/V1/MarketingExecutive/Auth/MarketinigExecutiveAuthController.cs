@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.Common.TenantDomain;
@@ -17,8 +18,8 @@ public class MarketinigExecutiveAuthController(IFodoAuthService fodoAuthService)
     /// <returns>Login response with token or OTP requirement</returns>
     [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<IActionResult> LoginAsync([FromBody] AgentLoginRequestModel requestModel)
-        => HandleResult(await fodoAuthService.LoginAsync(requestModel));
+    public async Task<IActionResult> LoginAsync([FromBody] AgentLoginRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoAuthService.LoginAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Verify 2FA code for fodo login
@@ -27,8 +28,8 @@ public class MarketinigExecutiveAuthController(IFodoAuthService fodoAuthService)
     /// <returns>Success message with token</returns>
     [AllowAnonymous]
     [HttpPost("login-2fa")]
-    public async Task<IActionResult> Login2FaAsync([FromBody] Verify2FaCustomerRequestModel requestModel)
-        => HandleResult(await fodoAuthService.Login2FaAsync(requestModel));
+    public async Task<IActionResult> Login2FaAsync([FromBody] Verify2FaCustomerRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoAuthService.Login2FaAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Refresh access token
@@ -36,8 +37,8 @@ public class MarketinigExecutiveAuthController(IFodoAuthService fodoAuthService)
     /// <returns>New token pair</returns>
     [AllowAnonymous]
     [HttpPost("refresh")]
-    public async Task<IActionResult> RefreshTokenAsync()
-        => HandleResult(await fodoAuthService.RefreshTokenAsync());
+    public async Task<IActionResult> RefreshTokenAsync(CancellationToken cancellationToken = default)
+        => HandleResult(await fodoAuthService.RefreshTokenAsync(cancellationToken));
 
     /// <summary>
     /// Fodo logout

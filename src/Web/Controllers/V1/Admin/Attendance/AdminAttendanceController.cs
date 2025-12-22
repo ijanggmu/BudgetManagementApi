@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
@@ -24,31 +25,25 @@ public class AdminAttendanceController(IAttendanceService attendanceService) : B
     [HttpPost]
     [Permission(MenuPermissionConstant.OperationsView)]
     public async Task<IActionResult> GetAttendanceAsync(
-        [FromBody] CommonPaginationRequestModel requestModel)
+        [FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         return HandleResult(await attendanceService.GetAttendanceForAdminAsync(
-            requestModel));
+            requestModel, cancellationToken));
     }
 
     /// <summary>
     /// Export attendance records to Excel
     /// </summary>
-    /// <param name="userId">Optional: Filter by user ID</param>
-    /// <param name="type">Optional: Filter by type (CheckIn, CheckOut)</param>
-    /// <param name="from">Optional: Filter attendance from this date</param>
-    /// <param name="to">Optional: Filter attendance until this date</param>
-    /// <param name="tenantId">Optional: Filter by tenant ID (SuperAdmin only)</param>
+    /// <param name="requestModel">Pagination and filter parameters</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Excel file</returns>
-    [HttpGet("Export")]
+    [HttpPost("export")]
     [Permission(MenuPermissionConstant.OperationsView)] // Note: Export permission can be added if needed
     public async Task<IActionResult> ExportToExcelAsync(
-        [FromQuery] string? userId = null,
-        [FromQuery] string? type = null,
-        [FromQuery] DateTime? from = null,
-        [FromQuery] DateTime? to = null,
-        [FromQuery] string? tenantId = null)
+        [FromBody] CommonPaginationRequestModel requestModel,
+        CancellationToken cancellationToken = default)
     {
-        var result = await attendanceService.ExportToExcelAsync(userId, type, from, to, tenantId);
+        var result = await attendanceService.ExportToExcelAsync(requestModel, cancellationToken);
         if (!result.IsSuccess || result.Data == null)
             return HandleResult(result);
 

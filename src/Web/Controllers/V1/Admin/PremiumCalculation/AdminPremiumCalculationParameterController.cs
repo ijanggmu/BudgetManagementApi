@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
@@ -18,9 +19,9 @@ public class AdminPremiumCalculationParameterController(
     /// </summary>
     [HttpGet("configuration/{configurationId}")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
-    public async Task<IActionResult> GetByConfigurationAsync(string configurationId)
+    public async Task<IActionResult> GetByConfigurationAsync(string configurationId, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.GetParametersByConfigurationIdAsync(configurationId));
+        return HandleResult(await service.GetParametersByConfigurationIdAsync(configurationId, cancellationToken));
     }
 
     /// <summary>
@@ -28,9 +29,9 @@ public class AdminPremiumCalculationParameterController(
     /// </summary>
     [HttpGet("{id}")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
-    public async Task<IActionResult> GetAsync(string id)
+    public async Task<IActionResult> GetAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.GetParameterByIdAsync(id));
+        return HandleResult(await service.GetParameterByIdAsync(id, cancellationToken));
     }
 
     /// <summary>
@@ -38,9 +39,9 @@ public class AdminPremiumCalculationParameterController(
     /// </summary>
     [HttpPost("configuration/{configurationId}")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsCreate)]
-    public async Task<IActionResult> CreateAsync(string configurationId, [FromBody] CreatePremiumCalculationParameterDto dto)
+    public async Task<IActionResult> CreateAsync(string configurationId, [FromBody] CreatePremiumCalculationParameterDto dto, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.CreateParameterAsync(configurationId, dto));
+        return HandleResult(await service.CreateParameterAsync(configurationId, dto, cancellationToken));
     }
 
     /// <summary>
@@ -48,9 +49,9 @@ public class AdminPremiumCalculationParameterController(
     /// </summary>
     [HttpPut("{id}")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsUpdate)]
-    public async Task<IActionResult> UpdateAsync(string id, [FromBody] CreatePremiumCalculationParameterDto dto)
+    public async Task<IActionResult> UpdateAsync(string id, [FromBody] CreatePremiumCalculationParameterDto dto, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.UpdateParameterAsync(id, dto));
+        return HandleResult(await service.UpdateParameterAsync(id, dto, cancellationToken));
     }
 
     /// <summary>
@@ -58,9 +59,9 @@ public class AdminPremiumCalculationParameterController(
     /// </summary>
     [HttpDelete("{id}")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsDelete)]
-    public async Task<IActionResult> DeleteAsync(string id)
+    public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.DeleteParameterAsync(id));
+        return HandleResult(await service.DeleteParameterAsync(id, cancellationToken));
     }
 
     /// <summary>
@@ -68,9 +69,9 @@ public class AdminPremiumCalculationParameterController(
     /// </summary>
     [HttpPost("configuration/{configurationId}/bulk")]
     [Permission(MenuPermissionConstant.PremiumConfigurationsView)]
-    public async Task<IActionResult> BulkUpdateAsync(string configurationId, [FromBody] List<CreatePremiumCalculationParameterDto> parameters)
+    public async Task<IActionResult> BulkUpdateAsync(string configurationId, [FromBody] List<CreatePremiumCalculationParameterDto> parameters, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.BulkUpdateParametersAsync(configurationId, parameters));
+        return HandleResult(await service.BulkUpdateParametersAsync(configurationId, parameters, cancellationToken));
     }
 }
 

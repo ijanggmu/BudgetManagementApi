@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
@@ -22,9 +23,9 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
     [HttpPost]
     [Permission(MenuPermissionConstant.AdminLeadsView)]
     public async Task<IActionResult> GetLeadsAsync(
-        [FromQuery] CommonPaginationRequestModel requestModel)
+        [FromQuery] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await leadService.GetLeadsForAdminAsync(requestModel));
+        return HandleResult(await leadService.GetLeadsForAdminAsync(requestModel, cancellationToken));
     }
 
     /// <summary>
@@ -34,9 +35,9 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
     /// <returns>Lead details with prospect and contact information</returns>
     [HttpGet("{id}")]
     [Permission(MenuPermissionConstant.AdminLeadsView)]
-    public async Task<IActionResult> GetLeadDetailsAsync(string id)
+    public async Task<IActionResult> GetLeadDetailsAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await leadService.GetLeadDetailsForAdminAsync(id));
+        return HandleResult(await leadService.GetLeadDetailsForAdminAsync(id, cancellationToken));
     }
 
     /// <summary>
@@ -55,28 +56,25 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
         [FromQuery] CommonPaginationRequestModel requestModel,
         [FromQuery] string? status = null,
         [FromQuery] DateTime? from = null,
-        [FromQuery] DateTime? to = null)
+        [FromQuery] DateTime? to = null,
+        CancellationToken cancellationToken = default)
     {
-        return HandleResult(await leadService.GetLeadsByTenantIdAsync(tenantId, requestModel));
+        return HandleResult(await leadService.GetLeadsByTenantIdAsync(tenantId, requestModel, cancellationToken));
     }
 
     /// <summary>
     /// Export leads to Excel
     /// </summary>
-    /// <param name="status">Optional: Filter by lead status</param>
-    /// <param name="from">Optional: Filter leads created from this date</param>
-    /// <param name="to">Optional: Filter leads created until this date</param>
-    /// <param name="tenantId">Optional: Tenant ID filter (SuperAdmin only)</param>
+    /// <param name="requestModel">Pagination and filter parameters</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Excel file</returns>
-    [HttpGet("export")]
+    [HttpPost("export")]
     [Permission(MenuPermissionConstant.AdminLeadsExport)]
     public async Task<IActionResult> ExportToExcelAsync(
-        [FromQuery] string? status = null,
-        [FromQuery] DateTime? from = null,
-        [FromQuery] DateTime? to = null,
-        [FromQuery] string? tenantId = null)
+        [FromBody] CommonPaginationRequestModel requestModel,
+        CancellationToken cancellationToken = default)
     {
-        var result = await leadService.ExportToExcelAsync(status, from, to, tenantId);
+        var result = await leadService.ExportToExcelAsync(requestModel, cancellationToken);
         if (!result.IsSuccess || result.Data == null)
             return HandleResult(result);
 

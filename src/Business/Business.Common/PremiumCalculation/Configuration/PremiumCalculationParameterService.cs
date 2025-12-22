@@ -1,4 +1,5 @@
 using System.Net;
+using System.Threading;
 using Data.Context;
 using Data.Entities.Tenant;
 using Infrastructure.Common.UserProfile;
@@ -24,9 +25,9 @@ public class PremiumCalculationParameterService : IPremiumCalculationParameterSe
         _userProfileService = userProfileService;
     }
 
-    public async Task<Result<List<PremiumCalculationParameterDto>>> GetParametersByConfigurationIdAsync(string configurationId)
+    public async Task<Result<List<PremiumCalculationParameterDto>>> GetParametersByConfigurationIdAsync(string configurationId, CancellationToken cancellationToken = default)
     {
-        var config = await _configService.GetConfigurationByIdAsync(configurationId);
+        var config = await _configService.GetConfigurationByIdAsync(configurationId, cancellationToken);
         if (!config.IsSuccess)
         {
             return Result<List<PremiumCalculationParameterDto>>.Failed(
@@ -39,11 +40,11 @@ public class PremiumCalculationParameterService : IPremiumCalculationParameterSe
         return Result<List<PremiumCalculationParameterDto>>.Success(config.Data.Parameters);
     }
 
-    public async Task<Result<PremiumCalculationParameterDto>> GetParameterByIdAsync(string id)
+    public async Task<Result<PremiumCalculationParameterDto>> GetParameterByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var parameter = await _db.PremiumCalculationParameters
             .Where(p => p.Id == id && !p.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (parameter == null)
         {
@@ -59,10 +60,10 @@ public class PremiumCalculationParameterService : IPremiumCalculationParameterSe
 
     public async Task<Result<PremiumCalculationParameterDto>> CreateParameterAsync(
         string configurationId, 
-        CreatePremiumCalculationParameterDto dto)
+        CreatePremiumCalculationParameterDto dto, CancellationToken cancellationToken = default)
     {
         // Verify configuration exists
-        var config = await _configService.GetConfigurationByIdAsync(configurationId);
+        var config = await _configService.GetConfigurationByIdAsync(configurationId, cancellationToken);
         if (!config.IsSuccess)
         {
             return Result<PremiumCalculationParameterDto>.Failed(
@@ -76,7 +77,7 @@ public class PremiumCalculationParameterService : IPremiumCalculationParameterSe
         var exists = await _db.PremiumCalculationParameters
             .AnyAsync(p => p.ConfigurationId == configurationId && 
                           p.ParameterKey == dto.ParameterKey && 
-                          !p.IsDeleted);
+                          !p.IsDeleted, cancellationToken);
 
         if (exists)
         {
@@ -100,18 +101,18 @@ public class PremiumCalculationParameterService : IPremiumCalculationParameterSe
         };
 
         _db.PremiumCalculationParameters.Add(parameter);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<PremiumCalculationParameterDto>.Success(MapToDto(parameter));
     }
 
     public async Task<Result<PremiumCalculationParameterDto>> UpdateParameterAsync(
         string id, 
-        CreatePremiumCalculationParameterDto dto)
+        CreatePremiumCalculationParameterDto dto, CancellationToken cancellationToken = default)
     {
         var parameter = await _db.PremiumCalculationParameters
             .Where(p => p.Id == id && !p.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (parameter == null)
         {
@@ -132,16 +133,16 @@ public class PremiumCalculationParameterService : IPremiumCalculationParameterSe
         parameter.DisplayOrder = dto.DisplayOrder;
         parameter.Category = dto.Category;
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<PremiumCalculationParameterDto>.Success(MapToDto(parameter));
     }
 
-    public async Task<Result<bool>> DeleteParameterAsync(string id)
+    public async Task<Result<bool>> DeleteParameterAsync(string id, CancellationToken cancellationToken = default)
     {
         var parameter = await _db.PremiumCalculationParameters
             .Where(p => p.Id == id && !p.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (parameter == null)
         {
@@ -153,17 +154,17 @@ public class PremiumCalculationParameterService : IPremiumCalculationParameterSe
         }
 
         parameter.IsDeleted = true;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<bool>.Success(true);
     }
 
     public async Task<Result<bool>> BulkUpdateParametersAsync(
         string configurationId, 
-        List<CreatePremiumCalculationParameterDto> parameters)
+        List<CreatePremiumCalculationParameterDto> parameters, CancellationToken cancellationToken = default)
     {
         // Verify configuration exists
-        var config = await _configService.GetConfigurationByIdAsync(configurationId);
+        var config = await _configService.GetConfigurationByIdAsync(configurationId, cancellationToken);
         if (!config.IsSuccess)
         {
             return Result<bool>.Failed(
@@ -176,7 +177,7 @@ public class PremiumCalculationParameterService : IPremiumCalculationParameterSe
         // Delete existing parameters (soft delete)
         await _db.PremiumCalculationParameters
             .Where(p => p.ConfigurationId == configurationId && !p.IsDeleted)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.IsDeleted, true));
+            .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.IsDeleted, true), cancellationToken);
 
         // Add new parameters
         foreach (var dto in parameters)
@@ -199,7 +200,7 @@ public class PremiumCalculationParameterService : IPremiumCalculationParameterSe
             _db.PremiumCalculationParameters.Add(parameter);
         }
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<bool>.Success(true);
     }

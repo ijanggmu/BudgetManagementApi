@@ -1,4 +1,5 @@
 using System.Net;
+using System.Threading;
 using Business.Common.Otp;
 using Business.Common.Sms;
 using Business.Common.Token;
@@ -35,12 +36,12 @@ public class FodoAuthService(
     IAttendanceService attendanceService)
     : IFodoAuthService
 {
-    public async Task<Result<LoginCustomerResponseModel>> LoginAsync(AgentLoginRequestModel requestModel)
+    public async Task<Result<LoginCustomerResponseModel>> LoginAsync(AgentLoginRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var fodo = await dbContext.Fodos
             .Include(x => x.User)
             .Where(x => x.User.UserName == requestModel.Username)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (fodo == null || fodo.User == null || fodo.User.IsDeleted)
             return Result<LoginCustomerResponseModel>.Failed("Username or password is invalid.");
@@ -82,7 +83,7 @@ public class FodoAuthService(
             user.TotpTokenEnd = DateTime.UtcNow.AddHours(1);
 
             dbContext.Users.Update(user);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
             responseModel.Token = token;
         }
 
@@ -110,7 +111,7 @@ public class FodoAuthService(
                 var tenant = await dbContext.Tenants
                     .Include(t => t.Branding)
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.Id == user.TenantId);
+                    .FirstOrDefaultAsync(t => t.Id == user.TenantId, cancellationToken);
 
                 if (tenant?.Branding != null)
                 {
@@ -129,7 +130,7 @@ public class FodoAuthService(
             var userRoles = await userManager.GetRolesAsync(user);
             if (userRoles.Contains(SharedKernel.Constant.Roles.SystemRoles.MarketingExecutive))
             {
-                var attendanceResult = await attendanceService.HasAttendanceTodayAsync(user.Id);
+                var attendanceResult = await attendanceService.HasAttendanceTodayAsync(user.Id, cancellationToken);
                 if (attendanceResult.IsSuccess)
                 {
                     responseModel.HasAttendanceToday = attendanceResult.Data;
@@ -142,11 +143,11 @@ public class FodoAuthService(
         return Result<LoginCustomerResponseModel>.Success(responseModel);
     }
 
-    public async Task<Result<MessageResponseModel>> Login2FaAsync(Verify2FaCustomerRequestModel requestModel)
+    public async Task<Result<MessageResponseModel>> Login2FaAsync(Verify2FaCustomerRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var agent = await dbContext.Fodos.Include(x => x.User)
             .Where(x => x.User.TotpToken == requestModel.Token)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (agent == null || agent.User == null)
             return Result<MessageResponseModel>.Failed("Invalid token.");
@@ -181,7 +182,7 @@ public class FodoAuthService(
         user.TotpTokenEnd = null;
 
         dbContext.Users.Update(user);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         // Note: For 2FA login, attendance status is not included in response
         // as it returns MessageResponseModel, not LoginCustomerResponseModel
@@ -190,7 +191,7 @@ public class FodoAuthService(
         return Result<MessageResponseModel>.Success(new MessageResponseModel("Login successful."));
     }
 
-    public async Task<Result<MessageResponseModel>> RefreshTokenAsync()
+    public async Task<Result<MessageResponseModel>> RefreshTokenAsync(CancellationToken cancellationToken = default)
     {
         var userId = ipersonAccessor.GetUserId();
         if (string.IsNullOrEmpty(userId))

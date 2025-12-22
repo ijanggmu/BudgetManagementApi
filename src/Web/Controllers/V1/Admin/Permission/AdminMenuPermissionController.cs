@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
@@ -36,6 +37,6 @@ public class AdminMenuPermissionController(IMenuPermissionService menuPermission
     /// <returns>Success message</returns>
     [HttpPost]
     [Permission(MenuPermissionConstant.MenuUpdate)]
-    public async Task<IActionResult> AssignAsync([FromBody] PermissionManagementViewModel managementViewModel)
-        => HandleResult(await menuPermissionService.AssignRolePermissionAsync(managementViewModel));
+    public async Task<IActionResult> AssignAsync([FromBody] PermissionManagementViewModel managementViewModel, CancellationToken cancellationToken = default)
+        => HandleResult(await menuPermissionService.AssignRolePermissionAsync(managementViewModel, cancellationToken));
 }

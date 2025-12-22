@@ -1,3 +1,4 @@
+using System.Threading;
 using Business.Common.Otp;
 using Data.Context;
 using Data.Entities.Identity;
@@ -17,7 +18,7 @@ public class AdminPasswordService(ApplicationDataContext dbContext,
  IUserProfileService ipersonAccessor,
  OtpGeneratorService otpGeneratorService) : IAdminPasswordService
 {
-    public async Task<Result<MessageResponseModel>> ChangePasswordAsync(ChangePasswordRequestModel requestModel)
+    public async Task<Result<MessageResponseModel>> ChangePasswordAsync(ChangePasswordRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var userId = ipersonAccessor.GetUserId();
 
@@ -50,7 +51,7 @@ public class AdminPasswordService(ApplicationDataContext dbContext,
         return Result<MessageResponseModel>.Success(new MessageResponseModel("Password changed successfully."));
     }
 
-    public async Task<Result<MessageResponseModel>> ForgetPasswordAsync(ForgetPasswordRequestModel requestModel)
+    public async Task<Result<MessageResponseModel>> ForgetPasswordAsync(ForgetPasswordRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByNameAsync(requestModel.UserName);
 
@@ -66,7 +67,7 @@ public class AdminPasswordService(ApplicationDataContext dbContext,
         return Result<MessageResponseModel>.Success(new MessageResponseModel("OTP sent successfully."));
     }
 
-    public async Task<Result<MessageResponseModel>> SetPasswordAsync(ChangePasswordRequestModel requestModel)
+    public async Task<Result<MessageResponseModel>> SetPasswordAsync(ChangePasswordRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var userId = ipersonAccessor.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
@@ -88,7 +89,7 @@ public class AdminPasswordService(ApplicationDataContext dbContext,
 
         return Result<MessageResponseModel>.Success(new MessageResponseModel("Password set successfully."));
     }
-    public async Task<Result<MessageResponseModel>> ResetPasswordWithOtpAsync(ResetPasswordRequestModel requestModel)
+    public async Task<Result<MessageResponseModel>> ResetPasswordWithOtpAsync(ResetPasswordRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(requestModel.UserName);
 

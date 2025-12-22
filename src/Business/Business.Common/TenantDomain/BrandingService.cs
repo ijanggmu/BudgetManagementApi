@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Data.Context;
 using Data.Entities.Identity;
@@ -48,7 +49,7 @@ public class BrandingService : IBrandingService
         );
     }
 
-    public async Task<Result<BrandingResponseDto>> GetAsync()
+    public async Task<Result<BrandingResponseDto>> GetAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -57,7 +58,7 @@ public class BrandingService : IBrandingService
 
             var branding = await _db.Set<CompanyBranding>()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.TenantId == _tenant.TenantId);
+                .FirstOrDefaultAsync(x => x.TenantId == _tenant.TenantId, cancellationToken);
 
             if (branding is null)
                 return Result<BrandingResponseDto>.Failed("Branding not found for current tenant.");
@@ -71,7 +72,7 @@ public class BrandingService : IBrandingService
         }
     }
 
-    public async Task<Result<BrandingResponseDto>> GetByTenantIdAsync(string tenantId)
+    public async Task<Result<BrandingResponseDto>> GetByTenantIdAsync(string tenantId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -90,7 +91,7 @@ public class BrandingService : IBrandingService
                     ur => ur.RoleId,
                     r => r.Id,
                     (ur, r) => r.Name)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             var isSuperAdmin = userRoles.Contains(SystemRoles.SuperAdmin);
 
@@ -101,14 +102,14 @@ public class BrandingService : IBrandingService
             // Verify tenant exists
             var tenant = await _db.Set<Tenant>()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Id == tenantId && t.IsActive);
+                .FirstOrDefaultAsync(t => t.Id == tenantId && t.IsActive, cancellationToken);
 
             if (tenant == null)
                 return Result<BrandingResponseDto>.Failed("Tenant not found or inactive.");
 
             var branding = await _db.Set<CompanyBranding>()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.TenantId == tenantId);
+                .FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
 
             if (branding is null)
                 return Result<BrandingResponseDto>.Failed("Branding not found for the specified tenant.");
@@ -122,16 +123,16 @@ public class BrandingService : IBrandingService
         }
     }
 
-    public async Task<Result<BrandingResponseDto>> UpdateAsync(UpdateBrandingDto dto)
+    public async Task<Result<BrandingResponseDto>> UpdateAsync(UpdateBrandingDto dto, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             if (_tenant.TenantId is null)
                 return Result<BrandingResponseDto>.Failed("Tenant not resolved.");
 
             var branding = await _db.Set<CompanyBranding>()
-                .FirstOrDefaultAsync(x => x.TenantId == _tenant.TenantId);
+                .FirstOrDefaultAsync(x => x.TenantId == _tenant.TenantId, cancellationToken);
 
             if (branding is null)
             {
@@ -151,14 +152,14 @@ public class BrandingService : IBrandingService
 
             branding.Version += 1;
 
-            await _db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             return Result<BrandingResponseDto>.Success(MapToDto(branding));
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             _logger.LogError(ex, "Error updating branding: {Message}", ex.Message);
             return Result<BrandingResponseDto>.Failed($"An error occurred while updating branding: {ex.Message}");
         }

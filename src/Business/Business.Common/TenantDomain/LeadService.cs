@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Business.AdminPortalApi.ExcelExport;
 using Data.Context;
@@ -77,9 +78,9 @@ public class LeadService : ILeadService
         );
     }
 
-    public async Task<Result<LeadResponseDto>> CreateLeadAsync(CreateLeadPublicDto dto)
+    public async Task<Result<LeadResponseDto>> CreateLeadAsync(CreateLeadPublicDto dto, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var contact = new Contact
@@ -89,16 +90,16 @@ public class LeadService : ILeadService
                 Phone = dto.Phone ?? string.Empty
             };
 
-            await _db.Contacts.AddAsync(contact);
-            await _db.SaveChangesAsync(); // Save to get contact ID
+            await _db.Contacts.AddAsync(contact, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken); // Save to get contact ID
 
             var prospect = new Prospect
             {
                 PrimaryContactId = contact.Id
             };
 
-            await _db.Prospects.AddAsync(prospect);
-            await _db.SaveChangesAsync(); // Save to get prospect ID
+            await _db.Prospects.AddAsync(prospect, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken); // Save to get prospect ID
 
             var lead = new Lead
             {
@@ -107,9 +108,9 @@ public class LeadService : ILeadService
                 Source = "Web"
             };
 
-            await _db.Leads.AddAsync(lead);
-            await _db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await _db.Leads.AddAsync(lead, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             // Reload lead with related entities for response
             await _db.Entry(lead).Reference(l => l.Prospect).LoadAsync();
@@ -119,18 +120,18 @@ public class LeadService : ILeadService
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             _logger.LogError(ex, "Error creating lead for contact {Email}: {Message}", dto.Email, ex.Message);
             throw;
         }
     }
 
-    public async Task<Result<LeadActivityResponseDto>> AddActivityAsync(string leadId, LeadActivityDto dto)
+    public async Task<Result<LeadActivityResponseDto>> AddActivityAsync(string leadId, LeadActivityDto dto, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var lead = await _db.Set<Lead>().FirstOrDefaultAsync(l => l.Id == leadId);
+            var lead = await _db.Set<Lead>().FirstOrDefaultAsync(l => l.Id == leadId, cancellationToken);
             if (lead == null)
                 return Result<LeadActivityResponseDto>.Failed("Lead not found.");
 
@@ -142,21 +143,21 @@ public class LeadService : ILeadService
                 When = DateTimeOffset.UtcNow
             };
 
-            await _db.LeadActivities.AddAsync(act);
-            await _db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await _db.LeadActivities.AddAsync(act, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             return Result<LeadActivityResponseDto>.Success(MapActivityToDto(act));
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             _logger.LogError(ex, "Error adding activity to lead {LeadId}: {Message}", leadId, ex.Message);
             throw;
         }
     }
 
-    public async Task<Result<List<LeadResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel)
+    public async Task<Result<List<LeadResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var query = _db.Set<Lead>()
             .Include(l => l.Prospect)
@@ -165,7 +166,7 @@ public class LeadService : ILeadService
             .AsQueryable();
 
         var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
-        var leads = await result.ToListAsync();
+        var leads = await result.ToListAsync(cancellationToken);
 
         var leadDtos = leads.Select(MapToDto).ToList();
 
@@ -180,7 +181,7 @@ public class LeadService : ILeadService
         return Result<List<LeadResponseDto>>.Success(leadDtos, pagination);
     }
 
-    public async Task<Result<LeadResponseDto>> GetByIdAsync(string id)
+    public async Task<Result<LeadResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var lead = await _db.Set<Lead>()
             .Include(l => l.Prospect)
@@ -194,12 +195,12 @@ public class LeadService : ILeadService
         return Result<LeadResponseDto>.Success(MapToDto(lead));
     }
 
-    public async Task<Result<LeadResponseDto>> UpdateStatusAsync(string id, string newStatus)
+    public async Task<Result<LeadResponseDto>> UpdateStatusAsync(string id, string newStatus, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            var lead = await _db.Set<Lead>().FirstOrDefaultAsync(l => l.Id == id);
+            var lead = await _db.Set<Lead>().FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
             if (lead == null)
                 return Result<LeadResponseDto>.Failed("Lead not found.");
 
@@ -215,7 +216,7 @@ public class LeadService : ILeadService
             }
 
             lead.Status = statusEnum;
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync();
 
             // Reload with related entities
@@ -232,9 +233,9 @@ public class LeadService : ILeadService
         }
     }
 
-    public async Task<Result<List<LeadActivityResponseDto>>> GetActivitiesAsync(string leadId)
+    public async Task<Result<List<LeadActivityResponseDto>>> GetActivitiesAsync(string leadId, CancellationToken cancellationToken = default)
     {
-        var lead = await _db.Set<Lead>().AsNoTracking().FirstOrDefaultAsync(l => l.Id == leadId);
+        var lead = await _db.Set<Lead>().AsNoTracking().FirstOrDefaultAsync(l => l.Id == leadId, cancellationToken);
         if (lead == null)
             return Result<List<LeadActivityResponseDto>>.Failed("Lead not found.");
 
@@ -248,7 +249,7 @@ public class LeadService : ILeadService
         return Result<List<LeadActivityResponseDto>>.Success(activityDtos);
     }
 
-    public async Task<Result<List<LeadResponseDto>>> GetLeadsForAdminAsync(CommonPaginationRequestModel requestModel)
+    public async Task<Result<List<LeadResponseDto>>> GetLeadsForAdminAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -297,7 +298,7 @@ public class LeadService : ILeadService
 
             // Apply Sieve filtering and pagination
             var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
-            var leads = await result.ToListAsync();
+            var leads = await result.ToListAsync(cancellationToken);
 
             var leadDtos = leads.Select(MapToDto).ToList();
 
@@ -318,7 +319,7 @@ public class LeadService : ILeadService
         }
     }
 
-    public async Task<Result<LeadResponseDto>> GetLeadDetailsForAdminAsync(string id)
+    public async Task<Result<LeadResponseDto>> GetLeadDetailsForAdminAsync(string id, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -357,7 +358,7 @@ public class LeadService : ILeadService
                 query = query.IgnoreQueryFilters();
             }
 
-            var lead = await query.FirstOrDefaultAsync(l => l.Id == id);
+            var lead = await query.FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
 
             if (lead == null)
                 return Result<LeadResponseDto>.Failed("Lead not found.");
@@ -377,7 +378,7 @@ public class LeadService : ILeadService
         }
     }
 
-    public async Task<Result<List<LeadResponseDto>>> GetLeadsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel)
+    public async Task<Result<List<LeadResponseDto>>> GetLeadsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -422,7 +423,7 @@ public class LeadService : ILeadService
 
             // Apply Sieve filtering and pagination
             var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
-            var leads = await result.ToListAsync();
+            var leads = await result.ToListAsync(cancellationToken);
 
             var leadDtos = leads.Select(MapToDto).ToList();
 
@@ -443,14 +444,12 @@ public class LeadService : ILeadService
         }
     }
 
-    public async Task<Result<byte[]>> ExportToExcelAsync(string? status = null, DateTime? from = null, DateTime? to = null, string? tenantId = null)
+    public async Task<Result<byte[]>> ExportToExcelAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         try
         {
-            var requestModel = new CommonPaginationRequestModel { PageNumber = 1, PageSize = int.MaxValue };
-            var result = string.IsNullOrEmpty(tenantId)
-                ? await GetLeadsForAdminAsync(requestModel)
-                : await GetLeadsByTenantIdAsync(tenantId, requestModel);
+            requestModel.PageSize = -1;
+            var result = await GetLeadsForAdminAsync(requestModel, cancellationToken);
 
             if (!result.IsSuccess || result.Data == null)
                 return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve lead data.");

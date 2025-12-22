@@ -1,3 +1,4 @@
+using System.Threading;
 using Business.Common.Otp;
 using Business.Common.Sms;
 using Business.Common.Token;
@@ -27,14 +28,14 @@ public class FodoRegistrationService(
     ISmsService smsService)
     : IFodoRegistrationService
 {
-    public async Task<Result<MessageResponseModel>> RegisterAsync(RegisterFodoRequestModel requestModel)
+    public async Task<Result<MessageResponseModel>> RegisterAsync(RegisterFodoRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             // Check if phone number already exists
             var phoneExists = await dbContext.Users
-                .AnyAsync(u => u.PhoneNumber == requestModel.MobileNumber && !u.IsDeleted);
+                .AnyAsync(u => u.PhoneNumber == requestModel.MobileNumber && !u.IsDeleted, cancellationToken);
 
             if (phoneExists)
                 return Result<MessageResponseModel>.Failed("Mobile number already exists.");
@@ -43,7 +44,7 @@ public class FodoRegistrationService(
             if (!string.IsNullOrWhiteSpace(requestModel.Email))
             {
                 var emailExists = await dbContext.Users
-                    .AnyAsync(u => u.Email == requestModel.Email && !u.IsDeleted);
+                    .AnyAsync(u => u.Email == requestModel.Email && !u.IsDeleted, cancellationToken);
 
                 if (emailExists)
                     return Result<MessageResponseModel>.Failed("Email already exists.");
@@ -52,7 +53,7 @@ public class FodoRegistrationService(
             // Check if country id is valid and get country dialing code
             var country = await dbContext.Countries
                 .Where(c => c.Id == requestModel.CountryId)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (country == null)
                 return Result<MessageResponseModel>.Failed("Invalid country id.");
@@ -94,9 +95,9 @@ public class FodoRegistrationService(
                 UserId = user.Id
             };
 
-            await dbContext.Fodos.AddAsync(fodo);
+            await dbContext.Fodos.AddAsync(fodo, cancellationToken);
 
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             var registerOtpCode = await otpGeneratorService.GenerateOtpAsync();
 
@@ -112,18 +113,18 @@ public class FodoRegistrationService(
             };
             smsService.QueueSms(smsRequest);
 
-            await transaction.CommitAsync();
+            await transaction.CommitAsync(cancellationToken);
 
             return Result<MessageResponseModel>.Success(new MessageResponseModel("Registration successful. Please verify your OTP."));
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             return Result<MessageResponseModel>.Failed($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Result<MessageResponseModel>> VerifyFodoOtpAsync(VerifyFodoOtpRequestModel requestModel)
+    public async Task<Result<MessageResponseModel>> VerifyFodoOtpAsync(VerifyFodoOtpRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByNameAsync(requestModel.Username);
 
@@ -134,7 +135,7 @@ public class FodoRegistrationService(
                                                 && x.Type == OtpType.SignUp
                                                 && x.Channel == OtpChannel.Sms
                                                 && !x.IsUsed)
-                                                    .FirstOrDefaultAsync();
+                                                    .FirstOrDefaultAsync(cancellationToken);
 
         if (storedOtpCode == null)
             return Result<MessageResponseModel>.Failed("OTP not found or already used.");
@@ -174,7 +175,7 @@ public class FodoRegistrationService(
         ipersonAccessor.SetAuthCookiesInClient(result, requestModel.Username);
 
         await userManager.UpdateAsync(user);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result<MessageResponseModel>.Success(new MessageResponseModel(ResponseMessage.OtpVerified));
     }

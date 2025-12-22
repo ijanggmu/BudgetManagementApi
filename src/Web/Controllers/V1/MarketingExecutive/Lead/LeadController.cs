@@ -6,45 +6,46 @@ using Microsoft.AspNetCore.Mvc;
 using Business.Common.TenantDomain;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
+using System.Threading;
 
 namespace BeemaEdgeApi.Controllers.V1.FoDo.Lead;
 
 public class LeadController(ILeadService leads) : BaseMarketingExecutiveApiController
 {
     [HttpPost]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateLeadPublicDto dto)
+    public async Task<IActionResult> CreateAsync([FromBody] CreateLeadPublicDto dto, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await leads.CreateLeadAsync(dto));
+        return HandleResult(await leads.CreateLeadAsync(dto, cancellationToken));
     }
 
     [HttpGet]
-    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel, [FromQuery] string? status, [FromQuery] DateTime? from, [FromQuery] DateTime? to)
+    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel, [FromQuery] string? status, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await leads.ListAsync(requestModel));
+        return HandleResult(await leads.ListAsync(requestModel, cancellationToken));
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetAsync(string id)
+    public async Task<IActionResult> GetAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await leads.GetByIdAsync(id));
+        return HandleResult(await leads.GetByIdAsync(id, cancellationToken));
     }
 
     [HttpPatch("{id}/status")]
-    public async Task<IActionResult> UpdateStatusAsync(string id, [FromBody] UpdateLeadStatusDto dto)
+    public async Task<IActionResult> UpdateStatusAsync(string id, [FromBody] UpdateLeadStatusDto dto, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await leads.UpdateStatusAsync(id, dto.Status));
+        return HandleResult(await leads.UpdateStatusAsync(id, dto.Status, cancellationToken));
     }
 
     [HttpPost("{id}/activities")]
-    public async Task<IActionResult> AddActivityAsync(string id, [FromBody] LeadActivityDto dto)
+    public async Task<IActionResult> AddActivityAsync(string id, [FromBody] LeadActivityDto dto, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await leads.AddActivityAsync(id, dto));
+        return HandleResult(await leads.AddActivityAsync(id, dto, cancellationToken));
     }
 
     [HttpGet("{id}/activities")]
-    public async Task<IActionResult> GetActivitiesAsync(string id)
+    public async Task<IActionResult> GetActivitiesAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await leads.GetActivitiesAsync(id));
+        return HandleResult(await leads.GetActivitiesAsync(id, cancellationToken));
     }
 }
 

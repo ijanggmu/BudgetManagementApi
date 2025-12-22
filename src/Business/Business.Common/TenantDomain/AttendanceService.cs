@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Business.AdminPortalApi.ExcelExport;
 using Data.Context;
@@ -33,7 +34,7 @@ public class AttendanceService(
     IConfiguration configuration,
     IExcelExportService excelExportService) : IAttendanceService
 {
-    public async Task<Result<AttendanceEntry>> CheckInAsync(string userId, double lat, double lng, string? remarks = null)
+    public async Task<Result<AttendanceEntry>> CheckInAsync(string userId, double lat, double lng, string? remarks = null, CancellationToken cancellationToken = default)
     {
         var entry = new AttendanceEntry
         {
@@ -46,15 +47,15 @@ public class AttendanceService(
         };
 
         db.Add(entry);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(cancellationToken);
 
         // Sync to tenant API in background (fire and forget)
-        _ = Task.Run(async () => await SyncAttendanceToTenantApiAsync(entry, userId));
+        _ = Task.Run(async () => await SyncAttendanceToTenantApiAsync(entry, userId, cancellationToken), cancellationToken);
 
         return Result<AttendanceEntry>.Success(entry);
     }
 
-    public async Task<Result<AttendanceEntry>> CheckOutAsync(string userId, double lat, double lng, string? remarks = null)
+    public async Task<Result<AttendanceEntry>> CheckOutAsync(string userId, double lat, double lng, string? remarks = null, CancellationToken cancellationToken = default)
     {
         var entry = new AttendanceEntry
         {
@@ -67,15 +68,15 @@ public class AttendanceService(
         };
 
         db.Add(entry);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(cancellationToken);
 
         // Sync to tenant API in background (fire and forget)
-        _ = Task.Run(async () => await SyncAttendanceToTenantApiAsync(entry, userId));
+        _ = Task.Run(async () => await SyncAttendanceToTenantApiAsync(entry, userId, cancellationToken), cancellationToken);
 
         return Result<AttendanceEntry>.Success(entry);
     }
 
-    public async Task<Result<List<AttendanceEntry>>> GetDailyAsync(string userId, DateTime date)
+    public async Task<Result<List<AttendanceEntry>>> GetDailyAsync(string userId, DateTime date, CancellationToken cancellationToken = default)
     {
         var startDate = date.Date;
         var endDate = startDate.AddDays(1);
@@ -84,12 +85,12 @@ public class AttendanceService(
             .AsNoTracking()
             .Where(a => a.UserId == userId && a.Timestamp >= startDate && a.Timestamp < endDate)
             .OrderBy(a => a.Timestamp)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return Result<List<AttendanceEntry>>.Success(entries);
     }
 
-    public async Task<Result<List<AttendanceEntry>>> GetMonthlyAsync(string userId, int year, int month)
+    public async Task<Result<List<AttendanceEntry>>> GetMonthlyAsync(string userId, int year, int month, CancellationToken cancellationToken = default)
     {
         var startDate = new DateTime(year, month, 1);
         var endDate = startDate.AddMonths(1);
@@ -98,12 +99,12 @@ public class AttendanceService(
             .AsNoTracking()
             .Where(a => a.UserId == userId && a.Timestamp >= startDate && a.Timestamp < endDate)
             .OrderBy(a => a.Timestamp)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return Result<List<AttendanceEntry>>.Success(entries);
     }
 
-    public async Task<Result<bool>> HasAttendanceTodayAsync(string userId)
+    public async Task<Result<bool>> HasAttendanceTodayAsync(string userId, CancellationToken cancellationToken = default)
     {
         var today = DateTime.UtcNow.Date;
         var tomorrow = today.AddDays(1);
@@ -113,13 +114,13 @@ public class AttendanceService(
             .AnyAsync(a => a.UserId == userId &&
                           a.Timestamp >= today &&
                           a.Timestamp < tomorrow &&
-                          a.Type == "CheckIn");
+                          a.Type == "CheckIn", cancellationToken);
 
         return Result<bool>.Success(hasAttendance);
     }
 
     public async Task<Result<List<AttendanceResponseDto>>> GetAttendanceForAdminAsync(
-        CommonPaginationRequestModel requestModel)
+        CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -137,7 +138,7 @@ public class AttendanceService(
                     ur => ur.RoleId,
                     r => r.Id,
                     (ur, r) => r.Name)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             var isSuperAdmin = userRoles.Contains(SystemRoles.SuperAdmin);
             var isAdmin = userRoles.Contains(SystemRoles.Admin);
@@ -159,18 +160,18 @@ public class AttendanceService(
             var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
             var attendanceEntries = await result
                 .OrderByDescending(a => a.Timestamp)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             // Get user information
             var userIds = attendanceEntries.Select(a => a.UserId).Distinct().ToList();
             var users = await db.Users
                 .Where(u => userIds.Contains(u.Id))
-                .ToDictionaryAsync(u => u.Id, u => u);
+                .ToDictionaryAsync(u => u.Id, u => u, cancellationToken);
 
             // Get FoDo information
             var fodos = await db.Fodos
                 .Where(f => userIds.Contains(f.UserId) && !f.IsDeleted)
-                .ToDictionaryAsync(f => f.UserId, f => f);
+                .ToDictionaryAsync(f => f.UserId, f => f, cancellationToken);
 
             // Get tenant names
             var tenantIds = attendanceEntries.Where(a => !string.IsNullOrEmpty(a.TenantId))
@@ -179,7 +180,7 @@ public class AttendanceService(
                 .ToList();
             var tenants = await db.Set<Data.Entities.Tenant.Tenant>()
                 .Where(t => tenantIds.Contains(t.Id))
-                .ToDictionaryAsync(t => t.Id, t => t.Name);
+                .ToDictionaryAsync(t => t.Id, t => t.Name, cancellationToken);
 
             // Map to DTOs
             var dtos = attendanceEntries.Select(entry =>
@@ -223,17 +224,12 @@ public class AttendanceService(
         }
     }
 
-    public async Task<Result<byte[]>> ExportToExcelAsync(
-        string? userId = null,
-        string? type = null,
-        DateTime? from = null,
-        DateTime? to = null,
-        string? tenantId = null)
+    public async Task<Result<byte[]>> ExportToExcelAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         try
         {
-            var requestModel = new CommonPaginationRequestModel { PageNumber = 1, PageSize = int.MaxValue };
-            var result = await GetAttendanceForAdminAsync(requestModel, userId, type, from, to, tenantId);
+            requestModel.PageSize = -1;
+            var result = await GetAttendanceForAdminAsync(requestModel, cancellationToken);
 
             if (!result.IsSuccess || result.Data == null)
                 return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve attendance data.");
@@ -264,7 +260,7 @@ public class AttendanceService(
         }
     }
 
-    private async Task SyncAttendanceToTenantApiAsync(AttendanceEntry entry, string userId)
+    private async Task SyncAttendanceToTenantApiAsync(AttendanceEntry entry, string userId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -285,8 +281,8 @@ public class AttendanceService(
             }
 
             // Get user and FoDo information
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            var fodo = await db.Fodos.FirstOrDefaultAsync(f => f.UserId == userId && !f.IsDeleted);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            var fodo = await db.Fodos.FirstOrDefaultAsync(f => f.UserId == userId && !f.IsDeleted, cancellationToken);
 
             var syncDto = new TenantAttendanceSyncDto(
                 entry.UserId,
@@ -308,7 +304,7 @@ public class AttendanceService(
             });
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync(apiUrl, content);
+            var response = await httpClient.PostAsync(apiUrl, content, cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {

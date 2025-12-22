@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
+using SharedKernel.Constant;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 using Tenant = Data.Entities.Tenant.Tenant;
@@ -52,7 +53,7 @@ public class TenantAdminService : ITenantAdminService
         _excelExportService = excelExportService;
     }
 
-    public async Task<Result<List<TenantsResponseDto>>> ListAsync(CommonPaginationRequestModel? requestModel = null)
+    public async Task<Result<List<TenantsResponseDto>>> ListAsync(CommonPaginationRequestModel? requestModel = null, CancellationToken cancellationToken = default)
     {
         var query = _db.Set<Tenant>()
             .Include(t => t.Branding)
@@ -93,7 +94,7 @@ public class TenantAdminService : ITenantAdminService
         return Result<List<TenantsResponseDto>>.Success(allTenants);
     }
 
-    public async Task<Result<TenantResponseDto>> GetByIdAsync(string id)
+    public async Task<Result<TenantResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var tenant = await _db.Tenants
             .Include(x => x.Branding)
@@ -130,7 +131,7 @@ public class TenantAdminService : ITenantAdminService
         return Result<TenantResponseDto>.Success(response);
     }
 
-    public async Task<Result<TenantsResponseDto>> CreateAsync(CreateTenantDto dto)
+    public async Task<Result<TenantsResponseDto>> CreateAsync(CreateTenantDto dto, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
@@ -273,7 +274,7 @@ public class TenantAdminService : ITenantAdminService
         }
     }
 
-    public async Task<Result<TenantsResponseDto>> UpdateAsync(string id, UpdateTenantDto dto)
+    public async Task<Result<TenantsResponseDto>> UpdateAsync(string id, UpdateTenantDto dto, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
@@ -322,7 +323,7 @@ public class TenantAdminService : ITenantAdminService
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(string id)
+    public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
@@ -345,7 +346,7 @@ public class TenantAdminService : ITenantAdminService
         }
     }
 
-    public async Task<Result<List<TenantDropdownDto>>> GetTenantsForDropdownAsync()
+    public async Task<Result<List<TenantDropdownDto>>> GetTenantsForDropdownAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -365,12 +366,12 @@ public class TenantAdminService : ITenantAdminService
         }
     }
 
-    public async Task<Result<byte[]>> ExportToExcelAsync()
+    public async Task<Result<byte[]>> ExportToExcelAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         try
         {
-            var requestModel = new CommonPaginationRequestModel { PageNumber = 1, PageSize = int.MaxValue };
-            var result = await ListAsync(requestModel);
+            requestModel.PageSize = -1;
+            var result = await ListAsync(requestModel, cancellationToken);
 
             if (!result.IsSuccess || result.Data == null)
                 return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve tenant data.");

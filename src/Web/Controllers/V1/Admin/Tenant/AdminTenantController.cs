@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
@@ -14,37 +15,37 @@ public class AdminTenantController(ITenantAdminService service) : BaseAdminApiCo
 {
     [HttpPost]
     [Permission(MenuPermissionConstant.TenantsView)]
-    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel)
+    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.ListAsync(requestModel));
+        return HandleResult(await service.ListAsync(requestModel, cancellationToken));
     }
 
     [HttpGet("{id}")]
     [Permission(MenuPermissionConstant.TenantsView)]
-    public async Task<IActionResult> GetAsync(string id)
+    public async Task<IActionResult> GetAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.GetByIdAsync(id));
+        return HandleResult(await service.GetByIdAsync(id, cancellationToken));
     }
 
     [HttpPost("Create")]
     [Permission(MenuPermissionConstant.TenantsCreate)]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateTenantDto dto)
+    public async Task<IActionResult> CreateAsync([FromBody] CreateTenantDto dto, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.CreateAsync(dto));
+        return HandleResult(await service.CreateAsync(dto, cancellationToken));
     }
 
     [HttpPatch("{id}")]
     [Permission(MenuPermissionConstant.TenantsUpdate)]
-    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateTenantDto dto)
+    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateTenantDto dto, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.UpdateAsync(id, dto));
+        return HandleResult(await service.UpdateAsync(id, dto, cancellationToken));
     }
 
     [HttpDelete("{id}")]
     [Permission(MenuPermissionConstant.TenantsDelete)]
-    public async Task<IActionResult> DeleteAsync(string id)
+    public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.DeleteAsync(id));
+        return HandleResult(await service.DeleteAsync(id, cancellationToken));
     }
 
     /// <summary>
@@ -53,20 +54,24 @@ public class AdminTenantController(ITenantAdminService service) : BaseAdminApiCo
     /// <returns>List of active tenants (Id, Name, Slug)</returns>
     [HttpGet("dropdown")]
     [Permission(MenuPermissionConstant.TenantsView)]
-    public async Task<IActionResult> GetTenantsForDropdownAsync()
+    public async Task<IActionResult> GetTenantsForDropdownAsync(CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.GetTenantsForDropdownAsync());
+        return HandleResult(await service.GetTenantsForDropdownAsync(cancellationToken));
     }
 
     /// <summary>
     /// Export all tenants to Excel
     /// </summary>
+    /// <param name="requestModel">Pagination and filter parameters</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Excel file</returns>
-    [HttpGet("export")]
+    [HttpPost("export")]
     [Permission(MenuPermissionConstant.TenantsExport)]
-    public async Task<IActionResult> ExportToExcelAsync()
+    public async Task<IActionResult> ExportToExcelAsync(
+        [FromBody] CommonPaginationRequestModel requestModel,
+        CancellationToken cancellationToken = default)
     {
-        var result = await service.ExportToExcelAsync();
+        var result = await service.ExportToExcelAsync(requestModel, cancellationToken);
         if (!result.IsSuccess || result.Data == null)
             return HandleResult(result);
 

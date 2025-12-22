@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.Common.TenantDomain;
@@ -16,8 +17,8 @@ public class MarketingExecutiveRegistrationController(IFodoRegistrationService f
     /// <param name="requestModel">Fodo registration data</param>
     /// <returns>Success message with OTP sent notification</returns>
     [HttpPost("register")]
-    public async Task<IActionResult> RegisterAsync([FromBody] RegisterFodoRequestModel requestModel)
-        => HandleResult(await fodoRegistrationService.RegisterAsync(requestModel));
+    public async Task<IActionResult> RegisterAsync([FromBody] RegisterFodoRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoRegistrationService.RegisterAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Verify OTP for fodo registration
@@ -25,7 +26,7 @@ public class MarketingExecutiveRegistrationController(IFodoRegistrationService f
     /// <param name="requestModel">OTP verification data</param>
     /// <returns>Success message with authentication token</returns>
     [HttpPost("verify-otp")]
-    public async Task<IActionResult> VerifyOtpAsync([FromBody] VerifyFodoOtpRequestModel requestModel)
-        => HandleResult(await fodoRegistrationService.VerifyFodoOtpAsync(requestModel));
+    public async Task<IActionResult> VerifyOtpAsync([FromBody] VerifyFodoOtpRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoRegistrationService.VerifyFodoOtpAsync(requestModel, cancellationToken));
 }
 

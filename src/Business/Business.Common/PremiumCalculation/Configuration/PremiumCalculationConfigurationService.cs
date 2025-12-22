@@ -1,4 +1,5 @@
 using System.Net;
+using System.Threading;
 using Data.Context;
 using Data.Entities.Tenant;
 using Infrastructure.Common.UserProfile;
@@ -24,7 +25,7 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
     public async Task<Result<PremiumCalculationConfigurationDto>> GetConfigurationAsync(
         string portfolioAlias, 
         string fiscalYear, 
-        DateTime? effectiveDate = null)
+        DateTime? effectiveDate = null, CancellationToken cancellationToken = default)
     {
         var query = _db.PremiumCalculationConfigurations
             .Include(c => c.Parameters)
@@ -44,7 +45,7 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
 
         var config = await query
             .OrderByDescending(c => c.Version)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (config == null)
         {
@@ -58,14 +59,14 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
         return Result<PremiumCalculationConfigurationDto>.Success(MapToDto(config));
     }
 
-    public async Task<Result<PremiumCalculationConfigurationDto>> GetConfigurationByIdAsync(string id)
+    public async Task<Result<PremiumCalculationConfigurationDto>> GetConfigurationByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var config = await _db.PremiumCalculationConfigurations
             .Include(c => c.Parameters)
             .Include(c => c.Rules)
             .Include(c => c.RateTables)
             .Where(c => c.Id == id && !c.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (config == null)
         {
@@ -81,7 +82,7 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
 
     public async Task<Result<List<PremiumCalculationConfigurationDto>>> GetAllConfigurationsAsync(
         string? portfolioAlias = null, 
-        string? fiscalYear = null)
+        string? fiscalYear = null, CancellationToken cancellationToken = default)
     {
         var query = _db.PremiumCalculationConfigurations
             .Include(c => c.Parameters)
@@ -103,20 +104,20 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
         var configs = await query
             .OrderByDescending(c => c.FiscalYear)
             .ThenByDescending(c => c.Version)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var dtos = configs.Select(MapToDto).ToList();
         return Result<List<PremiumCalculationConfigurationDto>>.Success(dtos);
     }
 
     public async Task<Result<PremiumCalculationConfigurationDto>> CreateConfigurationAsync(
-        CreatePremiumCalculationConfigurationDto dto)
+        CreatePremiumCalculationConfigurationDto dto, CancellationToken cancellationToken = default)
     {
         // Check if configuration already exists
         var exists = await _db.PremiumCalculationConfigurations
             .AnyAsync(c => c.PortfolioAlias == dto.PortfolioAlias && 
                           c.FiscalYear == dto.FiscalYear && 
-                          !c.IsDeleted);
+                          !c.IsDeleted, cancellationToken);
 
         if (exists)
         {
@@ -137,18 +138,18 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
         };
 
         _db.PremiumCalculationConfigurations.Add(config);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<PremiumCalculationConfigurationDto>.Success(MapToDto(config));
     }
 
     public async Task<Result<PremiumCalculationConfigurationDto>> UpdateConfigurationAsync(
         string id, 
-        UpdatePremiumCalculationConfigurationDto dto)
+        UpdatePremiumCalculationConfigurationDto dto, CancellationToken cancellationToken = default)
     {
         var config = await _db.PremiumCalculationConfigurations
             .Where(c => c.Id == id && !c.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (config == null)
         {
@@ -170,7 +171,7 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
         if (!string.IsNullOrEmpty(dto.CalculationEngineType))
             config.CalculationEngineType = dto.CalculationEngineType;
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         // Reload with includes
         var updated = await _db.PremiumCalculationConfigurations
@@ -178,16 +179,16 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
             .Include(c => c.Rules)
             .Include(c => c.RateTables)
             .Where(c => c.Id == id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         return Result<PremiumCalculationConfigurationDto>.Success(MapToDto(updated!));
     }
 
-    public async Task<Result<bool>> DeleteConfigurationAsync(string id)
+    public async Task<Result<bool>> DeleteConfigurationAsync(string id, CancellationToken cancellationToken = default)
     {
         var config = await _db.PremiumCalculationConfigurations
             .Where(c => c.Id == id && !c.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (config == null)
         {
@@ -199,21 +200,21 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
         }
 
         config.IsDeleted = true;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<bool>.Success(true);
     }
 
     public async Task<Result<PremiumCalculationConfigurationDto>> ActivateConfigurationAsync(
         string id, 
-        string fiscalYear)
+        string fiscalYear, CancellationToken cancellationToken = default)
     {
         var config = await _db.PremiumCalculationConfigurations
             .Include(c => c.Parameters)
             .Include(c => c.Rules)
             .Include(c => c.RateTables)
             .Where(c => c.Id == id && !c.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (config == null)
         {
@@ -230,24 +231,24 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
                        c.FiscalYear == fiscalYear && 
                        c.Id != id && 
                        !c.IsDeleted)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.IsActive, false));
+            .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.IsActive, false), cancellationToken);
 
         config.IsActive = true;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<PremiumCalculationConfigurationDto>.Success(MapToDto(config));
     }
 
     public async Task<Result<PremiumCalculationConfigurationDto>> CloneConfigurationAsync(
         string id, 
-        string newFiscalYear)
+        string newFiscalYear, CancellationToken cancellationToken = default)
     {
         var source = await _db.PremiumCalculationConfigurations
             .Include(c => c.Parameters)
             .Include(c => c.Rules)
             .Include(c => c.RateTables)
             .Where(c => c.Id == id && !c.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (source == null)
         {
@@ -262,7 +263,7 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
         var exists = await _db.PremiumCalculationConfigurations
             .AnyAsync(c => c.PortfolioAlias == source.PortfolioAlias && 
                           c.FiscalYear == newFiscalYear && 
-                          !c.IsDeleted);
+                          !c.IsDeleted, cancellationToken);
 
         if (exists)
         {
@@ -283,7 +284,7 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
         };
 
         _db.PremiumCalculationConfigurations.Add(cloned);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         // Clone parameters
         foreach (var param in source.Parameters.Where(p => !p.IsDeleted))
@@ -332,7 +333,7 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
             });
         }
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         // Reload with includes
         var result = await _db.PremiumCalculationConfigurations
@@ -340,7 +341,7 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
             .Include(c => c.Rules)
             .Include(c => c.RateTables)
             .Where(c => c.Id == cloned.Id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         return Result<PremiumCalculationConfigurationDto>.Success(MapToDto(result!));
     }
@@ -348,9 +349,9 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
     public async Task<Result<object>> GetParameterValueAsync(
         string portfolioAlias, 
         string fiscalYear, 
-        string parameterKey)
+        string parameterKey, CancellationToken cancellationToken = default)
     {
-        var config = await GetConfigurationAsync(portfolioAlias, fiscalYear);
+        var config = await GetConfigurationAsync(portfolioAlias, fiscalYear, null, cancellationToken);
         if (!config.IsSuccess)
         {
             return Result<object>.Failed(config.Error, config.ErrorCode, null, config.StatusCode);
@@ -381,13 +382,13 @@ public class PremiumCalculationConfigurationService : IPremiumCalculationConfigu
         return Result<object>.Success(value);
     }
 
-    public async Task<Result<bool>> ValidateConfigurationAsync(string configurationId)
+    public async Task<Result<bool>> ValidateConfigurationAsync(string configurationId, CancellationToken cancellationToken = default)
     {
         var config = await _db.PremiumCalculationConfigurations
             .Include(c => c.Parameters)
             .Include(c => c.Rules)
             .Where(c => c.Id == configurationId && !c.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (config == null)
         {

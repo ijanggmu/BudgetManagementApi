@@ -23,7 +23,7 @@ public class AdminTwoFactorService(
     StringCipherService stringCipherService)
     : IAdminTwoFactorService
 {
-    public async Task<Result<TwoFaResponseModel>> Set2FaAsync()
+    public async Task<Result<TwoFaResponseModel>> Set2FaAsync(CancellationToken cancellationToken)
     {
         var userId = ipersonAccessor.GetUserId();
         var roleId = ipersonAccessor.GetRoleId();
@@ -31,7 +31,7 @@ public class AdminTwoFactorService(
 
         var user = await userManager.FindByIdAsync(userId);
 
-        if (!await dbContext.Roles.AnyAsync(x => roleIds.Contains(x.Name) && x.RoleType == SystemRoles.Admin))
+        if (!await dbContext.Roles.AnyAsync(x => roleIds.Contains(x.Name) && x.RoleType == SystemRoles.Admin, cancellationToken: cancellationToken))
             return Result<TwoFaResponseModel>.Failed(ResponseMessage.UserNotFound);
 
         var qrCode = await totpService.GenerateTotpQrCode(user);
@@ -42,7 +42,7 @@ public class AdminTwoFactorService(
             Message = "2FA QR code generated. Scan using your authenticator app."
         });
     }
-    public async Task<Result<TwoFaValidateResponseModel>> ValidateTotpCodeAsync(string code)
+    public async Task<Result<TwoFaValidateResponseModel>> ValidateTotpCodeAsync(string code, CancellationToken cancellationToken)
     {
         var userId = ipersonAccessor.GetUserId();
 
@@ -69,6 +69,7 @@ public class AdminTwoFactorService(
             user.TwoFactorEnabled = true;
 
             dbContext.Users.Update(user);
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             return Result<TwoFaValidateResponseModel>.Success(new TwoFaValidateResponseModel()
             {
@@ -79,7 +80,7 @@ public class AdminTwoFactorService(
         else
             return Result<TwoFaValidateResponseModel>.Failed(ResponseMessage.Invalid2FACode);
     }
-    public async Task<Result<MessageResponseModel>> Disable2FaAsync()
+    public async Task<Result<MessageResponseModel>> Disable2FaAsync(CancellationToken cancellationToken)
     {
         var userLogged = ipersonAccessor.GetUser();
 
@@ -96,7 +97,7 @@ public class AdminTwoFactorService(
 
         return Result<MessageResponseModel>.Success(new MessageResponseModel("2FA disabled successfully."));
     }
-    public async Task<Result<List<UserTotpBackUpCodeResponseModel>>> Generate2FaBackUpCodesAsync()
+    public async Task<Result<List<UserTotpBackUpCodeResponseModel>>> Generate2FaBackUpCodesAsync(CancellationToken cancellationToken)
     {
         var userLogged = ipersonAccessor.GetUser();
 
@@ -107,7 +108,7 @@ public class AdminTwoFactorService(
             .Where(x => x.User.Id == userId && !x.User.IsDeleted &&
                         x.User.TotpSecurityStamp != null)
             .Select(x => x.User)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (agentUser == null)
             return Result<List<UserTotpBackUpCodeResponseModel>>.Failed("Admin not found or 2 FA not enabled.");
@@ -117,7 +118,7 @@ public class AdminTwoFactorService(
         agentUser.UserTotpBackUpCodes = pinCodesHash;
 
         dbContext.Users.Update(agentUser);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result<List<UserTotpBackUpCodeResponseModel>>.Success(pinCodes.Select(x =>
             new UserTotpBackUpCodeResponseModel { CodeHash = x, CreatedOn = pinCodesHash.Select(x => x.CreatedOn).FirstOrDefault().ToUtcString() }).ToList());
@@ -141,7 +142,7 @@ public class AdminTwoFactorService(
         return (pinCodes, pinCodesHash);
     }
 
-    public async Task<Result<List<UserTotpBackUpCodeResponseModel>>> GetAll2FaBackUpCodesAsync()
+    public async Task<Result<List<UserTotpBackUpCodeResponseModel>>> GetAll2FaBackUpCodesAsync(CancellationToken cancellationToken)
     {
         var userLogged = ipersonAccessor.GetUser();
         var userId = userLogged.UserId;
@@ -151,7 +152,7 @@ public class AdminTwoFactorService(
             .Where(x => x.User.Id == userId && !x.User.IsDeleted &&
                         x.User.TotpSecurityStamp != null)
             .Select(x => x.User.UserTotpBackUpCodes)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (backUpCodesHashed == null)
             return Result<List<UserTotpBackUpCodeResponseModel>>.Failed("Admin not found or 2 FA not enabled.");

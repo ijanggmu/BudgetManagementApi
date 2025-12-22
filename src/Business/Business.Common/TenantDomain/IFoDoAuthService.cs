@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.AspNetCore.Http;
 using Models.BeemaEdgeApi.Fodo;
 using Models.BeemaEdgeApi.Identity;
@@ -8,9 +9,9 @@ namespace Business.Common.TenantDomain;
 
 public interface IFodoAuthService
 {
-    Task<Result<LoginCustomerResponseModel>> LoginAsync(AgentLoginRequestModel requestModel);
-    Task<Result<MessageResponseModel>> Login2FaAsync(Verify2FaCustomerRequestModel requestModel);
-    Task<Result<MessageResponseModel>> RefreshTokenAsync();
+    Task<Result<LoginCustomerResponseModel>> LoginAsync(AgentLoginRequestModel requestModel, CancellationToken cancellationToken = default);
+    Task<Result<MessageResponseModel>> Login2FaAsync(Verify2FaCustomerRequestModel requestModel, CancellationToken cancellationToken = default);
+    Task<Result<MessageResponseModel>> RefreshTokenAsync(CancellationToken cancellationToken = default);
     Result<MessageResponseModel> Logout(HttpResponse response);
 }
 

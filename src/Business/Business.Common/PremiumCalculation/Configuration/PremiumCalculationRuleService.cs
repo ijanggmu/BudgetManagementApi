@@ -1,4 +1,5 @@
 using System.Net;
+using System.Threading;
 using Data.Context;
 using Data.Entities.Tenant;
 using Infrastructure.Common.UserProfile;
@@ -24,9 +25,9 @@ public class PremiumCalculationRuleService : IPremiumCalculationRuleService
         _userProfileService = userProfileService;
     }
 
-    public async Task<Result<List<PremiumCalculationRuleDto>>> GetRulesByConfigurationIdAsync(string configurationId)
+    public async Task<Result<List<PremiumCalculationRuleDto>>> GetRulesByConfigurationIdAsync(string configurationId, CancellationToken cancellationToken = default)
     {
-        var config = await _configService.GetConfigurationByIdAsync(configurationId);
+        var config = await _configService.GetConfigurationByIdAsync(configurationId, cancellationToken);
         if (!config.IsSuccess)
         {
             return Result<List<PremiumCalculationRuleDto>>.Failed(
@@ -39,11 +40,11 @@ public class PremiumCalculationRuleService : IPremiumCalculationRuleService
         return Result<List<PremiumCalculationRuleDto>>.Success(config.Data.Rules);
     }
 
-    public async Task<Result<PremiumCalculationRuleDto>> GetRuleByIdAsync(string id)
+    public async Task<Result<PremiumCalculationRuleDto>> GetRuleByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var rule = await _db.PremiumCalculationRules
             .Where(r => r.Id == id && !r.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (rule == null)
         {
@@ -59,10 +60,10 @@ public class PremiumCalculationRuleService : IPremiumCalculationRuleService
 
     public async Task<Result<PremiumCalculationRuleDto>> CreateRuleAsync(
         string configurationId, 
-        CreatePremiumCalculationRuleDto dto)
+        CreatePremiumCalculationRuleDto dto, CancellationToken cancellationToken = default)
     {
         // Verify configuration exists
-        var config = await _configService.GetConfigurationByIdAsync(configurationId);
+        var config = await _configService.GetConfigurationByIdAsync(configurationId, cancellationToken);
         if (!config.IsSuccess)
         {
             return Result<PremiumCalculationRuleDto>.Failed(
@@ -84,18 +85,18 @@ public class PremiumCalculationRuleService : IPremiumCalculationRuleService
         };
 
         _db.PremiumCalculationRules.Add(rule);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<PremiumCalculationRuleDto>.Success(MapToDto(rule));
     }
 
     public async Task<Result<PremiumCalculationRuleDto>> UpdateRuleAsync(
         string id, 
-        CreatePremiumCalculationRuleDto dto)
+        CreatePremiumCalculationRuleDto dto, CancellationToken cancellationToken = default)
     {
         var rule = await _db.PremiumCalculationRules
             .Where(r => r.Id == id && !r.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (rule == null)
         {
@@ -113,16 +114,16 @@ public class PremiumCalculationRuleService : IPremiumCalculationRuleService
         rule.Priority = dto.Priority;
         rule.IsActive = dto.IsActive;
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<PremiumCalculationRuleDto>.Success(MapToDto(rule));
     }
 
-    public async Task<Result<bool>> DeleteRuleAsync(string id)
+    public async Task<Result<bool>> DeleteRuleAsync(string id, CancellationToken cancellationToken = default)
     {
         var rule = await _db.PremiumCalculationRules
             .Where(r => r.Id == id && !r.IsDeleted)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (rule == null)
         {
@@ -134,7 +135,7 @@ public class PremiumCalculationRuleService : IPremiumCalculationRuleService
         }
 
         rule.IsDeleted = true;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Result<bool>.Success(true);
     }

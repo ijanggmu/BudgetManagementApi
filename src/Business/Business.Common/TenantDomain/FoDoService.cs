@@ -1,3 +1,4 @@
+using System.Threading;
 using Data.Context;
 using Data.Entities.FodoEntity;
 using Data.Entities.Identity;
@@ -18,7 +19,7 @@ public class FodoService(
     ISieveExtension sieveExtension)
     : IFodoService
 {
-    public async Task<Result<List<FodoResponseDto>>> GetFodosForAdminAsync(string? tenantId = null)
+    public async Task<Result<List<FodoResponseDto>>> GetFodosForAdminAsync(string tenantId = null, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
@@ -51,11 +52,11 @@ public class FodoService(
         }
         // For Admin: only show fodos from their tenant (global query filter applies)
 
-        var fodos = await query.ToListAsync();
+        var fodos = await query.ToListAsync(cancellationToken);
 
         // Get tenant names for all unique tenant IDs
         var tenantIds = fodos.Where(a => !string.IsNullOrEmpty(a.TenantId)).Select(a => a.TenantId).Distinct().ToList();
-        var tenants = await db.Tenants.Where(t => tenantIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.Name);
+        var tenants = await db.Tenants.Where(t => tenantIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.Name, cancellationToken);
 
         var dtos = fodos.Select(a => new FodoResponseDto
         {
@@ -73,7 +74,7 @@ public class FodoService(
         return Result<List<FodoResponseDto>>.Success(dtos);
     }
 
-    public async Task<Result<FodoResponseDto>> GetFodoByIdAsync(string id)
+    public async Task<Result<FodoResponseDto>> GetFodoByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
@@ -93,7 +94,7 @@ public class FodoService(
         if (isSuperAdmin)
             query = query.IgnoreQueryFilters();
 
-        var fodo = await query.FirstOrDefaultAsync();
+        var fodo = await query.FirstOrDefaultAsync(cancellationToken);
 
         if (fodo == null)
             return Result<FodoResponseDto>.Failed("Fodo not found.");
@@ -101,7 +102,7 @@ public class FodoService(
         var tenantName = string.Empty;
         if (!string.IsNullOrEmpty(fodo.TenantId))
         {
-            var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == fodo.TenantId);
+            var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == fodo.TenantId, cancellationToken);
             tenantName = tenant?.Name ?? string.Empty;
         }
 
@@ -121,9 +122,9 @@ public class FodoService(
         return Result<FodoResponseDto>.Success(dto);
     }
 
-    public async Task<Result<FodoResponseDto>> CreateAsync(CreateFodoDto dto)
+    public async Task<Result<FodoResponseDto>> CreateAsync(CreateFodoDto dto, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var userId = userProfileService.GetUserId();
@@ -146,7 +147,7 @@ public class FodoService(
 
             // Check if phone number already exists
             var phoneExists = await db.Users
-                .AnyAsync(u => u.PhoneNumber == dto.MobileNumber && !u.IsDeleted);
+                .AnyAsync(u => u.PhoneNumber == dto.MobileNumber && !u.IsDeleted, cancellationToken);
 
             if (phoneExists)
                 return Result<FodoResponseDto>.Failed("Mobile number already exists.");
@@ -155,7 +156,7 @@ public class FodoService(
             if (!string.IsNullOrWhiteSpace(dto.Email))
             {
                 var emailExists = await db.Users
-                    .AnyAsync(u => u.Email == dto.Email && !u.IsDeleted);
+                    .AnyAsync(u => u.Email == dto.Email && !u.IsDeleted, cancellationToken);
 
                 if (emailExists)
                     return Result<FodoResponseDto>.Failed("Email already exists.");
@@ -163,7 +164,7 @@ public class FodoService(
 
             // Get country dialing code
             var country = await db.Countries
-                .FirstOrDefaultAsync(c => c.Id == dto.CountryId);
+                .FirstOrDefaultAsync(c => c.Id == dto.CountryId, cancellationToken);
 
             if (country == null)
                 return Result<FodoResponseDto>.Failed("Invalid country ID.");
@@ -172,7 +173,7 @@ public class FodoService(
 
             // Check if username already exists
             var usernameExists = await db.Users
-                .AnyAsync(u => u.UserName == username && !u.IsDeleted);
+                .AnyAsync(u => u.UserName == username && !u.IsDeleted, cancellationToken);
 
             if (usernameExists)
                 return Result<FodoResponseDto>.Failed("Username already exists.");
@@ -212,9 +213,9 @@ public class FodoService(
                 TenantId = tenantId
             };
 
-            await db.Fodos.AddAsync(fodo);
-            await db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await db.Fodos.AddAsync(fodo, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             var responseDto = new FodoResponseDto
             {
@@ -232,14 +233,14 @@ public class FodoService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             return Result<FodoResponseDto>.Failed($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Result<FodoResponseDto>> UpdateAsync(string id, UpdateFodoDto dto)
+    public async Task<Result<FodoResponseDto>> UpdateAsync(string id, UpdateFodoDto dto, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var userId = userProfileService.GetUserId();
@@ -260,7 +261,7 @@ public class FodoService(
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
 
-            var fodo = await query.FirstOrDefaultAsync();
+            var fodo = await query.FirstOrDefaultAsync(cancellationToken);
 
             if (fodo == null)
                 return Result<FodoResponseDto>.Failed("Fodo not found.");
@@ -272,7 +273,7 @@ public class FodoService(
             if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email != fodo.User.Email)
             {
                 var emailExists = await db.Users
-                    .AnyAsync(u => u.Email == dto.Email && u.Id != fodo.UserId && !u.IsDeleted);
+                    .AnyAsync(u => u.Email == dto.Email && u.Id != fodo.UserId && !u.IsDeleted, cancellationToken);
 
                 if (emailExists)
                     return Result<FodoResponseDto>.Failed("Email already exists.");
@@ -283,7 +284,7 @@ public class FodoService(
             if (!string.IsNullOrWhiteSpace(dto.MobileNumber) && dto.MobileNumber != fodo.User.PhoneNumber)
             {
                 var phoneExists = await db.Users
-                    .AnyAsync(u => u.PhoneNumber == dto.MobileNumber && u.Id != fodo.UserId && !u.IsDeleted);
+                    .AnyAsync(u => u.PhoneNumber == dto.MobileNumber && u.Id != fodo.UserId && !u.IsDeleted, cancellationToken);
 
                 if (phoneExists)
                     return Result<FodoResponseDto>.Failed("Mobile number already exists.");
@@ -296,8 +297,8 @@ public class FodoService(
                 return Result<FodoResponseDto>.Failed(updateResult.Errors.FirstOrDefault()?.Description ?? "Failed to update user.");
 
             db.Fodos.Update(fodo);
-            await db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             var responseDto = new FodoResponseDto
             {
@@ -315,14 +316,14 @@ public class FodoService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             return Result<FodoResponseDto>.Failed($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(string id)
+    public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var userId = userProfileService.GetUserId();
@@ -343,7 +344,7 @@ public class FodoService(
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
 
-            var fodo = await query.FirstOrDefaultAsync();
+            var fodo = await query.FirstOrDefaultAsync(cancellationToken);
 
             if (fodo == null)
                 return Result<bool>.Failed("Fodo not found.");
@@ -354,14 +355,14 @@ public class FodoService(
 
             db.Fodos.Update(fodo);
             db.Users.Update(fodo.User);
-            await db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             return Result<bool>.Failed($"An error occurred: {ex.Message}");
         }
     }

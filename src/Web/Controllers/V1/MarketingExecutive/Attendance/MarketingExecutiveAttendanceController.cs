@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.Common.TenantDomain;
@@ -17,13 +18,13 @@ public class MarketingExecutiveAttendanceController(
     /// <param name="dto">Attendance check-in data with location</param>
     /// <returns>Attendance entry</returns>
     [HttpPost("check-in")]
-    public async Task<IActionResult> CheckIn([FromBody] AttendanceDto dto)
+    public async Task<IActionResult> CheckIn([FromBody] AttendanceDto dto, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
 
-        return HandleResult(await attendanceService.CheckInAsync(userId, dto.Latitude, dto.Longitude, dto.Remarks));
+        return HandleResult(await attendanceService.CheckInAsync(userId, dto.Latitude, dto.Longitude, dto.Remarks, cancellationToken));
     }
 
     /// <summary>
@@ -32,13 +33,13 @@ public class MarketingExecutiveAttendanceController(
     /// <param name="dto">Attendance check-out data with location</param>
     /// <returns>Attendance entry</returns>
     [HttpPost("check-out")]
-    public async Task<IActionResult> CheckOut([FromBody] AttendanceDto dto)
+    public async Task<IActionResult> CheckOut([FromBody] AttendanceDto dto, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
 
-        return HandleResult(await attendanceService.CheckOutAsync(userId, dto.Latitude, dto.Longitude, dto.Remarks));
+        return HandleResult(await attendanceService.CheckOutAsync(userId, dto.Latitude, dto.Longitude, dto.Remarks, cancellationToken));
     }
 
     /// <summary>
@@ -47,14 +48,14 @@ public class MarketingExecutiveAttendanceController(
     /// <param name="date">Date to get attendance for (defaults to today)</param>
     /// <returns>List of attendance entries for the day</returns>
     [HttpGet("daily")]
-    public async Task<IActionResult> GetDaily([FromQuery] DateTime? date)
+    public async Task<IActionResult> GetDaily([FromQuery] DateTime? date, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
 
         var targetDate = date ?? DateTime.UtcNow.Date;
-        return HandleResult(await attendanceService.GetDailyAsync(userId, targetDate));
+        return HandleResult(await attendanceService.GetDailyAsync(userId, targetDate, cancellationToken));
     }
 
     /// <summary>
@@ -64,7 +65,7 @@ public class MarketingExecutiveAttendanceController(
     /// <param name="month">Month (defaults to current month)</param>
     /// <returns>List of attendance entries for the month</returns>
     [HttpGet("monthly")]
-    public async Task<IActionResult> GetMonthly([FromQuery] int? year, [FromQuery] int? month)
+    public async Task<IActionResult> GetMonthly([FromQuery] int? year, [FromQuery] int? month, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
@@ -72,7 +73,7 @@ public class MarketingExecutiveAttendanceController(
 
         var targetYear = year ?? DateTime.UtcNow.Year;
         var targetMonth = month ?? DateTime.UtcNow.Month;
-        return HandleResult(await attendanceService.GetMonthlyAsync(userId, targetYear, targetMonth));
+        return HandleResult(await attendanceService.GetMonthlyAsync(userId, targetYear, targetMonth, cancellationToken));
     }
 
     /// <summary>
@@ -80,13 +81,13 @@ public class MarketingExecutiveAttendanceController(
     /// </summary>
     /// <returns>True if check-in was performed today, false otherwise</returns>
     [HttpGet("today/status")]
-    public async Task<IActionResult> GetTodayStatus()
+    public async Task<IActionResult> GetTodayStatus(CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
 
-        return HandleResult(await attendanceService.HasAttendanceTodayAsync(userId));
+        return HandleResult(await attendanceService.HasAttendanceTodayAsync(userId, cancellationToken));
     }
 }
 

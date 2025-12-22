@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Business.AdminPortalApi.ExcelExport;
 using Data.Context;
@@ -25,7 +26,7 @@ public class AdminService(
     IExcelExportService excelExportService)
     : IAdminService
 {
-    public async Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(string? tenantId = null)
+    public async Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(string? tenantId = null, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
@@ -58,11 +59,11 @@ public class AdminService(
         }
         // For Admin: only show admins from their tenant (global query filter applies)
 
-        var admins = await query.ToListAsync();
+        var admins = await query.ToListAsync(cancellationToken);
 
         // Get tenant names for all unique tenant IDs
         var tenantIds = admins.Where(a => !string.IsNullOrEmpty(a.TenantId)).Select(a => a.TenantId).Distinct().ToList();
-        var tenants = await db.Tenants.Where(t => tenantIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.Name);
+        var tenants = await db.Tenants.Where(t => tenantIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.Name, cancellationToken);
 
         var dtos = new List<AdminResponseDto>();
         foreach (var admin in admins)
@@ -91,7 +92,7 @@ public class AdminService(
         return Result<List<AdminResponseDto>>.Success(dtos);
     }
 
-    public async Task<Result<AdminResponseDto>> GetAdminByIdAsync(string id)
+    public async Task<Result<AdminResponseDto>> GetAdminByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
@@ -111,7 +112,7 @@ public class AdminService(
         if (isSuperAdmin)
             query = query.IgnoreQueryFilters();
 
-        var admin = await query.FirstOrDefaultAsync();
+        var admin = await query.FirstOrDefaultAsync(cancellationToken);
 
         if (admin == null)
             return Result<AdminResponseDto>.Failed("Admin not found.");
@@ -120,7 +121,7 @@ public class AdminService(
         var tenantName = string.Empty;
         if (!string.IsNullOrEmpty(admin.TenantId))
         {
-            var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == admin.TenantId);
+            var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == admin.TenantId, cancellationToken);
             tenantName = tenant?.Name ?? string.Empty;
         }
 
@@ -142,9 +143,9 @@ public class AdminService(
         return Result<AdminResponseDto>.Success(dto);
     }
 
-    public async Task<Result<AdminResponseDto>> CreateAsync(CreateAdminDto dto)
+    public async Task<Result<AdminResponseDto>> CreateAsync(CreateAdminDto dto, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var userId = userProfileService.GetUserId();
@@ -167,7 +168,7 @@ public class AdminService(
 
             // Check if username already exists
             var usernameExists = await db.Users
-                .AnyAsync(u => u.UserName == dto.Username && !u.IsDeleted);
+                .AnyAsync(u => u.UserName == dto.Username && !u.IsDeleted, cancellationToken);
 
             if (usernameExists)
                 return Result<AdminResponseDto>.Failed("Username already exists.");
@@ -176,7 +177,7 @@ public class AdminService(
             if (!string.IsNullOrWhiteSpace(dto.Email))
             {
                 var emailExists = await db.Users
-                    .AnyAsync(u => u.Email == dto.Email && !u.IsDeleted);
+                    .AnyAsync(u => u.Email == dto.Email && !u.IsDeleted, cancellationToken);
 
                 if (emailExists)
                     return Result<AdminResponseDto>.Failed("Email already exists.");
@@ -188,7 +189,7 @@ public class AdminService(
                 var validRoles = await roleManager.Roles
                     .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
                     .Select(r => r.Name)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 if (validRoles.Count != dto.Roles.Count)
                     return Result<AdminResponseDto>.Failed("One or more roles are invalid.");
@@ -240,15 +241,15 @@ public class AdminService(
                 TenantId = tenantId
             };
 
-            await db.Admins.AddAsync(admin);
-            await db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await db.Admins.AddAsync(admin, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             var userRoles = await userManager.GetRolesAsync(adminUser);
             var tenantName = string.Empty;
             if (!string.IsNullOrEmpty(tenantId))
             {
-                var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId);
+                var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
                 tenantName = tenant?.Name ?? string.Empty;
             }
 
@@ -271,14 +272,14 @@ public class AdminService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             return Result<AdminResponseDto>.Failed($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Result<AdminResponseDto>> UpdateAsync(string id, UpdateAdminDto dto)
+    public async Task<Result<AdminResponseDto>> UpdateAsync(string id, UpdateAdminDto dto, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var userId = userProfileService.GetUserId();
@@ -299,7 +300,7 @@ public class AdminService(
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
 
-            var admin = await query.FirstOrDefaultAsync();
+            var admin = await query.FirstOrDefaultAsync(cancellationToken);
 
             if (admin == null)
                 return Result<AdminResponseDto>.Failed("Admin not found.");
@@ -312,7 +313,7 @@ public class AdminService(
             if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email != admin.User.Email)
             {
                 var emailExists = await db.Users
-                    .AnyAsync(u => u.Email == dto.Email && u.Id != admin.UserId && !u.IsDeleted);
+                    .AnyAsync(u => u.Email == dto.Email && u.Id != admin.UserId && !u.IsDeleted, cancellationToken);
 
                 if (emailExists)
                     return Result<AdminResponseDto>.Failed("Email already exists.");
@@ -323,7 +324,7 @@ public class AdminService(
             if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && dto.PhoneNumber != admin.User.PhoneNumber)
             {
                 var phoneExists = await db.Users
-                    .AnyAsync(u => u.PhoneNumber == dto.PhoneNumber && u.Id != admin.UserId && !u.IsDeleted);
+                    .AnyAsync(u => u.PhoneNumber == dto.PhoneNumber && u.Id != admin.UserId && !u.IsDeleted, cancellationToken);
 
                 if (phoneExists)
                     return Result<AdminResponseDto>.Failed("Phone number already exists.");
@@ -341,7 +342,7 @@ public class AdminService(
                 var validRoles = await roleManager.Roles
                     .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
                     .Select(r => r.Name)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 if (validRoles.Count != dto.Roles.Count)
                     return Result<AdminResponseDto>.Failed("One or more roles are invalid.");
@@ -360,7 +361,7 @@ public class AdminService(
                     var removeResult = await userManager.RemoveFromRolesAsync(admin.User, rolesToRemove);
                     if (!removeResult.Succeeded)
                     {
-                        await transaction.RollbackAsync();
+                        await transaction.RollbackAsync(cancellationToken);
                         return Result<AdminResponseDto>.Failed("Failed to remove roles.");
                     }
                 }
@@ -372,7 +373,7 @@ public class AdminService(
                     var addResult = await userManager.AddToRolesAsync(admin.User, rolesToAdd);
                     if (!addResult.Succeeded)
                     {
-                        await transaction.RollbackAsync();
+                        await transaction.RollbackAsync(cancellationToken);
                         return Result<AdminResponseDto>.Failed("Failed to add roles.");
                     }
                 }
@@ -383,14 +384,14 @@ public class AdminService(
                 return Result<AdminResponseDto>.Failed(updateResult.Errors.FirstOrDefault()?.Description ?? "Failed to update user.");
 
             db.Admins.Update(admin);
-            await db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             var userRoles = await userManager.GetRolesAsync(admin.User);
             var tenantName = string.Empty;
             if (!string.IsNullOrEmpty(admin.TenantId))
             {
-                var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == admin.TenantId);
+                var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == admin.TenantId, cancellationToken);
                 tenantName = tenant?.Name ?? string.Empty;
             }
 
@@ -413,14 +414,14 @@ public class AdminService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             return Result<AdminResponseDto>.Failed($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(string id)
+    public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var userId = userProfileService.GetUserId();
@@ -441,7 +442,7 @@ public class AdminService(
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
 
-            var admin = await query.FirstOrDefaultAsync();
+            var admin = await query.FirstOrDefaultAsync(cancellationToken);
 
             if (admin == null)
                 return Result<bool>.Failed("Admin not found.");
@@ -456,23 +457,32 @@ public class AdminService(
 
             db.Admins.Update(admin);
             db.Users.Update(admin.User);
-            await db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             return Result<bool>.Failed($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Result<byte[]>> ExportToExcelAsync(string? tenantId = null)
+    public async Task<Result<byte[]>> ExportToExcelAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         try
         {
-            var result = await GetAdminsForAdminAsync(tenantId);
+            // Extract tenantId from Sieve filters if present, otherwise null (will filter based on user role)
+            string? tenantId = null;
+            if (!string.IsNullOrEmpty(requestModel.Filters) && requestModel.Filters.Contains("TenantId=="))
+            {
+                var tenantIdMatch = System.Text.RegularExpressions.Regex.Match(requestModel.Filters, @"TenantId==([^,|]+)");
+                if (tenantIdMatch.Success)
+                    tenantId = tenantIdMatch.Groups[1].Value.Trim();
+            }
+
+            var result = await GetAdminsForAdminAsync(tenantId, cancellationToken);
             if (!result.IsSuccess || result.Data == null)
                 return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve admin data.");
 

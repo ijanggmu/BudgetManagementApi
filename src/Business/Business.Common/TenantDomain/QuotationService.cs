@@ -1,3 +1,4 @@
+using System.Threading;
 using Business.AdminPortalApi.ExcelExport;
 using Business.AdminPortalApi.PdfGeneration;
 using Data.Context;
@@ -73,7 +74,7 @@ public class QuotationService : IQuotationService
         );
     }
 
-    public async Task<Result<QuotationResponseDto>> CreateAsync(CreateQuotationDto dto)
+    public async Task<Result<QuotationResponseDto>> CreateAsync(CreateQuotationDto dto, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
@@ -112,7 +113,7 @@ public class QuotationService : IQuotationService
         }
     }
 
-    public async Task<Result<List<QuotationResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel = null)
+    public async Task<Result<List<QuotationResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel = null, CancellationToken cancellationToken = default)
     {
         var query = _db.Set<Quotation>()
             .Include(q => q.Items)
@@ -139,7 +140,7 @@ public class QuotationService : IQuotationService
         return Result<List<QuotationResponseDto>>.Success(allQuotationDtos);
     }
 
-    public async Task<Result<QuotationResponseDto>> GetByIdAsync(string id)
+    public async Task<Result<QuotationResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var quotation = await _db.Set<Quotation>()
             .Include(q => q.Items)
@@ -152,7 +153,7 @@ public class QuotationService : IQuotationService
         return Result<QuotationResponseDto>.Success(MapToDto(quotation));
     }
 
-    public async Task<Result<byte[]>> GeneratePdfAsync(string id)
+    public async Task<Result<byte[]>> GeneratePdfAsync(string id, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -207,7 +208,7 @@ public class QuotationService : IQuotationService
         }
     }
 
-    public async Task<Result<List<QuotationResponseDto>>> GetByLeadIdAsync(string leadId)
+    public async Task<Result<List<QuotationResponseDto>>> GetByLeadIdAsync(string leadId, CancellationToken cancellationToken = default)
     {
         var lead = await _db.Set<Lead>().AsNoTracking().FirstOrDefaultAsync(l => l.Id == leadId);
         if (lead == null)
@@ -224,7 +225,7 @@ public class QuotationService : IQuotationService
         return Result<List<QuotationResponseDto>>.Success(quotationDtos);
     }
 
-    public async Task<Result<List<QuotationResponseDto>>> GetQuotationsForAdminAsync(CommonPaginationRequestModel requestModel)
+    public async Task<Result<List<QuotationResponseDto>>> GetQuotationsForAdminAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -293,7 +294,7 @@ public class QuotationService : IQuotationService
         }
     }
 
-    public async Task<Result<QuotationResponseDto>> GetQuotationDetailsForAdminAsync(string id)
+    public async Task<Result<QuotationResponseDto>> GetQuotationDetailsForAdminAsync(string id, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -351,7 +352,7 @@ public class QuotationService : IQuotationService
         }
     }
 
-    public async Task<Result<List<QuotationResponseDto>>> GetQuotationsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel)
+    public async Task<Result<List<QuotationResponseDto>>> GetQuotationsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -417,7 +418,7 @@ public class QuotationService : IQuotationService
         }
     }
 
-    public async Task<Result<QuotationResponseDto>> UpdateAsync(string id, UpdateQuotationDto dto)
+    public async Task<Result<QuotationResponseDto>> UpdateAsync(string id, UpdateQuotationDto dto, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
@@ -476,7 +477,7 @@ public class QuotationService : IQuotationService
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(string id)
+    public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
@@ -507,14 +508,12 @@ public class QuotationService : IQuotationService
         }
     }
 
-    public async Task<Result<byte[]>> ExportToExcelAsync(string? status = null, DateTime? from = null, DateTime? to = null, string? tenantId = null)
+    public async Task<Result<byte[]>> ExportToExcelAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         try
         {
-            var requestModel = new CommonPaginationRequestModel { PageNumber = 1, PageSize = int.MaxValue };
-            var result = string.IsNullOrEmpty(tenantId)
-                ? await GetQuotationsForAdminAsync(requestModel)
-                : await GetQuotationsByTenantIdAsync(tenantId, requestModel);
+            requestModel.PageSize = -1;
+            var result = await GetQuotationsForAdminAsync(requestModel, cancellationToken);
 
             if (!result.IsSuccess || result.Data == null)
                 return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve quotation data.");

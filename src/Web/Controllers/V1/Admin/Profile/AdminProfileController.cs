@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Business.AdminPortalApi.Profile;
@@ -13,8 +14,8 @@ public class AdminProfileController(IAdminProfileService adminProfileService) : 
     /// </summary>
     /// <returns>Admin profile information</returns>
     [HttpGet]
-    public async Task<IActionResult> GetAsync()
-        => HandleResult(await adminProfileService.GetProfileAsync());
+    public async Task<IActionResult> GetAsync(CancellationToken cancellationToken = default)
+        => HandleResult(await adminProfileService.GetProfileAsync(cancellationToken));
 
     /// <summary>
     /// Update admin user profile
@@ -22,8 +23,8 @@ public class AdminProfileController(IAdminProfileService adminProfileService) : 
     /// <param name="requestModel">Profile update data</param>
     /// <returns>Success message</returns>
     [HttpPut]
-    public async Task<IActionResult> UpdateAsync([FromBody] UpdateProfileRequestModel requestModel)
-        => HandleResult(await adminProfileService.UpdateProfileAsync(requestModel));
+    public async Task<IActionResult> UpdateAsync([FromBody] UpdateProfileRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await adminProfileService.UpdateProfileAsync(requestModel, cancellationToken));
 }
 
 

@@ -18,7 +18,7 @@ public class AdminProfileService(
     ILogger<AdminProfileService> logger)
     : IAdminProfileService
 {
-    public async Task<Result<AdminUserProfileResponseModel>> GetProfileAsync()
+    public async Task<Result<AdminUserProfileResponseModel>> GetProfileAsync(CancellationToken ct)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
@@ -44,7 +44,7 @@ public class AdminProfileService(
                  PhoneNumber = grp.Key.PhoneNumber,
                  Roles = grp.Where(x => x != null).Select(x => x.Name).ToList()
              })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
 
         if (profile == null)
             return Result<AdminUserProfileResponseModel>.Failed(ResponseMessage.UserNotFound);
@@ -53,9 +53,9 @@ public class AdminProfileService(
     }
 
 
-    public async Task<Result<MessageResponseModel>> UpdateProfileAsync(UpdateProfileRequestModel requestModel)
+    public async Task<Result<MessageResponseModel>> UpdateProfileAsync(UpdateProfileRequestModel requestModel,CancellationToken ct)
     {
-        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
         try
         {
             var userId = userProfileService.GetUserId();
@@ -64,7 +64,7 @@ public class AdminProfileService(
 
             var admin = await dbContext.Admins
                 .Include(a => a.User)
-                .FirstOrDefaultAsync(a => a.UserId == userId && !a.User.IsDeleted);
+                .FirstOrDefaultAsync(a => a.UserId == userId && !a.User.IsDeleted, ct);
 
             if (admin == null)
                 return Result<MessageResponseModel>.Failed(ResponseMessage.UserNotFound);
@@ -78,7 +78,7 @@ public class AdminProfileService(
             {
                 // Check if email already exists
                 var emailExists = await userManager.Users
-                    .AnyAsync(u => u.Email == requestModel.Email && u.Id != userId && !u.IsDeleted);
+                    .AnyAsync(u => u.Email == requestModel.Email && u.Id != userId && !u.IsDeleted, ct);
 
                 if (emailExists)
                     return Result<MessageResponseModel>.Failed("Email already exists.");
@@ -94,14 +94,14 @@ public class AdminProfileService(
                 return Result<MessageResponseModel>.Failed(string.Join(", ", updateResult.Errors.Select(e => e.Description)));
 
             dbContext.Admins.Update(admin);
-            await dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await dbContext.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
 
             return Result<MessageResponseModel>.Success(new MessageResponseModel("Profile updated successfully."));
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(ct);
             throw;
         }
     }
