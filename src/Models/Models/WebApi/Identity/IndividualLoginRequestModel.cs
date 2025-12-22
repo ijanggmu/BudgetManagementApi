@@ -64,4 +64,14 @@ public class LoginCustomerResponseModel
     public string Token { get; set; }
     public bool IsTwoFactorEnabled { get; set; }
     public bool IsPhoneNumberConfirmed { get; set; }
+    public BrandingResponseModel? Branding { get; set; }
+}
+
+public class BrandingResponseModel
+{
+    public string TenantId { get; set; }
+    public string LogoUrl { get; set; }
+    public string PaletteJson { get; set; }
+    public string TypographyJson { get; set; }
+    public int Version { get; set; }
 }

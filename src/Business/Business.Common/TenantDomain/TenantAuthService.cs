@@ -39,6 +39,7 @@ public class TenantAuthService : ITenantAuthService
     {
         // First, verify the tenant exists and is active
         var tenant = await _db.Set<Tenant>()
+            .Include(t => t.Branding)
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Slug == request.Slug && t.IsActive);
 
@@ -81,13 +82,28 @@ public class TenantAuthService : ITenantAuthService
         var tokenModel = _tokenService.CreateToken(user, roles.ToList());
         var refresh = await _tokenService.CreateRefreshToken(user);
 
+        // Prepare branding response
+        BrandingResponseDto? branding = null;
+        if (tenant.Branding != null)
+        {
+            branding = new BrandingResponseDto(
+                tenant.Branding.TenantId,
+                tenant.Branding.LogoUrl,
+                tenant.Branding.PaletteJson,
+                tenant.Branding.TypographyJson,
+                tenant.Branding.Version,
+                tenant.Branding.CreatedOn
+            );
+        }
+
         var response = new TenantLoginResponseDto(
             tokenModel.Item1,
             tokenModel.Item2,
             refresh.Item1,
             refresh.Item2,
             tenant.Id,
-            tenant.Name
+            tenant.Name,
+            branding
         );
 
         // Set cookies

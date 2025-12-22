@@ -7,6 +7,7 @@ using Data.Context;
 using Data.Entities.FodoEntity;
 using Data.Entities.Identity;
 using Data.Entities.Log;
+using Data.Entities.Tenant;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -101,6 +102,27 @@ public class FodoAuthService(
             };
 
             ipersonAccessor.SetAuthCookiesInClient(result, requestModel.Username);
+
+            // Include branding if user has tenant
+            if (!string.IsNullOrEmpty(user.TenantId))
+            {
+                var tenant = await dbContext.Tenants
+                    .Include(t => t.Branding)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.Id == user.TenantId);
+
+                if (tenant?.Branding != null)
+                {
+                    responseModel.Branding = new BrandingResponseModel
+                    {
+                        TenantId = tenant.Branding.TenantId,
+                        LogoUrl = tenant.Branding.LogoUrl,
+                        PaletteJson = tenant.Branding.PaletteJson,
+                        TypographyJson = tenant.Branding.TypographyJson,
+                        Version = tenant.Branding.Version
+                    };
+                }
+            }
 
             return Result<LoginCustomerResponseModel>.Success(responseModel, statusCode: HttpStatusCode.NoContent);
         }

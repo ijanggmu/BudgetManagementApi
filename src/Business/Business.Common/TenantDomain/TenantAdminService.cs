@@ -93,24 +93,41 @@ public class TenantAdminService : ITenantAdminService
         return Result<List<TenantsResponseDto>>.Success(allTenants);
     }
 
-    public async Task<Result<TenantsResponseDto>> GetByIdAsync(string id)
+    public async Task<Result<TenantResponseDto>> GetByIdAsync(string id)
     {
-        var tenant = await _db.Tenants.Include(x => x.Branding).AsNoTracking()
+        var tenant = await _db.Tenants
+            .Include(x => x.Branding)
+            .AsNoTracking()
             .Where(t => t.Id == id)
-            .Select(t => new TenantsResponseDto(
-                t.Id,
-                t.Name,
-                t.Slug,
-                t.IsActive,
-                t.Branding.Version,
-                t.CreatedOn
-            ))
             .FirstOrDefaultAsync();
 
         if (tenant == null)
-            return Result<TenantsResponseDto>.Failed("Tenant not found.");
+            return Result<TenantResponseDto>.Failed("Tenant not found.");
 
-        return Result<TenantsResponseDto>.Success(tenant);
+        BrandingResponseDto? branding = null;
+        if (tenant.Branding != null)
+        {
+            branding = new BrandingResponseDto(
+                tenant.Branding.TenantId,
+                tenant.Branding.LogoUrl,
+                tenant.Branding.PaletteJson,
+                tenant.Branding.TypographyJson,
+                tenant.Branding.Version,
+                tenant.Branding.CreatedOn
+            );
+        }
+
+        var response = new TenantResponseDto(
+            tenant.Id,
+            tenant.Name,
+            tenant.Slug,
+            tenant.IsActive,
+            tenant.Branding?.Version ?? 1,
+            tenant.CreatedOn,
+            branding
+        );
+
+        return Result<TenantResponseDto>.Success(response);
     }
 
     public async Task<Result<TenantsResponseDto>> CreateAsync(CreateTenantDto dto)
@@ -144,7 +161,7 @@ public class TenantAdminService : ITenantAdminService
                 LogoUrl = dto.CompanyBranding.LogoUrl,
                 PaletteJson = dto.CompanyBranding.PaletteJson,
                 TypographyJson = dto.CompanyBranding.TypographyJson,
-                Version = dto.CompanyBranding.Version
+                Version = dto.ThemeVersion > 0 ? dto.ThemeVersion : dto.CompanyBranding.Version
             };
 
             await _db.CompanyBrandings.AddAsync(companyBranding);
