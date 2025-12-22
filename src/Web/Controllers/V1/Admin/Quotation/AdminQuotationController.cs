@@ -19,7 +19,7 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     /// <param name="from">Optional: Filter quotations created from this date</param>
     /// <param name="to">Optional: Filter quotations created until this date</param>
     /// <returns>Paginated list of quotations</returns>
-    [HttpGet]
+    [HttpPost]
     [Permission(MenuPermissionConstant.AdminQuotationsView)]
     public async Task<IActionResult> GetQuotationsAsync(
         [FromBody] CommonPaginationRequestModel requestModel)
@@ -52,10 +52,8 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     [Permission(MenuPermissionConstant.AdminQuotationsView)]
     public async Task<IActionResult> GetQuotationsByTenantIdAsync(
         string tenantId,
-        [FromQuery] CommonPaginationRequestModel requestModel,
-        [FromQuery] string? status = null,
-        [FromQuery] DateTime? from = null,
-        [FromQuery] DateTime? to = null)
+        [FromQuery] CommonPaginationRequestModel requestModel
+        )
     {
         return HandleResult(await quotationService.GetQuotationsByTenantIdAsync(tenantId, requestModel));
     }
