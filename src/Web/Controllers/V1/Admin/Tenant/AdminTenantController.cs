@@ -14,7 +14,7 @@ public class AdminTenantController(ITenantAdminService service) : BaseAdminApiCo
 {
     [HttpPost]
     [Permission(MenuPermissionConstant.TenantsView)]
-    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel? requestModel)
+    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel)
     {
         return HandleResult(await service.ListAsync(requestModel));
     }
