@@ -8,7 +8,7 @@ using Models.BeemaEdgeApi.Fodo;
 namespace BeemaEdgeApi.Controllers.V1.FoDo.Registration;
 
 [AllowAnonymous]
-public class FodoRegistrationController(IFodoRegistrationService fodoRegistrationService) : BaseFoDoApiController
+public class MarketingExecutiveRegistrationController(IFodoRegistrationService fodoRegistrationService) : BaseMarketingExecutiveApiController
 {
     /// <summary>
     /// Register a new fodo (Field Officer/Door Office Marketing)

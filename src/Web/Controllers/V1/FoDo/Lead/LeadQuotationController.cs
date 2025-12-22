@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BeemaEdgeApi.Controllers.V1.FoDo.Lead;
 
 [Route("api/v1/leads")]
-public class LeadQuotationController : BaseFoDoApiController
+public class LeadQuotationController : BaseMarketingExecutiveApiController
 {
     private readonly IQuotationService _quotationService;
 

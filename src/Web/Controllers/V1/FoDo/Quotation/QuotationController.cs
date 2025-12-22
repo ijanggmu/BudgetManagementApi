@@ -8,7 +8,7 @@ using Models.WebApi.TenantDTOs;
 
 namespace BeemaEdgeApi.Controllers.V1.FoDo.Quotation;
 
-public class QuotationController(IQuotationService quotes) : BaseFoDoApiController
+public class QuotationController(IQuotationService quotes) : BaseMarketingExecutiveApiController
 {
     [HttpPost]
     public async Task<IActionResult> CreateAsync([FromBody] CreateQuotationDto dto)

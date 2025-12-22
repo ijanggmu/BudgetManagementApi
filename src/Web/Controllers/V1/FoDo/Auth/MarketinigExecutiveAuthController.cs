@@ -8,7 +8,7 @@ using Models.BeemaEdgeApi.Identity;
 
 namespace BeemaEdgeApi.Controllers.V1.FoDo.Auth;
 
-public class FodoAuthController(IFodoAuthService fodoAuthService) : BaseFoDoApiController
+public class MarketinigExecutiveAuthController(IFodoAuthService fodoAuthService) : BaseMarketingExecutiveApiController
 {
     /// <summary>
     /// Fodo (Field Officer/Door Office Marketing) login

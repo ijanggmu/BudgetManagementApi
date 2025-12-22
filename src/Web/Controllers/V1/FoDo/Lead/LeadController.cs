@@ -9,7 +9,7 @@ using Models.WebApi.TenantDTOs;
 
 namespace BeemaEdgeApi.Controllers.V1.FoDo.Lead;
 
-public class LeadController(ILeadService leads) : BaseFoDoApiController
+public class LeadController(ILeadService leads) : BaseMarketingExecutiveApiController
 {
     [HttpPost]
     public async Task<IActionResult> CreateAsync([FromBody] CreateLeadPublicDto dto)
