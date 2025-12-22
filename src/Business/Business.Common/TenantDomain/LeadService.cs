@@ -156,28 +156,13 @@ public class LeadService : ILeadService
         }
     }
 
-    public async Task<Result<List<LeadResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
+    public async Task<Result<List<LeadResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel)
     {
         var query = _db.Set<Lead>()
             .Include(l => l.Prospect)
             .ThenInclude(p => p.PrimaryContact)
             .AsNoTracking()
             .AsQueryable();
-
-        if (!string.IsNullOrEmpty(status) && Enum.TryParse<LeadStatus>(status, true, out var statusEnum))
-        {
-            query = query.Where(l => l.Status == statusEnum);
-        }
-
-        if (from.HasValue)
-        {
-            query = query.Where(l => l.CreatedOn >= from.Value);
-        }
-
-        if (to.HasValue)
-        {
-            query = query.Where(l => l.CreatedOn <= to.Value);
-        }
 
         var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
         var leads = await result.ToListAsync();
@@ -263,7 +248,7 @@ public class LeadService : ILeadService
         return Result<List<LeadActivityResponseDto>>.Success(activityDtos);
     }
 
-    public async Task<Result<List<LeadResponseDto>>> GetLeadsForAdminAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
+    public async Task<Result<List<LeadResponseDto>>> GetLeadsForAdminAsync(CommonPaginationRequestModel requestModel)
     {
         try
         {
@@ -308,23 +293,6 @@ public class LeadService : ILeadService
                 // Tenant Admin: only show leads from their tenant
                 // The query filter should handle this, but we add explicit filter for safety
                 query = query.Where(l => l.TenantId == user.TenantId);
-            }
-
-            // Apply status filter
-            if (!string.IsNullOrEmpty(status) && Enum.TryParse<LeadStatus>(status, true, out var statusEnum))
-            {
-                query = query.Where(l => l.Status == statusEnum);
-            }
-
-            // Apply date range filters
-            if (from.HasValue)
-            {
-                query = query.Where(l => l.CreatedOn >= from.Value);
-            }
-
-            if (to.HasValue)
-            {
-                query = query.Where(l => l.CreatedOn <= to.Value);
             }
 
             // Apply Sieve filtering and pagination
@@ -409,7 +377,7 @@ public class LeadService : ILeadService
         }
     }
 
-    public async Task<Result<List<LeadResponseDto>>> GetLeadsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
+    public async Task<Result<List<LeadResponseDto>>> GetLeadsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel)
     {
         try
         {
@@ -452,23 +420,6 @@ public class LeadService : ILeadService
                 .IgnoreQueryFilters() // Ignore automatic tenant filter for SuperAdmin
                 .Where(l => l.TenantId == tenantId);
 
-            // Apply status filter
-            if (!string.IsNullOrEmpty(status) && Enum.TryParse<LeadStatus>(status, true, out var statusEnum))
-            {
-                query = query.Where(l => l.Status == statusEnum);
-            }
-
-            // Apply date range filters
-            if (from.HasValue)
-            {
-                query = query.Where(l => l.CreatedOn >= from.Value);
-            }
-
-            if (to.HasValue)
-            {
-                query = query.Where(l => l.CreatedOn <= to.Value);
-            }
-
             // Apply Sieve filtering and pagination
             var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
             var leads = await result.ToListAsync();
@@ -498,8 +449,8 @@ public class LeadService : ILeadService
         {
             var requestModel = new CommonPaginationRequestModel { PageNumber = 1, PageSize = int.MaxValue };
             var result = string.IsNullOrEmpty(tenantId)
-                ? await GetLeadsForAdminAsync(requestModel, status, from, to)
-                : await GetLeadsByTenantIdAsync(tenantId, requestModel, status, from, to);
+                ? await GetLeadsForAdminAsync(requestModel)
+                : await GetLeadsByTenantIdAsync(tenantId, requestModel);
 
             if (!result.IsSuccess || result.Data == null)
                 return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve lead data.");

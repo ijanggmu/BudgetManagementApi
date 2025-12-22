@@ -20,7 +20,7 @@ public class LeadController(ILeadService leads) : BaseFoDoApiController
     [HttpGet]
     public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel, [FromQuery] string? status, [FromQuery] DateTime? from, [FromQuery] DateTime? to)
     {
-        return HandleResult(await leads.ListAsync(requestModel, status, from, to));
+        return HandleResult(await leads.ListAsync(requestModel));
     }
 
     [HttpGet("{id}")]

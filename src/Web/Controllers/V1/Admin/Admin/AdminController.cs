@@ -68,7 +68,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// </summary>
     /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
     /// <returns>Excel file</returns>
-    [HttpGet("export")]
+    [HttpGet("Export")]
     [Permission(MenuPermissionConstant.AdminManagementExport)]
     public async Task<IActionResult> ExportToExcelAsync([FromQuery] string? tenantId = null)
     {

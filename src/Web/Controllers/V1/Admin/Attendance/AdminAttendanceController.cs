@@ -44,7 +44,7 @@ public class AdminAttendanceController(IAttendanceService attendanceService) : B
     /// <param name="to">Optional: Filter attendance until this date</param>
     /// <param name="tenantId">Optional: Filter by tenant ID (SuperAdmin only)</param>
     /// <returns>Excel file</returns>
-    [HttpGet("export")]
+    [HttpGet("Export")]
     [Permission(MenuPermissionConstant.OperationsView)] // Note: Export permission can be added if needed
     public async Task<IActionResult> ExportToExcelAsync(
         [FromQuery] string? userId = null,

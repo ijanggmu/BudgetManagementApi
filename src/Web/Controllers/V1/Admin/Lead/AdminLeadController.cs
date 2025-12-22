@@ -19,15 +19,12 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
     /// <param name="from">Optional: Filter leads created from this date</param>
     /// <param name="to">Optional: Filter leads created until this date</param>
     /// <returns>Paginated list of leads</returns>
-    [HttpGet]
+    [HttpPost]
     [Permission(MenuPermissionConstant.AdminLeadsView)]
     public async Task<IActionResult> GetLeadsAsync(
-        [FromQuery] CommonPaginationRequestModel requestModel,
-        [FromQuery] string? status = null,
-        [FromQuery] DateTime? from = null,
-        [FromQuery] DateTime? to = null)
+        [FromQuery] CommonPaginationRequestModel requestModel)
     {
-        return HandleResult(await leadService.GetLeadsForAdminAsync(requestModel, status, from, to));
+        return HandleResult(await leadService.GetLeadsForAdminAsync(requestModel));
     }
 
     /// <summary>

@@ -15,7 +15,7 @@ public class AdminFodoController(IFodoService fodoService) : BaseAdminApiControl
     /// </summary>
     /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
     /// <returns>List of fodos</returns>
-    [HttpGet]
+    [HttpPost]
     [Permission(MenuPermissionConstant.MarketingExecutivesView)]
     public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null)
         => HandleResult(await fodoService.GetFodosForAdminAsync(tenantId));
@@ -35,7 +35,7 @@ public class AdminFodoController(IFodoService fodoService) : BaseAdminApiControl
     /// </summary>
     /// <param name="dto">Fodo creation data</param>
     /// <returns>Created fodo details</returns>
-    [HttpPost]
+    [HttpPost("create")]
     [Permission(MenuPermissionConstant.MarketingExecutivesCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateFodoDto dto)
         => HandleResult(await fodoService.CreateAsync(dto));
