@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Models.WebApi.TenantDTOs;
 
 namespace BeemaEdgeApi.Controllers.V1.FoDo.Attendance;
-
-[Route("api/v1/marketing-executive/attendance")]
 public class MarketingExecutiveAttendanceController(
     IAttendanceService attendanceService,
     IUserProfileService userProfileService) : BaseMarketingExecutiveApiController

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Fodo;
 
-namespace BeemaEdgeApi.Controllers.V1.FoDo.Registration;
+namespace BeemaEdgeApi.Controllers.V1.MarketingExecutive.MarketingExecutiveRegistrationController;
 
 [AllowAnonymous]
 public class MarketingExecutiveRegistrationController(IFodoRegistrationService fodoRegistrationService) : BaseMarketingExecutiveApiController

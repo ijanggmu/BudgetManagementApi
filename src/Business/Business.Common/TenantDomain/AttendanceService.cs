@@ -110,21 +110,16 @@ public class AttendanceService(
 
         var hasAttendance = await db.Set<AttendanceEntry>()
             .AsNoTracking()
-            .AnyAsync(a => a.UserId == userId && 
-                          a.Timestamp >= today && 
-                          a.Timestamp < tomorrow && 
+            .AnyAsync(a => a.UserId == userId &&
+                          a.Timestamp >= today &&
+                          a.Timestamp < tomorrow &&
                           a.Type == "CheckIn");
 
         return Result<bool>.Success(hasAttendance);
     }
 
     public async Task<Result<List<AttendanceResponseDto>>> GetAttendanceForAdminAsync(
-        CommonPaginationRequestModel requestModel,
-        string? userId = null,
-        string? type = null,
-        DateTime? from = null,
-        DateTime? to = null,
-        string? tenantId = null)
+        CommonPaginationRequestModel requestModel)
     {
         try
         {
@@ -158,32 +153,6 @@ public class AttendanceService(
             if (isSuperAdmin)
             {
                 query = query.IgnoreQueryFilters();
-            }
-
-            // Apply filters
-            if (!string.IsNullOrEmpty(userId))
-            {
-                query = query.Where(a => a.UserId == userId);
-            }
-
-            if (!string.IsNullOrEmpty(type))
-            {
-                query = query.Where(a => a.Type == type);
-            }
-
-            if (from.HasValue)
-            {
-                query = query.Where(a => a.Timestamp >= from.Value);
-            }
-
-            if (to.HasValue)
-            {
-                query = query.Where(a => a.Timestamp <= to.Value);
-            }
-
-            if (!string.IsNullOrEmpty(tenantId) && isSuperAdmin)
-            {
-                query = query.Where(a => a.TenantId == tenantId);
             }
 
             // Apply Sieve filtering and pagination
@@ -347,7 +316,7 @@ public class AttendanceService(
             }
             else
             {
-                logger.LogWarning("Failed to sync attendance {AttendanceId} to tenant API. Status: {Status}", 
+                logger.LogWarning("Failed to sync attendance {AttendanceId} to tenant API. Status: {Status}",
                     entry.Id, response.StatusCode);
             }
         }

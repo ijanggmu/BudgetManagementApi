@@ -21,18 +21,13 @@ public class AdminAttendanceController(IAttendanceService attendanceService) : B
     /// <param name="to">Optional: Filter attendance until this date</param>
     /// <param name="tenantId">Optional: Filter by tenant ID (SuperAdmin only)</param>
     /// <returns>Paginated list of attendance records</returns>
-    [HttpGet]
+    [HttpPost]
     [Permission(MenuPermissionConstant.OperationsView)]
     public async Task<IActionResult> GetAttendanceAsync(
-        [FromQuery] CommonPaginationRequestModel requestModel,
-        [FromQuery] string? userId = null,
-        [FromQuery] string? type = null,
-        [FromQuery] DateTime? from = null,
-        [FromQuery] DateTime? to = null,
-        [FromQuery] string? tenantId = null)
+        [FromBody] CommonPaginationRequestModel requestModel)
     {
         return HandleResult(await attendanceService.GetAttendanceForAdminAsync(
-            requestModel, userId, type, from, to, tenantId));
+            requestModel));
     }
 
     /// <summary>
