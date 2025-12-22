@@ -57,7 +57,7 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null)
     {
-        return HandleResult(await leadService.GetLeadsByTenantIdAsync(tenantId, requestModel, status, from, to));
+        return HandleResult(await leadService.GetLeadsByTenantIdAsync(tenantId, requestModel));
     }
 
     /// <summary>
