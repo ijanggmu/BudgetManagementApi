@@ -112,7 +112,7 @@ public class QuotationService : IQuotationService
         }
     }
 
-    public async Task<Result<List<QuotationResponseDto>>> ListAsync(CommonPaginationRequestModel? requestModel = null)
+    public async Task<Result<List<QuotationResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel = null)
     {
         var query = _db.Set<Quotation>()
             .Include(q => q.Items)
@@ -224,7 +224,7 @@ public class QuotationService : IQuotationService
         return Result<List<QuotationResponseDto>>.Success(quotationDtos);
     }
 
-    public async Task<Result<List<QuotationResponseDto>>> GetQuotationsForAdminAsync(CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
+    public async Task<Result<List<QuotationResponseDto>>> GetQuotationsForAdminAsync(CommonPaginationRequestModel requestModel)
     {
         try
         {
@@ -269,22 +269,6 @@ public class QuotationService : IQuotationService
                 query = query.Where(q => q.TenantId == user.TenantId);
             }
 
-            // Apply status filter
-            if (!string.IsNullOrEmpty(status))
-            {
-                query = query.Where(q => q.Status == status);
-            }
-
-            // Apply date range filters
-            if (from.HasValue)
-            {
-                query = query.Where(q => q.CreatedOn >= from.Value);
-            }
-
-            if (to.HasValue)
-            {
-                query = query.Where(q => q.CreatedOn <= to.Value);
-            }
 
             // Apply Sieve filtering and pagination
             var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
@@ -367,7 +351,7 @@ public class QuotationService : IQuotationService
         }
     }
 
-    public async Task<Result<List<QuotationResponseDto>>> GetQuotationsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel, string? status = null, DateTime? from = null, DateTime? to = null)
+    public async Task<Result<List<QuotationResponseDto>>> GetQuotationsByTenantIdAsync(string tenantId, CommonPaginationRequestModel requestModel)
     {
         try
         {
@@ -409,22 +393,6 @@ public class QuotationService : IQuotationService
                 .IgnoreQueryFilters() // Ignore automatic tenant filter for SuperAdmin
                 .Where(q => q.TenantId == tenantId);
 
-            // Apply status filter
-            if (!string.IsNullOrEmpty(status))
-            {
-                query = query.Where(q => q.Status == status);
-            }
-
-            // Apply date range filters
-            if (from.HasValue)
-            {
-                query = query.Where(q => q.CreatedOn >= from.Value);
-            }
-
-            if (to.HasValue)
-            {
-                query = query.Where(q => q.CreatedOn <= to.Value);
-            }
 
             // Apply Sieve filtering and pagination
             var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
@@ -545,8 +513,8 @@ public class QuotationService : IQuotationService
         {
             var requestModel = new CommonPaginationRequestModel { PageNumber = 1, PageSize = int.MaxValue };
             var result = string.IsNullOrEmpty(tenantId)
-                ? await GetQuotationsForAdminAsync(requestModel, status, from, to)
-                : await GetQuotationsByTenantIdAsync(tenantId, requestModel, status, from, to);
+                ? await GetQuotationsForAdminAsync(requestModel)
+                : await GetQuotationsByTenantIdAsync(tenantId, requestModel);
 
             if (!result.IsSuccess || result.Data == null)
                 return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve quotation data.");

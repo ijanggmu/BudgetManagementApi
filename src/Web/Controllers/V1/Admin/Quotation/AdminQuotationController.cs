@@ -22,12 +22,9 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     [HttpGet]
     [Permission(MenuPermissionConstant.AdminQuotationsView)]
     public async Task<IActionResult> GetQuotationsAsync(
-        [FromQuery] CommonPaginationRequestModel requestModel,
-        [FromQuery] string? status = null,
-        [FromQuery] DateTime? from = null,
-        [FromQuery] DateTime? to = null)
+        [FromBody] CommonPaginationRequestModel requestModel)
     {
-        return HandleResult(await quotationService.GetQuotationsForAdminAsync(requestModel, status, from, to));
+        return HandleResult(await quotationService.GetQuotationsForAdminAsync(requestModel));
     }
 
     /// <summary>
@@ -60,7 +57,7 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null)
     {
-        return HandleResult(await quotationService.GetQuotationsByTenantIdAsync(tenantId, requestModel, status, from, to));
+        return HandleResult(await quotationService.GetQuotationsByTenantIdAsync(tenantId, requestModel));
     }
 
     /// <summary>
