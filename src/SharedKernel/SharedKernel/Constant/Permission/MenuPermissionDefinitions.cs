@@ -46,7 +46,7 @@ public static class MenuPermissionDefinitions
     public static readonly MenuPermissionSet Designation = PermissionHelper.GeneratePermissions("18-15", "Designation");
 
     // Operations - Entity Settings
-    public static readonly MenuPermissionSet EntitySettings = PermissionHelper.GeneratePermissions(
+    public static readonly MenuPermissionSet Entity = PermissionHelper.GeneratePermissions(
         "20-18", "Entity Settings", includeCreate: false, includeUpdate: true, includeDelete: false, includeExport: false);
 
     // Administration - Additional
@@ -120,7 +120,7 @@ public static class MenuPermissionDefinitions
             nameof(Config) => Config,
             nameof(Branch) => Branch,
             nameof(Designation) => Designation,
-            nameof(EntitySettings) => EntitySettings,
+            nameof(Entity) => Entity,
             nameof(Branding) => Branding,
             nameof(Profile) => Profile,
             nameof(Password) => Password,

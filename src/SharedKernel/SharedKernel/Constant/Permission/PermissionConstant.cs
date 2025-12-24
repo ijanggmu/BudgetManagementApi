@@ -164,7 +164,7 @@ public static class MenuPermissionConstant
 
     public const string BranchName = "Branch";
     public const string DesignationName = "Designation";
-    public const string EntitySettingsName = "Entity Settings";
+    public const string EntityName = "Entity";
     public const string BrandingName = "Branding";
     public const string ProfileName = "Profile";
     public const string PasswordName = "Password";
