@@ -186,54 +186,6 @@ public static partial class MenuPermissionsList
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminQuotations, false),
                         Children = null
                     },
-                    // 19-32. Sales & Marketing > My Leads (Marketing Executive)
-                    new MenuItem
-                    {
-                        MenuId = 32,
-                        MenuName = MenuPermissionConstant.MarketingExecutiveLeadsName,
-                        MenuSlug = "/my-leads",
-                        Icon = "TargetOutlined",
-                        Rank = 4,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutiveLeads, false),
-                        Children = null
-                    },
-                    // 19-33. Sales & Marketing > My Quotations (Marketing Executive)
-                    new MenuItem
-                    {
-                        MenuId = 33,
-                        MenuName = MenuPermissionConstant.MarketingExecutiveQuotationsName,
-                        MenuSlug = "/my-quotations",
-                        Icon = "FileTextOutlined",
-                        Rank = 5,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutiveQuotations, false),
-                        Children = null
-                    },
-                    // 19-34. Sales & Marketing > My Attendance (Marketing Executive)
-                    new MenuItem
-                    {
-                        MenuId = 34,
-                        MenuName = MenuPermissionConstant.CommonAttendanceName,
-                        MenuSlug = "/my-attendance",
-                        Icon = "CalendarOutlined",
-                        Rank = 6,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.CommonAttendance, false),
-                        Children = null
-                    }
                 }
             },
 
