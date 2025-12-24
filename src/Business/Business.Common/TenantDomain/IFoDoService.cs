@@ -18,5 +18,6 @@ public interface IFodoService
     Task<Result<List<object>>> GetAccessLogsAsync(string id, CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default);
     Task<Result<List<object>>> GetLeadsAsync(string id, CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default);
     Task<Result<List<object>>> GetQuotationsAsync(string id, CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default);
+    Task<Result<ImportResult>> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default);
 }
 

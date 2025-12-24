@@ -1,4 +1,5 @@
 using Models.BeemaEdgeApi.Branch;
+using Models.Common;
 using SharedKernel.Operation;
 
 namespace Business.Common.TenantDomain;
@@ -10,5 +11,6 @@ public interface IBranchService
     Task<Result<BranchResponseDto>> CreateAsync(CreateBranchDto dto, CancellationToken cancellationToken = default);
     Task<Result<BranchResponseDto>> UpdateAsync(string id, UpdateBranchDto dto, CancellationToken cancellationToken = default);
     Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default);
+    Task<Result<ImportResult>> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default);
 }
 

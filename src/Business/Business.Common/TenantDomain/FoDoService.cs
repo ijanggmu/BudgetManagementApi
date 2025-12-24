@@ -1,6 +1,4 @@
-using System.Threading;
 using Data.Context;
-using Data.Entities.Audit.UserActivites;
 using Data.Entities.FodoEntity;
 using Data.Entities.Identity;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
@@ -9,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Models.BeemaEdgeApi.Fodo;
 using Models.Common;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 
@@ -780,6 +780,376 @@ public class FodoService(
         {
             return Result<List<object>>.Failed($"An error occurred: {ex.Message}");
         }
+    }
+
+    public async Task<Result<ImportResult>> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
+    {
+        var userId = userProfileService.GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Result<ImportResult>.Failed("User not authenticated.");
+
+        var currentUser = await userManager.FindByIdAsync(userId);
+        if (currentUser == null)
+            return Result<ImportResult>.Failed("User not found.");
+
+        var roles = await userManager.GetRolesAsync(currentUser);
+        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        var isAdmin = roles.Contains(SystemRoles.Admin);
+
+        if (!isSuperAdmin && !isAdmin)
+            return Result<ImportResult>.Failed("Unauthorized access.");
+
+        var tenantId = isSuperAdmin ? currentUser.TenantId : db.CurrentTenantId;
+
+        var importResult = new ImportResult();
+        var errors = new List<ImportError>();
+
+        try
+        {
+            var workbook = new XSSFWorkbook(fileStream);
+            var sheet = workbook.GetSheetAt(0);
+
+            if (sheet == null || sheet.LastRowNum < 1)
+                return Result<ImportResult>.Failed("Excel file is empty or invalid.");
+
+            // Validate header row
+            var headerRow = sheet.GetRow(0);
+            if (headerRow == null)
+                return Result<ImportResult>.Failed("Header row is missing.");
+
+            // Map column indices
+            var columnMap = new Dictionary<string, int>();
+            for (int i = 0; i < headerRow.LastCellNum; i++)
+            {
+                var cellValue = headerRow.GetCell(i)?.ToString()?.Trim().ToLower();
+                if (!string.IsNullOrWhiteSpace(cellValue))
+                    columnMap[cellValue] = i;
+            }
+
+            // Required columns
+            var requiredColumns = new[] { "fullname", "employeeid", "email", "mobilenumber" };
+            var missingColumns = requiredColumns.Where(c => !columnMap.ContainsKey(c)).ToList();
+            if (missingColumns.Any())
+                return Result<ImportResult>.Failed($"Required columns are missing: {string.Join(", ", missingColumns)}");
+
+            // Get all designations and branches for lookup
+            var designations = await db.Designations
+                .Where(d => d.TenantId == tenantId && !d.IsDeleted)
+                .ToDictionaryAsync(d => d.Title.ToLower(), d => d.Id, cancellationToken);
+
+            var branches = await db.Branches
+                .Where(b => b.TenantId == tenantId && !b.IsDeleted)
+                .ToDictionaryAsync(b => b.BranchCode.ToLower(), b => b.Id, cancellationToken);
+
+            var countries = await db.Countries.ToListAsync(cancellationToken);
+            var defaultCountry = countries.FirstOrDefault(c => c.Id == 1) ?? countries.FirstOrDefault();
+
+            // Process data rows
+            for (int rowIndex = 1; rowIndex <= sheet.LastRowNum; rowIndex++)
+            {
+                var row = sheet.GetRow(rowIndex);
+                if (row == null) continue;
+
+                await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+                try
+                {
+                    var fullName = GetCellValue(row, columnMap, "fullname");
+                    var employeeId = GetCellValue(row, columnMap, "employeeid");
+                    var email = GetCellValue(row, columnMap, "email");
+                    var mobileNumber = GetCellValue(row, columnMap, "mobilenumber");
+                    var designationTitle = GetCellValue(row, columnMap, "designationtitle", "designation");
+                    var branchCode = GetCellValue(row, columnMap, "branchcode", "branch");
+                    var permanentProvince = GetCellValue(row, columnMap, "permanentprovince", "permanent province");
+                    var permanentDistrict = GetCellValue(row, columnMap, "permanentdistrict", "permanent district");
+                    var permanentMunicipality = GetCellValue(row, columnMap, "permanentmunicipality", "permanent municipality");
+                    var permanentWardStr = GetCellValue(row, columnMap, "permanentward", "permanent ward");
+                    var temporaryProvince = GetCellValue(row, columnMap, "temporaryprovince", "temporary province");
+                    var temporaryDistrict = GetCellValue(row, columnMap, "temporarydistrict", "temporary district");
+                    var temporaryMunicipality = GetCellValue(row, columnMap, "temporarymunicipality", "temporary municipality");
+                    var temporaryWardStr = GetCellValue(row, columnMap, "temporaryward", "temporary ward");
+                    var isActiveStr = GetCellValue(row, columnMap, "isactive", "is active");
+                    var password = GetCellValue(row, columnMap, "password");
+                    var countryIdStr = GetCellValue(row, columnMap, "countryid", "country id");
+
+                    // Validate required fields
+                    var validationErrors = new List<string>();
+                    if (string.IsNullOrWhiteSpace(fullName))
+                        validationErrors.Add("FullName is required.");
+                    if (string.IsNullOrWhiteSpace(employeeId))
+                        validationErrors.Add("EmployeeId is required.");
+                    if (string.IsNullOrWhiteSpace(email))
+                        validationErrors.Add("Email is required.");
+                    if (string.IsNullOrWhiteSpace(mobileNumber))
+                        validationErrors.Add("MobileNumber is required.");
+
+                    if (validationErrors.Any())
+                    {
+                        errors.Add(new ImportError
+                        {
+                            RowNumber = rowIndex + 1,
+                            Field = "Validation",
+                            ErrorMessage = string.Join(" ", validationErrors)
+                        });
+                        importResult.FailureCount++;
+                        await transaction.RollbackAsync(cancellationToken);
+                        continue;
+                    }
+
+                    // Check if email already exists
+                    var emailExists = await db.Users
+                        .AnyAsync(u => u.Email == email && !u.IsDeleted, cancellationToken);
+
+                    if (emailExists)
+                    {
+                        errors.Add(new ImportError
+                        {
+                            RowNumber = rowIndex + 1,
+                            Field = "Email",
+                            ErrorMessage = $"Email '{email}' already exists."
+                        });
+                        importResult.FailureCount++;
+                        await transaction.RollbackAsync(cancellationToken);
+                        continue;
+                    }
+
+                    // Check if employee ID already exists
+                    var employeeIdExists = await db.Fodos
+                        .AnyAsync(f => f.EmployeeId == employeeId && !f.IsDeleted, cancellationToken);
+
+                    if (employeeIdExists)
+                    {
+                        errors.Add(new ImportError
+                        {
+                            RowNumber = rowIndex + 1,
+                            Field = "EmployeeId",
+                            ErrorMessage = $"Employee ID '{employeeId}' already exists."
+                        });
+                        importResult.FailureCount++;
+                        await transaction.RollbackAsync(cancellationToken);
+                        continue;
+                    }
+
+                    // Get country ID
+                    var country = new Data.Entities.Common.Country();
+
+                    int countryId = defaultCountry?.Id ?? 1;
+                    if (!string.IsNullOrWhiteSpace(countryIdStr) && int.TryParse(countryIdStr, out var parsedCountryId))
+                    {
+                        country = countries.FirstOrDefault(c => c.Id == parsedCountryId);
+                        if (country != null)
+                            countryId = parsedCountryId;
+                    }
+
+                    country = countries.FirstOrDefault(c => c.Id == countryId) ?? defaultCountry;
+                    if (country == null)
+                    {
+                        errors.Add(new ImportError
+                        {
+                            RowNumber = rowIndex + 1,
+                            Field = "CountryId",
+                            ErrorMessage = "Invalid country ID."
+                        });
+                        importResult.FailureCount++;
+                        await transaction.RollbackAsync(cancellationToken);
+                        continue;
+                    }
+
+                    var username = $"{country.CountryDialingCode}{mobileNumber}";
+
+                    // Check if username already exists
+                    var usernameExists = await db.Users
+                        .AnyAsync(u => u.UserName == username && !u.IsDeleted, cancellationToken);
+
+                    if (usernameExists)
+                    {
+                        errors.Add(new ImportError
+                        {
+                            RowNumber = rowIndex + 1,
+                            Field = "MobileNumber",
+                            ErrorMessage = $"Username '{username}' already exists."
+                        });
+                        importResult.FailureCount++;
+                        await transaction.RollbackAsync(cancellationToken);
+                        continue;
+                    }
+
+                    // Lookup designation
+                    string? designationId = null;
+                    if (!string.IsNullOrWhiteSpace(designationTitle))
+                    {
+                        if (designations.TryGetValue(designationTitle.ToLower(), out var desId))
+                            designationId = desId;
+                        else
+                        {
+                            errors.Add(new ImportError
+                            {
+                                RowNumber = rowIndex + 1,
+                                Field = "DesignationTitle",
+                                ErrorMessage = $"Designation '{designationTitle}' not found."
+                            });
+                            importResult.FailureCount++;
+                            await transaction.RollbackAsync(cancellationToken);
+                            continue;
+                        }
+                    }
+
+                    // Lookup branch
+                    string? branchId = null;
+                    if (!string.IsNullOrWhiteSpace(branchCode))
+                    {
+                        if (branches.TryGetValue(branchCode.ToLower(), out var brId))
+                            branchId = brId;
+                        else
+                        {
+                            errors.Add(new ImportError
+                            {
+                                RowNumber = rowIndex + 1,
+                                Field = "BranchCode",
+                                ErrorMessage = $"Branch Code '{branchCode}' not found."
+                            });
+                            importResult.FailureCount++;
+                            await transaction.RollbackAsync(cancellationToken);
+                            continue;
+                        }
+                    }
+
+                    // Parse optional fields
+                    int? permanentWard = null;
+                    if (!string.IsNullOrWhiteSpace(permanentWardStr) && int.TryParse(permanentWardStr, out var pw))
+                        permanentWard = pw;
+
+                    int? temporaryWard = null;
+                    if (!string.IsNullOrWhiteSpace(temporaryWardStr) && int.TryParse(temporaryWardStr, out var tw))
+                        temporaryWard = tw;
+
+                    bool isActive = true;
+                    if (!string.IsNullOrWhiteSpace(isActiveStr))
+                    {
+                        if (bool.TryParse(isActiveStr, out var ia))
+                            isActive = ia;
+                        else if (isActiveStr.Equals("1") || isActiveStr.Equals("yes", StringComparison.OrdinalIgnoreCase))
+                            isActive = true;
+                        else if (isActiveStr.Equals("0") || isActiveStr.Equals("no", StringComparison.OrdinalIgnoreCase))
+                            isActive = false;
+                    }
+
+                    // Generate default password if not provided
+                    if (string.IsNullOrWhiteSpace(password))
+                        password = "DefaultPassword123!"; // You might want to generate a random password
+
+                    // Create ApplicationUser
+                    var user = new ApplicationUser
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        UserName = username,
+                        Email = email.Trim(),
+                        PhoneNumber = mobileNumber,
+                        PhoneCountryId = countryId,
+                        LockoutEnabled = true,
+                        EmailConfirmed = false,
+                        PhoneNumberConfirmed = false,
+                        TenantId = tenantId
+                    };
+
+                    var createUserResult = await userManager.CreateAsync(user, password);
+                    if (!createUserResult.Succeeded)
+                    {
+                        errors.Add(new ImportError
+                        {
+                            RowNumber = rowIndex + 1,
+                            Field = "User",
+                            ErrorMessage = createUserResult.Errors.FirstOrDefault()?.Description ?? "Failed to create user."
+                        });
+                        importResult.FailureCount++;
+                        await transaction.RollbackAsync(cancellationToken);
+                        continue;
+                    }
+
+                    // Add FoDo role
+                    var roleResult = await userManager.AddToRoleAsync(user, SystemRoles.FoDo);
+                    if (!roleResult.Succeeded)
+                    {
+                        errors.Add(new ImportError
+                        {
+                            RowNumber = rowIndex + 1,
+                            Field = "Role",
+                            ErrorMessage = roleResult.Errors.FirstOrDefault()?.Description ?? "Failed to assign role."
+                        });
+                        importResult.FailureCount++;
+                        await transaction.RollbackAsync(cancellationToken);
+                        continue;
+                    }
+
+                    // Create Fodo entity
+                    var fodo = new Fodo
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        FullName = fullName.Trim(),
+                        EmployeeId = employeeId.Trim(),
+                        UserId = user.Id,
+                        DesignationId = designationId,
+                        BranchId = branchId,
+                        PermanentProvince = string.IsNullOrWhiteSpace(permanentProvince) ? null : permanentProvince.Trim(),
+                        PermanentDistrict = string.IsNullOrWhiteSpace(permanentDistrict) ? null : permanentDistrict.Trim(),
+                        PermanentMunicipality = string.IsNullOrWhiteSpace(permanentMunicipality) ? null : permanentMunicipality.Trim(),
+                        PermanentWard = permanentWard,
+                        TemporaryProvince = string.IsNullOrWhiteSpace(temporaryProvince) ? null : temporaryProvince.Trim(),
+                        TemporaryDistrict = string.IsNullOrWhiteSpace(temporaryDistrict) ? null : temporaryDistrict.Trim(),
+                        TemporaryMunicipality = string.IsNullOrWhiteSpace(temporaryMunicipality) ? null : temporaryMunicipality.Trim(),
+                        TemporaryWard = temporaryWard,
+                        IsActive = isActive,
+                        TenantId = tenantId
+                    };
+
+                    await db.Fodos.AddAsync(fodo, cancellationToken);
+                    await db.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+
+                    importResult.SuccessCount++;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    errors.Add(new ImportError
+                    {
+                        RowNumber = rowIndex + 1,
+                        Field = "General",
+                        ErrorMessage = $"Error processing row: {ex.Message}"
+                    });
+                    importResult.FailureCount++;
+                }
+            }
+
+            importResult.TotalRows = sheet.LastRowNum;
+            importResult.Errors = errors;
+
+            return Result<ImportResult>.Success(importResult);
+        }
+        catch (Exception ex)
+        {
+            return Result<ImportResult>.Failed($"Error importing Excel file: {ex.Message}");
+        }
+    }
+
+    private string? GetCellValue(IRow row, Dictionary<string, int> columnMap, params string[] columnNames)
+    {
+        foreach (var columnName in columnNames)
+        {
+            if (columnMap.TryGetValue(columnName.ToLower(), out var index))
+            {
+                var cell = row.GetCell(index);
+                if (cell != null)
+                {
+                    if (cell.CellType == CellType.String)
+                        return cell.StringCellValue?.Trim();
+                    if (cell.CellType == CellType.Numeric)
+                        return cell.NumericCellValue.ToString();
+                    if (cell.CellType == CellType.Boolean)
+                        return cell.BooleanCellValue.ToString();
+                }
+            }
+        }
+        return null;
     }
 }
 

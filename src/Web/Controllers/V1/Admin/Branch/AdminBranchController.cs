@@ -1,8 +1,10 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Branch;
 using SharedKernel.Constant.Permission;
@@ -61,5 +63,25 @@ public class AdminBranchController(IBranchService branchService) : BaseAdminApiC
     [Permission(MenuPermissionConstant.BranchDelete)]
     public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
         => HandleResult(await branchService.DeleteAsync(id, cancellationToken));
+
+    /// <summary>
+    /// Import branches from Excel file
+    /// </summary>
+    /// <param name="file">Excel file (.xlsx) containing branches</param>
+    /// <returns>Import result with success/failure counts and errors</returns>
+    [HttpPost("import")]
+    [RequestSizeLimit(10 * 1024 * 1024)] // Limit to 10MB max
+    [Permission(MenuPermissionConstant.BranchCreate)]
+    public async Task<IActionResult> ImportAsync(IFormFile file, CancellationToken cancellationToken = default)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        if (!file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            return BadRequest("Only .xlsx files are supported.");
+
+        await using var stream = file.OpenReadStream();
+        return HandleResult(await branchService.ImportFromExcelAsync(stream, cancellationToken));
+    }
 }
 

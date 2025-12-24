@@ -5,6 +5,9 @@ using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Models.BeemaEdgeApi.Designation;
+using Models.Common;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 
@@ -226,6 +229,124 @@ public class DesignationService(
         await db.SaveChangesAsync(cancellationToken);
 
         return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<ImportResult>> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
+    {
+        var userId = userProfileService.GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Result<ImportResult>.Failed("User not authenticated.");
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            return Result<ImportResult>.Failed("User not found.");
+
+        var roles = await userManager.GetRolesAsync(user);
+        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        var isAdmin = roles.Contains(SystemRoles.Admin);
+
+        if (!isSuperAdmin && !isAdmin)
+            return Result<ImportResult>.Failed("Unauthorized access.");
+
+        var tenantId = isSuperAdmin ? user.TenantId : db.CurrentTenantId;
+
+        var importResult = new ImportResult();
+        var designationsToAdd = new List<Designation>();
+        var errors = new List<ImportError>();
+
+        try
+        {
+            var workbook = new XSSFWorkbook(fileStream);
+            var sheet = workbook.GetSheetAt(0);
+
+            if (sheet == null || sheet.LastRowNum < 1)
+                return Result<ImportResult>.Failed("Excel file is empty or invalid.");
+
+            // Validate header row
+            var headerRow = sheet.GetRow(0);
+            if (headerRow == null)
+                return Result<ImportResult>.Failed("Header row is missing.");
+
+            var titleIndex = -1;
+            var descriptionIndex = -1;
+
+            for (int i = 0; i < headerRow.LastCellNum; i++)
+            {
+                var cellValue = headerRow.GetCell(i)?.ToString()?.Trim().ToLower();
+                if (cellValue == "title")
+                    titleIndex = i;
+                else if (cellValue == "description")
+                    descriptionIndex = i;
+            }
+
+            if (titleIndex == -1)
+                return Result<ImportResult>.Failed("Required column 'Title' is missing in the Excel file.");
+
+            // Process data rows
+            for (int rowIndex = 1; rowIndex <= sheet.LastRowNum; rowIndex++)
+            {
+                var row = sheet.GetRow(rowIndex);
+                if (row == null) continue;
+
+                var title = row.GetCell(titleIndex)?.ToString()?.Trim();
+                var description = row.GetCell(descriptionIndex)?.ToString()?.Trim();
+
+                // Validate required fields
+                if (string.IsNullOrWhiteSpace(title))
+                {
+                    errors.Add(new ImportError
+                    {
+                        RowNumber = rowIndex + 1,
+                        Field = "Title",
+                        ErrorMessage = "Title is required."
+                    });
+                    importResult.FailureCount++;
+                    continue;
+                }
+
+                // Check if designation already exists
+                var exists = await db.Designations
+                    .AnyAsync(d => d.Title == title && d.TenantId == tenantId && !d.IsDeleted, cancellationToken);
+
+                if (exists)
+                {
+                    errors.Add(new ImportError
+                    {
+                        RowNumber = rowIndex + 1,
+                        Field = "Title",
+                        ErrorMessage = $"Designation '{title}' already exists."
+                    });
+                    importResult.FailureCount++;
+                    continue;
+                }
+
+                designationsToAdd.Add(new Designation
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = title,
+                    Description = string.IsNullOrWhiteSpace(description) ? null : description,
+                    TenantId = tenantId
+                });
+
+                importResult.SuccessCount++;
+            }
+
+            // Bulk insert
+            if (designationsToAdd.Any())
+            {
+                await db.Designations.AddRangeAsync(designationsToAdd, cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
+            }
+
+            importResult.TotalRows = sheet.LastRowNum;
+            importResult.Errors = errors;
+
+            return Result<ImportResult>.Success(importResult);
+        }
+        catch (Exception ex)
+        {
+            return Result<ImportResult>.Failed($"Error importing Excel file: {ex.Message}");
+        }
     }
 }
 

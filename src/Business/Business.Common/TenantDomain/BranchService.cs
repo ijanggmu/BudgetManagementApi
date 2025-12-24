@@ -5,6 +5,9 @@ using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Models.BeemaEdgeApi.Branch;
+using Models.Common;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 
@@ -273,6 +276,196 @@ public class BranchService(
         await db.SaveChangesAsync(cancellationToken);
 
         return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<ImportResult>> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
+    {
+        var userId = userProfileService.GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Result<ImportResult>.Failed("User not authenticated.");
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            return Result<ImportResult>.Failed("User not found.");
+
+        var roles = await userManager.GetRolesAsync(user);
+        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        var isAdmin = roles.Contains(SystemRoles.Admin);
+
+        if (!isSuperAdmin && !isAdmin)
+            return Result<ImportResult>.Failed("Unauthorized access.");
+
+        var tenantId = isSuperAdmin ? user.TenantId : db.CurrentTenantId;
+
+        var importResult = new ImportResult();
+        var branchesToAdd = new List<Branch>();
+        var errors = new List<ImportError>();
+
+        try
+        {
+            var workbook = new XSSFWorkbook(fileStream);
+            var sheet = workbook.GetSheetAt(0);
+
+            if (sheet == null || sheet.LastRowNum < 1)
+                return Result<ImportResult>.Failed("Excel file is empty or invalid.");
+
+            // Validate header row
+            var headerRow = sheet.GetRow(0);
+            if (headerRow == null)
+                return Result<ImportResult>.Failed("Header row is missing.");
+
+            var branchNameIndex = -1;
+            var branchCodeIndex = -1;
+            var provinceIndex = -1;
+            var districtIndex = -1;
+            var municipalityIndex = -1;
+            var wardIndex = -1;
+            var isActiveIndex = -1;
+
+            for (int i = 0; i < headerRow.LastCellNum; i++)
+            {
+                var cellValue = headerRow.GetCell(i)?.ToString()?.Trim().ToLower();
+                if (cellValue == "branchname" || cellValue == "branch name")
+                    branchNameIndex = i;
+                else if (cellValue == "branchcode" || cellValue == "branch code")
+                    branchCodeIndex = i;
+                else if (cellValue == "province")
+                    provinceIndex = i;
+                else if (cellValue == "district")
+                    districtIndex = i;
+                else if (cellValue == "municipality")
+                    municipalityIndex = i;
+                else if (cellValue == "ward")
+                    wardIndex = i;
+                else if (cellValue == "isactive" || cellValue == "is active")
+                    isActiveIndex = i;
+            }
+
+            if (branchNameIndex == -1 || branchCodeIndex == -1 || provinceIndex == -1 || 
+                districtIndex == -1 || municipalityIndex == -1 || wardIndex == -1)
+                return Result<ImportResult>.Failed("Required columns are missing in the Excel file.");
+
+            // Process data rows
+            for (int rowIndex = 1; rowIndex <= sheet.LastRowNum; rowIndex++)
+            {
+                var row = sheet.GetRow(rowIndex);
+                if (row == null) continue;
+
+                var branchName = row.GetCell(branchNameIndex)?.ToString()?.Trim();
+                var branchCode = row.GetCell(branchCodeIndex)?.ToString()?.Trim();
+                var province = row.GetCell(provinceIndex)?.ToString()?.Trim();
+                var district = row.GetCell(districtIndex)?.ToString()?.Trim();
+                var municipality = row.GetCell(municipalityIndex)?.ToString()?.Trim();
+                var wardCell = row.GetCell(wardIndex);
+                var isActive = true; // Default to true
+
+                if (isActiveIndex != -1)
+                {
+                    var isActiveCell = row.GetCell(isActiveIndex);
+                    if (isActiveCell != null)
+                    {
+                        if (isActiveCell.CellType == CellType.Boolean)
+                            isActive = isActiveCell.BooleanCellValue;
+                        else if (isActiveCell.CellType == CellType.String)
+                            bool.TryParse(isActiveCell.StringCellValue, out isActive);
+                        else if (isActiveCell.CellType == CellType.Numeric)
+                            isActive = isActiveCell.NumericCellValue != 0;
+                    }
+                }
+
+                // Validate required fields
+                var validationErrors = new List<string>();
+                if (string.IsNullOrWhiteSpace(branchName))
+                    validationErrors.Add("BranchName is required.");
+                if (string.IsNullOrWhiteSpace(branchCode))
+                    validationErrors.Add("BranchCode is required.");
+                if (string.IsNullOrWhiteSpace(province))
+                    validationErrors.Add("Province is required.");
+                if (string.IsNullOrWhiteSpace(district))
+                    validationErrors.Add("District is required.");
+                if (string.IsNullOrWhiteSpace(municipality))
+                    validationErrors.Add("Municipality is required.");
+
+                int ward = 0;
+                if (wardCell == null || !int.TryParse(wardCell.ToString(), out ward))
+                    validationErrors.Add("Ward must be a valid integer.");
+
+                if (validationErrors.Any())
+                {
+                    errors.Add(new ImportError
+                    {
+                        RowNumber = rowIndex + 1,
+                        Field = "Validation",
+                        ErrorMessage = string.Join(" ", validationErrors)
+                    });
+                    importResult.FailureCount++;
+                    continue;
+                }
+
+                // Check if branch code already exists
+                var codeExists = await db.Branches
+                    .AnyAsync(b => b.BranchCode == branchCode && b.TenantId == tenantId && !b.IsDeleted, cancellationToken);
+
+                if (codeExists)
+                {
+                    errors.Add(new ImportError
+                    {
+                        RowNumber = rowIndex + 1,
+                        Field = "BranchCode",
+                        ErrorMessage = $"Branch Code '{branchCode}' already exists."
+                    });
+                    importResult.FailureCount++;
+                    continue;
+                }
+
+                // Check if branch name already exists
+                var nameExists = await db.Branches
+                    .AnyAsync(b => b.BranchName == branchName && b.TenantId == tenantId && !b.IsDeleted, cancellationToken);
+
+                if (nameExists)
+                {
+                    errors.Add(new ImportError
+                    {
+                        RowNumber = rowIndex + 1,
+                        Field = "BranchName",
+                        ErrorMessage = $"Branch Name '{branchName}' already exists."
+                    });
+                    importResult.FailureCount++;
+                    continue;
+                }
+
+                branchesToAdd.Add(new Branch
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    BranchName = branchName,
+                    BranchCode = branchCode,
+                    Province = province,
+                    District = district,
+                    Municipality = municipality,
+                    Ward = ward,
+                    IsActive = isActive,
+                    TenantId = tenantId
+                });
+
+                importResult.SuccessCount++;
+            }
+
+            // Bulk insert
+            if (branchesToAdd.Any())
+            {
+                await db.Branches.AddRangeAsync(branchesToAdd, cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
+            }
+
+            importResult.TotalRows = sheet.LastRowNum;
+            importResult.Errors = errors;
+
+            return Result<ImportResult>.Success(importResult);
+        }
+        catch (Exception ex)
+        {
+            return Result<ImportResult>.Failed($"Error importing Excel file: {ex.Message}");
+        }
     }
 }
 

@@ -1,8 +1,10 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Designation;
 using SharedKernel.Constant.Permission;
@@ -61,5 +63,25 @@ public class AdminDesignationController(IDesignationService designationService) 
     [Permission(MenuPermissionConstant.DesignationDelete)]
     public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
         => HandleResult(await designationService.DeleteAsync(id, cancellationToken));
+
+    /// <summary>
+    /// Import designations from Excel file
+    /// </summary>
+    /// <param name="file">Excel file (.xlsx) containing designations</param>
+    /// <returns>Import result with success/failure counts and errors</returns>
+    [HttpPost("import")]
+    [RequestSizeLimit(10 * 1024 * 1024)] // Limit to 10MB max
+    [Permission(MenuPermissionConstant.DesignationCreate)]
+    public async Task<IActionResult> ImportAsync(IFormFile file, CancellationToken cancellationToken = default)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        if (!file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            return BadRequest("Only .xlsx files are supported.");
+
+        await using var stream = file.OpenReadStream();
+        return HandleResult(await designationService.ImportFromExcelAsync(stream, cancellationToken));
+    }
 }
 
