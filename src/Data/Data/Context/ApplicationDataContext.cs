@@ -83,6 +83,10 @@ namespace Data.Context
         public DbSet<PremiumCalculationRule> PremiumCalculationRules { get; set; }
         public DbSet<PremiumCalculationRateTable> PremiumCalculationRateTables { get; set; }
 
+        // Branch and Designation
+        public DbSet<Branch> Branches { get; set; }
+        public DbSet<Designation> Designations { get; set; }
+
         #endregion  DbSets
 
 

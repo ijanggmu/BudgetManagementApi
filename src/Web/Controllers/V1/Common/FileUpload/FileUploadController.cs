@@ -1,12 +1,14 @@
 using System;
 using System.Threading.Tasks;
-using Business.Common.File;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
+using Business.Common.File;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Models.Common.File;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Common.FileUpload;
 
@@ -14,6 +16,7 @@ public class FileUploadController(IFileService fileService) : BaseCommonApiContr
 {
     [HttpPost("UploadFile")]
     [RequestSizeLimit(10 * 1024 * 1024)] // Limit to 10MB max
+    [Permission(MenuPermissionConstant.FileUploadCreate)]
     public async Task<IActionResult> UploadFile([FromForm] FileUploadRequestModel model)
     {
         if (!Request.HasFormContentType ||

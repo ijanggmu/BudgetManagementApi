@@ -1,7 +1,9 @@
 using System.Threading.Tasks;
-using Business.BeemaEdgeApi.Province;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
+using Business.BeemaEdgeApi.Province;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Common.Location;
 
@@ -14,6 +16,7 @@ public class LocationController : BaseCommonApiController
     }
 
     [HttpGet("Provinces")]
+    [Permission(MenuPermissionConstant.CommonUtilitiesView)]
     public async Task<IActionResult> GetProvinces()
     {
         var result = await _locationService.GetProvincesAsync();
@@ -21,6 +24,7 @@ public class LocationController : BaseCommonApiController
     }
 
     [HttpPost("Districts")]
+    [Permission(MenuPermissionConstant.CommonUtilitiesView)]
     public async Task<IActionResult> GetDistricts(string provinceName)
     {
         var result = await _locationService.GetDistrictsAsync(provinceName);
@@ -28,6 +32,7 @@ public class LocationController : BaseCommonApiController
     }
 
     [HttpPost("Municipalities")]
+    [Permission(MenuPermissionConstant.CommonUtilitiesView)]
     public async Task<IActionResult> GetMunicipalities(string districtName)
     {
         var result = await _locationService.GetMunicipalitiesAsync(districtName);
@@ -35,6 +40,7 @@ public class LocationController : BaseCommonApiController
     }
 
     [HttpPost("Wards")]
+    [Permission(MenuPermissionConstant.CommonUtilitiesView)]
     public async Task<IActionResult> GetWards(string municipalityName)
     {
         var result = await _locationService.GetWardsAsync(municipalityName);

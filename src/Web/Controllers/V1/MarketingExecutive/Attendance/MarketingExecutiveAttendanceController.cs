@@ -2,10 +2,12 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Mvc;
 using Models.WebApi.TenantDTOs;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.FoDo.Attendance;
 public class MarketingExecutiveAttendanceController(
@@ -18,6 +20,7 @@ public class MarketingExecutiveAttendanceController(
     /// <param name="dto">Attendance check-in data with location</param>
     /// <returns>Attendance entry</returns>
     [HttpPost("check-in")]
+    [Permission(MenuPermissionConstant.CommonAttendanceCreate)]
     public async Task<IActionResult> CheckIn([FromBody] AttendanceDto dto, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
@@ -33,6 +36,7 @@ public class MarketingExecutiveAttendanceController(
     /// <param name="dto">Attendance check-out data with location</param>
     /// <returns>Attendance entry</returns>
     [HttpPost("check-out")]
+    [Permission(MenuPermissionConstant.CommonAttendanceCreate)]
     public async Task<IActionResult> CheckOut([FromBody] AttendanceDto dto, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
@@ -48,6 +52,7 @@ public class MarketingExecutiveAttendanceController(
     /// <param name="date">Date to get attendance for (defaults to today)</param>
     /// <returns>List of attendance entries for the day</returns>
     [HttpGet("daily")]
+    [Permission(MenuPermissionConstant.CommonAttendanceView)]
     public async Task<IActionResult> GetDaily([FromQuery] DateTime? date, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
@@ -65,6 +70,7 @@ public class MarketingExecutiveAttendanceController(
     /// <param name="month">Month (defaults to current month)</param>
     /// <returns>List of attendance entries for the month</returns>
     [HttpGet("monthly")]
+    [Permission(MenuPermissionConstant.CommonAttendanceView)]
     public async Task<IActionResult> GetMonthly([FromQuery] int? year, [FromQuery] int? month, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
@@ -81,6 +87,7 @@ public class MarketingExecutiveAttendanceController(
     /// </summary>
     /// <returns>True if check-in was performed today, false otherwise</returns>
     [HttpGet("today/status")]
+    [Permission(MenuPermissionConstant.CommonAttendanceView)]
     public async Task<IActionResult> GetTodayStatus(CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();

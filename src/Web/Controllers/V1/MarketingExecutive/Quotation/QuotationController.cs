@@ -2,40 +2,47 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Mvc;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.FoDo.Quotation;
 
 public class QuotationController(IQuotationService quotes) : BaseMarketingExecutiveApiController
 {
     [HttpPost]
+    [Permission(MenuPermissionConstant.MarketingExecutiveQuotationsCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateQuotationDto dto, CancellationToken cancellationToken = default)
     {
         return HandleResult(await quotes.CreateAsync(dto, cancellationToken));
     }
 
     [HttpGet]
+    [Permission(MenuPermissionConstant.MarketingExecutiveQuotationsView)]
     public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel? requestModel = null, CancellationToken cancellationToken = default)
     {
         return HandleResult(await quotes.ListAsync(requestModel, cancellationToken));
     }
 
     [HttpGet("{id}")]
+    [Permission(MenuPermissionConstant.MarketingExecutiveQuotationsView)]
     public async Task<IActionResult> GetAsync(string id, CancellationToken cancellationToken = default)
     {
         return HandleResult(await quotes.GetByIdAsync(id, cancellationToken));
     }
 
     [HttpPatch("{id}")]
+    [Permission(MenuPermissionConstant.MarketingExecutiveQuotationsUpdate)]
     public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateQuotationDto dto, CancellationToken cancellationToken = default)
     {
         return HandleResult(await quotes.UpdateAsync(id, dto, cancellationToken));
     }
 
     [HttpDelete("{id}")]
+    [Permission(MenuPermissionConstant.MarketingExecutiveQuotationsDelete)]
     public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
         return HandleResult(await quotes.DeleteAsync(id, cancellationToken));
@@ -47,6 +54,7 @@ public class QuotationController(IQuotationService quotes) : BaseMarketingExecut
     /// <param name="id">Quotation ID</param>
     /// <returns>PDF file</returns>
     [HttpGet("{id}/pdf")]
+    [Permission(MenuPermissionConstant.MarketingExecutiveQuotationsView)]
     public async Task<IActionResult> GetPdfAsync(string id, CancellationToken cancellationToken = default)
     {
         var result = await quotes.GeneratePdfAsync(id, cancellationToken);

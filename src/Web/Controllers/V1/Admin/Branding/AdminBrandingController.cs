@@ -1,9 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Mvc;
 using Models.WebApi.TenantDTOs;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Branding;
 
@@ -15,6 +17,7 @@ public class AdminBrandingController(IBrandingService brandingService) : BaseAdm
     /// <param name="tenantId">Optional: Tenant ID (SuperAdmin only)</param>
     /// <returns>Branding information</returns>
     [HttpGet]
+    [Permission(MenuPermissionConstant.BrandingView)]
     public async Task<IActionResult> GetAsync([FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrEmpty(tenantId))
@@ -29,6 +32,7 @@ public class AdminBrandingController(IBrandingService brandingService) : BaseAdm
     /// <param name="dto">Branding update data</param>
     /// <returns>Updated branding information</returns>
     [HttpPut]
+    [Permission(MenuPermissionConstant.BrandingUpdate)]
     public async Task<IActionResult> UpdateAsync([FromBody] UpdateBrandingDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await brandingService.UpdateAsync(dto, cancellationToken));
 }

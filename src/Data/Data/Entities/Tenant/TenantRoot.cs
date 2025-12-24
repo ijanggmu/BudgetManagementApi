@@ -8,6 +8,8 @@ public class Tenant : ApplicationBaseEntity
     public string Name { get; set; } = default!;
     public bool IsActive { get; set; } = true;
     public CompanyBranding Branding { get; set; } = default!;
+    public string? UnderwriterDigitalSignatureUrl { get; set; }
+    public string? UnderwriterName { get; set; }
 }
 
 

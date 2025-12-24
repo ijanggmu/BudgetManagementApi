@@ -72,7 +72,7 @@ public record LeadResponseDto(
     string ProspectId,
     string Status,
     string Source,
-    Guid? OwnerUserId,
+    string OwnerUserId,
     DateTime CreatedOn,
     ProspectResponseDto? Prospect
 );

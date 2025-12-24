@@ -1,11 +1,13 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.AdminPortalApi.AdminPassword;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Customer.CustomerIdentity;
 using Models.BeemaEdgeApi.Identity;
+using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Password;
 
@@ -17,6 +19,7 @@ public class AdminPasswordController(IAdminPasswordService adminPasswordService)
     /// <param name="requestModel">Password change data</param>
     /// <returns>Success message</returns>
     [HttpPut("change")]
+    [Permission(MenuPermissionConstant.PasswordChange)]
     public async Task<IActionResult> ChangeAsync([FromBody] ChangePasswordRequestModel requestModel, CancellationToken cancellationToken = default)
         => HandleResult(await adminPasswordService.ChangePasswordAsync(requestModel, cancellationToken));
 
@@ -36,6 +39,7 @@ public class AdminPasswordController(IAdminPasswordService adminPasswordService)
     /// <param name="requestModel">Password data</param>
     /// <returns>Success message</returns>
     [HttpPost("set")]
+    [Permission(MenuPermissionConstant.PasswordSet)]
     public async Task<IActionResult> SetAsync([FromBody] ChangePasswordRequestModel requestModel, CancellationToken cancellationToken = default)
         => HandleResult(await adminPasswordService.SetPasswordAsync(requestModel, cancellationToken));
 

@@ -10,7 +10,7 @@ public class Lead : TenantEntity
     public Prospect Prospect { get; set; }
     public LeadStatus Status { get; set; } = LeadStatus.New;
     public string Source { get; set; } = "Web";
-    public Guid? OwnerUserId { get; set; }
+    public string OwnerUserId { get; set; }
 }
 
 public class LeadActivity : TenantEntity

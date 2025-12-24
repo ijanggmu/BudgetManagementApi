@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
+using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Infrastructure.CoreApi.CoreApi;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Constant.Permission;
 using SharedKernel.Operation;
 using static BeemaEdgeApi.Controllers.V1.Common.Class.ClassController;
 
@@ -11,6 +13,7 @@ namespace BeemaEdgeApi.Controllers.V1.Common.Class;
 public class ClassController(IClassService classService) : BaseCommonApiController
 {
     [HttpGet("List")]
+    [Permission(MenuPermissionConstant.CommonUtilitiesView)]
     public async Task<IActionResult> GetClassList()
     {
         var result = await classService.GetClassListAsync();
@@ -18,6 +21,7 @@ public class ClassController(IClassService classService) : BaseCommonApiControll
     }
 
     [HttpGet("ByPortfolio/{portfolioId}")]
+    [Permission(MenuPermissionConstant.CommonUtilitiesView)]
     public async Task<IActionResult> GetClassesByPortfolio(string portfolioId)
     {
         var result = await classService.GetClassesByPortfolioAsync(portfolioId);

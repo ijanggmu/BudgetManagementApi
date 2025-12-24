@@ -23,7 +23,7 @@ public class AdminAttendanceController(IAttendanceService attendanceService) : B
     /// <param name="tenantId">Optional: Filter by tenant ID (SuperAdmin only)</param>
     /// <returns>Paginated list of attendance records</returns>
     [HttpPost]
-    [Permission(MenuPermissionConstant.OperationsView)]
+    [Permission(MenuPermissionConstant.AttendanceView)]
     public async Task<IActionResult> GetAttendanceAsync(
         [FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
@@ -38,7 +38,7 @@ public class AdminAttendanceController(IAttendanceService attendanceService) : B
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Excel file</returns>
     [HttpPost("export")]
-    [Permission(MenuPermissionConstant.OperationsView)] // Note: Export permission can be added if needed
+    [Permission(MenuPermissionConstant.AttendanceExport)]
     public async Task<IActionResult> ExportToExcelAsync(
         [FromBody] CommonPaginationRequestModel requestModel,
         CancellationToken cancellationToken = default)

@@ -157,6 +157,101 @@ public static class MenuPermissionConstant
     
     public const string ConfigView = "21-17-1";
     public const string ConfigViewName = "Config View";
+
+    public const string CommonUtilitiesName = "Common Utilities";
+    public const string FileUploadName = "File Upload";
+
+    public const string BranchName = "Branch";
+    public const string DesignationName = "Designation";
+    public const string EntitySettingsName = "Entity Settings";
+    public const string BrandingName = "Branding";
+    public const string ProfileName = "Profile";
+    public const string PasswordName = "Password";
+    public const string TwoFactorName = "Two Factor";
+    public const string AttendanceName = "Attendance";
+    public const string ReportingName = "Reporting";
+    public const string MarketingExecutiveLeadsName = "My Leads";
+    public const string MarketingExecutiveQuotationsName = "My Quotations";
+    public const string CommonAttendanceName = "My Attendance";
+
+    // Branch
+    public const string BranchView = "18-14-1";
+    public const string BranchViewName = "Branch View";
+    public const string BranchCreate = "18-14-2";
+    public const string BranchUpdate = "18-14-3";
+    public const string BranchDelete = "18-14-4";
+    public const string BranchExport = "18-14-5";
+
+    // Designation
+    public const string DesignationView = "18-15-1";
+    public const string DesignationViewName = "Designation View";
+    public const string DesignationCreate = "18-15-2";
+    public const string DesignationUpdate = "18-15-3";
+    public const string DesignationDelete = "18-15-4";
+    public const string DesignationExport = "18-15-5";
+
+    // Entity Settings (Operations)
+    public const string EntitySettingsView = "20-18-1";
+    public const string EntitySettingsViewName = "Entity Settings View";
+    public const string EntitySettingsUpdate = "20-18-3";
+
+    // Branding (Administration)
+    public const string BrandingView = "18-16-1";
+    public const string BrandingViewName = "Branding View";
+    public const string BrandingUpdate = "18-16-3";
+
+    // Profile (Administration)
+    public const string ProfileView = "18-17-1";
+    public const string ProfileViewName = "Profile View";
+    public const string ProfileUpdate = "18-17-3";
+
+    // Password (Administration)
+    public const string PasswordChange = "18-18-3";
+    public const string PasswordChangeName = "Password Change";
+    public const string PasswordSet = "18-18-4";
+    public const string PasswordSetName = "Password Set";
+
+    // Two Factor (Administration)
+    public const string TwoFactorView = "18-19-1";
+    public const string TwoFactorViewName = "Two Factor View";
+    public const string TwoFactorUpdate = "18-19-3";
+
+    // Attendance (Operations)
+    public const string AttendanceView = "20-19-1";
+    public const string AttendanceViewName = "Attendance View";
+    public const string AttendanceCreate = "20-19-2";
+    public const string AttendanceExport = "20-19-5";
+
+    // Marketing Executive Leads
+    public const string MarketingExecutiveLeadsView = "19-14-1";
+    public const string MarketingExecutiveLeadsViewName = "Marketing Executive Leads View";
+    public const string MarketingExecutiveLeadsCreate = "19-14-2";
+    public const string MarketingExecutiveLeadsUpdate = "19-14-3";
+
+    // Marketing Executive Quotations
+    public const string MarketingExecutiveQuotationsView = "19-15-1";
+    public const string MarketingExecutiveQuotationsViewName = "Marketing Executive Quotations View";
+    public const string MarketingExecutiveQuotationsCreate = "19-15-2";
+    public const string MarketingExecutiveQuotationsUpdate = "19-15-3";
+    public const string MarketingExecutiveQuotationsDelete = "19-15-4";
+
+    // Common Attendance (for Marketing Executives)
+    public const string CommonAttendanceView = "19-16-1";
+    public const string CommonAttendanceViewName = "Common Attendance View";
+    public const string CommonAttendanceCreate = "19-16-2";
+    public const string CommonAttendanceCreateName = "Common Attendance Create";
+
+    // Reporting (Operations)
+    public const string ReportingView = "20-20-1";
+    public const string ReportingViewName = "Reporting View";
+
+    // Common Utilities (used by multiple roles for lookups)
+    public const string CommonUtilitiesView = "22-1-1";
+    public const string CommonUtilitiesViewName = "Common Utilities View";
+    public const string FileUploadView = "22-2-1";
+    public const string FileUploadViewName = "File Upload View";
+    public const string FileUploadCreate = "22-2-2";
+    public const string FileUploadCreateName = "File Upload Create";
 }
 public static class CmsMenuConstant
 {
