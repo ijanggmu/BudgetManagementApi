@@ -16,6 +16,7 @@ public static class MenuPermissionDefinitions
 
     public static readonly MenuPermissionSet Tenants = PermissionHelper.GeneratePermissions("18-12", "Tenants");
     public static readonly MenuPermissionSet Roles = PermissionHelper.GeneratePermissions("18-2", "Roles");
+    public static readonly MenuPermissionSet Menu = PermissionHelper.GeneratePermissions("18-3", "Menu", includeCreate: false, includeDelete: false, includeExport: false);
     public static readonly MenuPermissionSet AdminManagement = PermissionHelper.GeneratePermissions("18-4", "Admin Management");
 
     // Sales & Marketing Section
@@ -102,6 +103,7 @@ public static class MenuPermissionDefinitions
             nameof(Administration) => Administration,
             nameof(Tenants) => Tenants,
             nameof(Roles) => Roles,
+            nameof(Menu) => Menu,
             nameof(AdminManagement) => AdminManagement,
             nameof(SalesMarketing) => SalesMarketing,
             nameof(MarketingExecutives) => MarketingExecutives,

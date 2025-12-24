@@ -49,6 +49,7 @@ public static class MenuPermissionConstant
     public const string OperationsName = "Operations";
     public const string SystemName = "System";
     public const string RolesName = "Roles";
+    public const string MenuName = "Menu";
     public const string AdminManagementName = "Admin Management";
     public const string TenantsName = "Tenants";
     public const string MarketingExecutivesName = "Marketing Executives";

@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Linq;
 
 namespace SharedKernel.Constant.Permission;
 
@@ -66,7 +67,7 @@ public static partial class MenuPermissionsList
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Tenants, false),
                         Children = null
                     },
-                    // 18-2. Administration > Roles
+                    // 18-2. Administration > Roles (includes Menu permissions)
                     new MenuItem
                     {
                         MenuId = 2,
@@ -79,7 +80,9 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Roles, false),
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Roles, false)
+                            .Concat(PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Menu, false))
+                            .ToList(),
                         Children = null
                     },
                     // 18-4. Administration > Admin Management
