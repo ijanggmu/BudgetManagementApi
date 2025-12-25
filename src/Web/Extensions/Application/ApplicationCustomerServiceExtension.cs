@@ -67,6 +67,7 @@ public static class ApplicationCustomerServiceExtension
     public static IServiceCollection AddApplicationCommonServiceExtension(this IServiceCollection services)
     {
         services.AddScoped<IPolicyCalculatorService, PolicyCalculatorService>();
+        services.AddScoped<IPolicyPremiumCalculatorService, PolicyPremiumCalculatorService>();
         services.AddScoped<IPolicyAcknowlegeService, PolicyAcknowlegeService>();
         services.AddScoped<ICountryService, CountryService>();
         services.AddScoped<IFileService, FileService>();

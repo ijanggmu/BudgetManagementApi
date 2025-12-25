@@ -1,4 +1,5 @@
 using Business.Common.PremiumCalculation.Calculator;
+using Business.Common.PremiumCalculation.Calculator.Motor;
 using Business.Common.PremiumCalculation.Configuration;
 using Business.Common.PremiumCalculation.Engine;
 using Business.Common.PremiumCalculation.Service;
@@ -41,6 +42,9 @@ public static class PremiumCalculationServicesExtension
 
         // Factory (updated to use new calculator)
         services.AddScoped<IPremiumCalculatorFactory, PremiumCalculatorFactory>();
+
+        services.AddScoped<IMotorcyclePremiumCalculator, MotorcyclePremiumCalculator>();
+
 
         return services;
     }
