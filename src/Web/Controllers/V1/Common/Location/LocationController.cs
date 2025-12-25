@@ -7,19 +7,13 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Common.Location;
 
-public class LocationController : BaseCommonApiController
+public class LocationController(ILocationService locationService) : BaseCommonApiController
 {
-    private readonly ILocationService _locationService;
-    public LocationController(ILocationService locationService)
-    {
-        _locationService = locationService;
-    }
-
     [HttpGet("Provinces")]
     [Permission(MenuPermissionConstant.CommonUtilitiesView)]
     public async Task<IActionResult> GetProvinces()
     {
-        var result = await _locationService.GetProvincesAsync();
+        var result = await locationService.GetProvincesAsync();
         return HandleResult(result);
     }
 
@@ -27,7 +21,7 @@ public class LocationController : BaseCommonApiController
     [Permission(MenuPermissionConstant.CommonUtilitiesView)]
     public async Task<IActionResult> GetDistricts(string provinceName)
     {
-        var result = await _locationService.GetDistrictsAsync(provinceName);
+        var result = await locationService.GetDistrictsAsync(provinceName);
         return HandleResult(result);
     }
 
@@ -35,7 +29,7 @@ public class LocationController : BaseCommonApiController
     [Permission(MenuPermissionConstant.CommonUtilitiesView)]
     public async Task<IActionResult> GetMunicipalities(string districtName)
     {
-        var result = await _locationService.GetMunicipalitiesAsync(districtName);
+        var result = await locationService.GetMunicipalitiesAsync(districtName);
         return HandleResult(result);
     }
 
@@ -43,7 +37,7 @@ public class LocationController : BaseCommonApiController
     [Permission(MenuPermissionConstant.CommonUtilitiesView)]
     public async Task<IActionResult> GetWards(string municipalityName)
     {
-        var result = await _locationService.GetWardsAsync(municipalityName);
+        var result = await locationService.GetWardsAsync(municipalityName);
         return HandleResult(result);
     }
 }
