@@ -19,9 +19,9 @@ public class AdminBranchController(IBranchService branchService) : BaseAdminApiC
     /// </summary>
     /// <param name="requestModel">Pagination and Sieve filter parameters</param>
     /// <returns>Paginated list of branches</returns>
-    [HttpGet]
+    [HttpPost]
     [Permission(MenuPermissionConstant.BranchView)]
-    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
         => HandleResult(await branchService.GetAllAsync(requestModel, cancellationToken));
 
     /// <summary>
@@ -39,7 +39,7 @@ public class AdminBranchController(IBranchService branchService) : BaseAdminApiC
     /// </summary>
     /// <param name="dto">Branch creation data</param>
     /// <returns>Created branch details</returns>
-    [HttpPost]
+    [HttpPost("create")]
     [Permission(MenuPermissionConstant.BranchCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateBranchDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await branchService.CreateAsync(dto, cancellationToken));

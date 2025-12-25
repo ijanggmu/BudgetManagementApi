@@ -19,9 +19,9 @@ public class AdminDesignationController(IDesignationService designationService) 
     /// </summary>
     /// <param name="requestModel">Pagination and Sieve filter parameters</param>
     /// <returns>Paginated list of designations</returns>
-    [HttpGet]
+    [HttpPost]
     [Permission(MenuPermissionConstant.DesignationView)]
-    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
         => HandleResult(await designationService.GetAllAsync(requestModel, cancellationToken));
 
     /// <summary>
@@ -39,7 +39,7 @@ public class AdminDesignationController(IDesignationService designationService) 
     /// </summary>
     /// <param name="dto">Designation creation data</param>
     /// <returns>Created designation details</returns>
-    [HttpPost]
+    [HttpPost("create")]
     [Permission(MenuPermissionConstant.DesignationCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateDesignationDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await designationService.CreateAsync(dto, cancellationToken));
