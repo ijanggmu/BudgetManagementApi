@@ -86,6 +86,9 @@ public static class MenuPermissionDefinitions
     public static readonly MenuPermissionSet Config = PermissionHelper.GeneratePermissions(
         "21-17", "Config", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
 
+    // System - Notice Board
+    public static readonly MenuPermissionSet NoticeBoard = PermissionHelper.GeneratePermissions("21-22", "Notice Board", includeExport: false);
+
     // Common Utilities (for lookup endpoints)
     public static readonly MenuPermissionSet CommonUtilities = PermissionHelper.GeneratePermissions(
         "22-1", "Common Utilities", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
@@ -130,6 +133,7 @@ public static class MenuPermissionDefinitions
             nameof(MarketingExecutiveLeads) => MarketingExecutiveLeads,
             nameof(MarketingExecutiveQuotations) => MarketingExecutiveQuotations,
             nameof(CommonAttendance) => CommonAttendance,
+            nameof(NoticeBoard) => NoticeBoard,
             nameof(CommonUtilities) => CommonUtilities,
             nameof(FileUpload) => FileUpload,
             _ => null

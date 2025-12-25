@@ -57,7 +57,7 @@ public static partial class MenuPermissionsList
                 },
                 Children = new List<MenuItem>
                 {
-                    // 18-12. Administration > Tenants
+                    // 18-12. Administration > Tenants (SuperAdmin only)
                     new MenuItem
                     {
                         MenuId = 12,
@@ -70,13 +70,55 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        Permissions =
-                        [
-                            .. PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Tenants, false),
-                            .. PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Branch, false),
-                            .. PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Designation, false),
-                            .. PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Branding, false),
-                        ],
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Tenants, false),
+                        Children = null
+                    },
+                    // 18-16. Administration > Organization Details / Branding (Tenant Admin)
+                    new MenuItem
+                    {
+                        MenuId = 16,
+                        MenuName = "Organization Details",
+                        MenuSlug = "/organization",
+                        Icon = "BankOutlined",
+                        Rank = 2,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Branding, false),
+                        Children = null
+                    },
+                    // 18-14. Administration > Branch (Tenant Admin)
+                    new MenuItem
+                    {
+                        MenuId = 14,
+                        MenuName = MenuPermissionConstant.BranchName,
+                        MenuSlug = "/branch",
+                        Icon = "ShopOutlined",
+                        Rank = 3,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Branch, false),
+                        Children = null
+                    },
+                    // 18-15. Administration > Designation (Tenant Admin)
+                    new MenuItem
+                    {
+                        MenuId = 15,
+                        MenuName = MenuPermissionConstant.DesignationName,
+                        MenuSlug = "/designation",
+                        Icon = "IdcardOutlined",
+                        Rank = 4,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Designation, false),
                         Children = null
                     },
                     // 18-2. Administration > Roles (includes Menu permissions)
@@ -86,7 +128,7 @@ public static partial class MenuPermissionsList
                         MenuName = MenuPermissionConstant.RolesName,
                         MenuSlug = "/roles",
                         Icon = "FileProtectOutlined",
-                        Rank = 2,
+                        Rank = 5,
                         Level = 2,
                         IsDisabled = false,
                         IsMenu = true,
@@ -106,7 +148,7 @@ public static partial class MenuPermissionsList
                         MenuName = MenuPermissionConstant.AdminManagementName,
                         MenuSlug = "/admin",
                         Icon = "TeamOutlined",
-                        Rank = 3,
+                        Rank = 6,
                         Level = 2,
                         IsDisabled = false,
                         IsMenu = true,
@@ -115,7 +157,6 @@ public static partial class MenuPermissionsList
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminManagement, false),
                         Children = null
                     },
-
                 }
             },
 
@@ -186,6 +227,54 @@ public static partial class MenuPermissionsList
                         ToHide = false,
                         HideChildren = false,
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminQuotations, false),
+                        Children = null
+                    },
+                    // 19-14. Sales & Marketing > Marketing Executive Leads (for Marketing Executive role)
+                    new MenuItem
+                    {
+                        MenuId = 14,
+                        MenuName = MenuPermissionConstant.MarketingExecutiveLeadsName,
+                        MenuSlug = "/leads",
+                        Icon = "Target",
+                        Rank = 4,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutiveLeads, false),
+                        Children = null
+                    },
+                    // 19-15. Sales & Marketing > Marketing Executive Quotations (for Marketing Executive role)
+                    new MenuItem
+                    {
+                        MenuId = 15,
+                        MenuName = MenuPermissionConstant.MarketingExecutiveQuotationsName,
+                        MenuSlug = "/quotations",
+                        Icon = "FileText",
+                        Rank = 5,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutiveQuotations, false),
+                        Children = null
+                    },
+                    // 19-16. Sales & Marketing > Marketing Executive Attendance (for Marketing Executive role)
+                    new MenuItem
+                    {
+                        MenuId = 16,
+                        MenuName = MenuPermissionConstant.CommonAttendanceName,
+                        MenuSlug = "/attendance",
+                        Icon = "CalendarOutlined",
+                        Rank = 6,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.CommonAttendance, false),
                         Children = null
                     },
                 }
@@ -303,12 +392,12 @@ public static partial class MenuPermissionsList
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Entity, false),
                         Children = null
                     },
-                    // 20-35. Operations > Attendance
+                    // 20-19. Operations > Attendance (Admin view)
                     new MenuItem
                     {
-                        MenuId = 35,
+                        MenuId = 19,
                         MenuName = MenuPermissionConstant.AttendanceName,
-                        MenuSlug = "/attendance",
+                        MenuSlug = "/admin-attendance",
                         Icon = "CalendarOutlined",
                         Rank = 4,
                         Level = 2,
@@ -317,6 +406,22 @@ public static partial class MenuPermissionsList
                         ToHide = false,
                         HideChildren = false,
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Attendance, false),
+                        Children = null
+                    },
+                    // 20-20. Operations > Reporting
+                    new MenuItem
+                    {
+                        MenuId = 20,
+                        MenuName = MenuPermissionConstant.ReportingName,
+                        MenuSlug = "/reporting",
+                        Icon = "BarChartOutlined",
+                        Rank = 5,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Reporting, false),
                         Children = null
                     },
                 }
@@ -402,7 +507,22 @@ public static partial class MenuPermissionsList
                         },
                         Children = null
                     },
-
+                    // 21-22. System > Notice Board
+                    new MenuItem
+                    {
+                        MenuId = 22,
+                        MenuName = "Notice Board",
+                        MenuSlug = "/noticeboard",
+                        Icon = "NotificationOutlined",
+                        Rank = 3,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.NoticeBoard, false),
+                        Children = null
+                    },
                 }
             }
         });
