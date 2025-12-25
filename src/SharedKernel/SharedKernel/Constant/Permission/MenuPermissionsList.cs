@@ -30,6 +30,7 @@ public static partial class MenuPermissionsList
                     .. PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Password, false),
                     .. PermissionHelper.ToPermissionList(MenuPermissionDefinitions.FileUpload, false),
                     .. PermissionHelper.ToPermissionList(MenuPermissionDefinitions.CommonUtilities, false),
+                    .. PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Profile, false),
 
                 ],
                 Children = null
