@@ -20,3 +20,4 @@ public class Designation : TenantEntity
     public string? Description { get; set; }
 }
 
+

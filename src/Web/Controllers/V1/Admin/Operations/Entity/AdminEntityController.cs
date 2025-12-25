@@ -32,3 +32,4 @@ public class AdminEntityController(IEntitySettingsService entitySettingsService)
         => HandleResult(await entitySettingsService.UpdateAsync(dto, cancellationToken));
 }
 
+

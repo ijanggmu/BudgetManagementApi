@@ -7,6 +7,7 @@ using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Branch;
+using Models.Common;
 using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Branch;
@@ -16,12 +17,12 @@ public class AdminBranchController(IBranchService branchService) : BaseAdminApiC
     /// <summary>
     /// Get all branches
     /// </summary>
-    /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
-    /// <returns>List of branches</returns>
+    /// <param name="requestModel">Pagination and Sieve filter parameters</param>
+    /// <returns>Paginated list of branches</returns>
     [HttpGet]
     [Permission(MenuPermissionConstant.BranchView)]
-    public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
-        => HandleResult(await branchService.GetAllAsync(tenantId, cancellationToken));
+    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await branchService.GetAllAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Get branch by ID

@@ -1,6 +1,7 @@
 using System.Threading;
 using Data.Context;
 using Data.Entities.Tenant;
+using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,10 +17,10 @@ namespace Business.Common.TenantDomain;
 public class BranchService(
     ApplicationDataContext db,
     UserManager<Data.Entities.Identity.ApplicationUser> userManager,
-    IUserProfileService userProfileService)
+    IUserProfileService userProfileService, ISieveExtension sieveExtension)
     : IBranchService
 {
-    public async Task<Result<List<BranchResponseDto>>> GetAllAsync(string? tenantId = null, CancellationToken cancellationToken = default)
+    public async Task<Result<List<BranchResponseDto>>> GetAllAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
@@ -35,14 +36,16 @@ public class BranchService(
         IQueryable<Branch> query = db.Branches
             .Where(b => !b.IsDeleted);
 
-        if (isSuperAdmin)
-        {
-            if (!string.IsNullOrEmpty(tenantId))
-                query = query.Where(b => b.TenantId == tenantId);
-            query = query.IgnoreQueryFilters();
-        }
+        //if (isSuperAdmin)
+        //{
+        //    if (!string.IsNullOrEmpty(tenantId))
+        //        query = query.Where(b => b.TenantId == tenantId);
+        //    query = query.IgnoreQueryFilters();
+        //}
 
-        var branches = await query.ToListAsync(cancellationToken);
+        // Apply Sieve filtering and pagination
+        var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
+        var branches = await result.ToListAsync(cancellationToken);
 
         var dtos = branches.Select(b => new BranchResponseDto
         {
@@ -58,7 +61,15 @@ public class BranchService(
             CreatedOn = b.CreatedOn
         }).ToList();
 
-        return Result<List<BranchResponseDto>>.Success(dtos);
+        var pagination = new Pagination
+        {
+            TotalItems = totalCount,
+            TotalPages = totalPage,
+            PageSize = requestModel.PageSize,
+            CurrentPage = requestModel.PageNumber
+        };
+
+        return Result<List<BranchResponseDto>>.Success(dtos, pagination);
     }
 
     public async Task<Result<BranchResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
@@ -341,7 +352,7 @@ public class BranchService(
                     isActiveIndex = i;
             }
 
-            if (branchNameIndex == -1 || branchCodeIndex == -1 || provinceIndex == -1 || 
+            if (branchNameIndex == -1 || branchCodeIndex == -1 || provinceIndex == -1 ||
                 districtIndex == -1 || municipalityIndex == -1 || wardIndex == -1)
                 return Result<ImportResult>.Failed("Required columns are missing in the Excel file.");
 

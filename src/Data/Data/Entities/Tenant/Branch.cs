@@ -26,3 +26,4 @@ public class Branch : TenantEntity
     public bool IsActive { get; set; } = true;
 }
 
+

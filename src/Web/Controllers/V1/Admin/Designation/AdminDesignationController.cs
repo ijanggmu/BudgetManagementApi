@@ -7,6 +7,7 @@ using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Designation;
+using Models.Common;
 using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Designation;
@@ -16,12 +17,12 @@ public class AdminDesignationController(IDesignationService designationService) 
     /// <summary>
     /// Get all designations
     /// </summary>
-    /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
-    /// <returns>List of designations</returns>
+    /// <param name="requestModel">Pagination and Sieve filter parameters</param>
+    /// <returns>Paginated list of designations</returns>
     [HttpGet]
     [Permission(MenuPermissionConstant.DesignationView)]
-    public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
-        => HandleResult(await designationService.GetAllAsync(tenantId, cancellationToken));
+    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await designationService.GetAllAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Get designation by ID

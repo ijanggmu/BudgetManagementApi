@@ -9,3 +9,4 @@ public interface IEntitySettingsService
     Task<Result<EntitySettingsResponseDto>> UpdateAsync(UpdateEntitySettingsDto dto, CancellationToken cancellationToken = default);
 }
 
+

@@ -1,6 +1,7 @@
 using System.Threading;
 using Data.Context;
 using Data.Entities.Tenant;
+using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,10 +17,11 @@ namespace Business.Common.TenantDomain;
 public class DesignationService(
     ApplicationDataContext db,
     UserManager<Data.Entities.Identity.ApplicationUser> userManager,
-    IUserProfileService userProfileService)
+    IUserProfileService userProfileService,
+    ISieveExtension sieveExtension)
     : IDesignationService
 {
-    public async Task<Result<List<DesignationResponseDto>>> GetAllAsync(string? tenantId = null, CancellationToken cancellationToken = default)
+    public async Task<Result<List<DesignationResponseDto>>> GetAllAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
@@ -37,12 +39,12 @@ public class DesignationService(
 
         if (isSuperAdmin)
         {
-            if (!string.IsNullOrEmpty(tenantId))
-                query = query.Where(d => d.TenantId == tenantId);
             query = query.IgnoreQueryFilters();
         }
 
-        var designations = await query.ToListAsync(cancellationToken);
+        // Apply Sieve filtering and pagination
+        var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
+        var designations = await result.ToListAsync(cancellationToken);
 
         var dtos = designations.Select(d => new DesignationResponseDto
         {
@@ -53,7 +55,15 @@ public class DesignationService(
             CreatedOn = d.CreatedOn
         }).ToList();
 
-        return Result<List<DesignationResponseDto>>.Success(dtos);
+        var pagination = new Pagination
+        {
+            TotalItems = totalCount,
+            TotalPages = totalPage,
+            PageSize = requestModel.PageSize,
+            CurrentPage = requestModel.PageNumber
+        };
+
+        return Result<List<DesignationResponseDto>>.Success(dtos, pagination);
     }
 
     public async Task<Result<DesignationResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
