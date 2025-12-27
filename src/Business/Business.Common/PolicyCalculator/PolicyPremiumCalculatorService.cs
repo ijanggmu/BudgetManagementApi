@@ -1,14 +1,13 @@
-using Business.Common.PremiumCalculation.Calculator.Motor;
-using Infrastructure.CoreApi.CoreApi;
+using Business.Common.PremiumCalculation.Abstract;
 using Models.Common.Policy.Calculation;
 using Models.Common.Policy.Policy;
 using Models.Common.Policy.Policy.Miscellaneous;
+using SharedKernel.Constant.Permission;
 using SharedKernel.Helper;
 using SharedKernel.Operation;
-using UnderwritingService.Calculation.PremiumCalculation.Abstract;
 
 namespace Business.Common.PolicyCalculator;
-public class PolicyPremiumCalculatorService(IMotorcyclePremiumCalculator premiumCalculator) : IPolicyPremiumCalculatorService
+public class PolicyPremiumCalculatorService(IPolicyPremiumCalculatorFactory policyPremiumCalculatorFactory) : IPolicyPremiumCalculatorService
 {
     public async Task<Result<PremiumCalculationResultModel>> CalculatePolicyPremiumAsync(PremiumCalculateRequestModel requestModel)
     {
@@ -63,7 +62,7 @@ public class PolicyPremiumCalculatorService(IMotorcyclePremiumCalculator premium
             {
                 MotorPartial = isElectric ? null : motorPartial,
                 ElectricMotorcyclePartial = isElectric ? ElectricMotorPartial : null,
-                PortfolioAlias = isElectric ? "EMCY" : "MCY",
+                PortfolioAlias = isElectric ? PortfolioClassConstants.ElectricMotorcycle : PortfolioClassConstants.Motorcycle,
                 PartyId = "Test",
                 BancassuanceBankName = "Dummy Bank Name",
                 BancassuanceBankBranch = "Dummy Bank Branch"
@@ -141,7 +140,7 @@ public class PolicyPremiumCalculatorService(IMotorcyclePremiumCalculator premium
             {
                 MotorPartial = isElectric ? null : fuelPartial,
                 ElectricMotorcyclePartial = isElectric ? electricPartial : null,
-                PortfolioAlias = isElectric ? "EMCY" : "MCY",
+                PortfolioAlias = isElectric ? PortfolioClassConstants.ElectricMotorcycle : PortfolioClassConstants.Motorcycle,
                 PartyId = "2222222222",
                 BancassuanceBankName = "Dummy Bank Name",
                 BancassuanceBankBranch = "Dummy Bank Branch"
@@ -199,7 +198,7 @@ public class PolicyPremiumCalculatorService(IMotorcyclePremiumCalculator premium
                     DepreciationAmount = 0,
                     HasSmartPolicy = false
                 },
-                PortfolioAlias = "PV",
+                PortfolioAlias = PortfolioClassConstants.PrivateVehicle,
                 PartyId = "2222222222",
                 BancassuanceBankName = "Dummy Bank Name",
                 BancassuanceBankBranch = "Dummy Bank Branch"
@@ -242,7 +241,7 @@ public class PolicyPremiumCalculatorService(IMotorcyclePremiumCalculator premium
                     DepreciationAmount = 0,
                     HasSmartPolicy = false
                 },
-                PortfolioAlias = "PV",
+                PortfolioAlias = PortfolioClassConstants.PrivateVehicle,
                 PartyId = "2222222222",
                 BancassuanceBankName = "Dummy Bank Name",
                 BancassuanceBankBranch = "Dummy Bank Branch"
@@ -270,7 +269,7 @@ public class PolicyPremiumCalculatorService(IMotorcyclePremiumCalculator premium
                     PremiumAmount = 58,
                     ExchangeRate = 145
                 },
-                PortfolioAlias = "TI",
+                PortfolioAlias = PortfolioClassConstants.TravelInsurance,
                 PortfolioId = "TI",
                 PartyId = "68361328-5dc7-4d99-b952-01a0fd66a890",
                 BancassuanceBankName = "dummyBank",
@@ -321,7 +320,7 @@ public class PolicyPremiumCalculatorService(IMotorcyclePremiumCalculator premium
                     Age = requestModel.InternationalTravelInsurance.Age.ToString(),
 
                 },
-                PortfolioAlias = "ITI",
+                PortfolioAlias = PortfolioClassConstants.InternationalTravelInsurance,
                 PortfolioId = "ITI",
                 PartyId = "68361328-5dc7-4d99-b952-01a0fd66a890",
                 BancassuanceBankName = "dummyBank",
@@ -329,10 +328,8 @@ public class PolicyPremiumCalculatorService(IMotorcyclePremiumCalculator premium
             };
         }
 
-
-
-        //var result = await coreApiService.CalculatePolicyPremiumAsync(request);
-        var result = await premiumCalculator.CalculatePremium(request);
+        var calculator = policyPremiumCalculatorFactory.GetCalculator(request.PortfolioAlias);
+        var result = await calculator.CalculatePremium(request);
 
         result.PremiumUSD = premiumAmount;
         result.ExchangeRate = premiumAmount > 0 ? result.BasicPremium / premiumAmount : 0;

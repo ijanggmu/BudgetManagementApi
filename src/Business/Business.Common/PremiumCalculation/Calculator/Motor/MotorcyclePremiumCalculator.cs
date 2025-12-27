@@ -1,6 +1,5 @@
 using Models.Common.Policy.Calculation;
 using Models.Common.Policy.Configuration.CalculationConfiguration;
-using Models.Common.Policy.Configuration.GlobalConfiguration;
 using Models.Common.Policy.Endorsement;
 using Models.Common.Policy.Policy;
 using Models.Common.Policy.Risk;
@@ -10,10 +9,10 @@ using Models.Common.Policy.Enum;
 using SharedKernel.Constant;
 using SharedKernel.Helper;
 using Data.Context;
-using Data.Entities.Calculation;
+using SharedKernel.Constant.Permission;
 
 namespace Business.Common.PremiumCalculation.Calculator.Motor;
-public class MotorcyclePremiumCalculator : IMotorcyclePremiumCalculator
+public class MotorcyclePremiumCalculator : IPolicyPremiumCalculator
 {
     private readonly ApplicationDataContext _db;
     private decimal _shortScaleRate;
@@ -29,9 +28,11 @@ public class MotorcyclePremiumCalculator : IMotorcyclePremiumCalculator
         isMinRSMDTAmount = false;
         _db = db;
     }
-
-
-
+    public IReadOnlyCollection<string> SupportedPortfolioAliases =>
+        new[]
+        {
+            PortfolioClassConstants.Motorcycle
+        };
     public async Task<PremiumCalculationResultModel> CalculatePremium(CreatePolicyViewModel model)
     {
         #region Initialization
@@ -43,86 +44,11 @@ public class MotorcyclePremiumCalculator : IMotorcyclePremiumCalculator
         res.MotorRiskViewModel = new MotorRiskViewModel();
         DateViewModel dateViewModel = new DateViewModel();
         var calculationConfigData = _db.CalculationConfigurations.Where(x => x.PortfolioAlias == model.PortfolioAlias && !x.IsDeleted).ToList();
-//        var calculationConfigData = new List<CalculationConfiguration>
-//{
-//    new CalculationConfiguration
-//    {
-//        Id = Guid.NewGuid().ToString(),
-//                Type = "BaseRate",
-//                TypeEnumValue = 1,
-//                DataType = "Decimal",
-//                Value = 0.2500m,
-//                Level = "Portfolio",
-//                ValueType = "Percentage",
-//                LowerLimit = 0,
-//                UpperLimit = 100,
-//                LowerLimitEquals = true,
-//                UpperLimitEquals = true,
-//                PortfolioAlias = "test",
-//                EffectiveFrom = DateTime.Today.AddMonths(-1),
-//                EffectiveTo = DateTime.Today.AddYears(1),
-//                ApprovalStatus = 1, // Approved
-//                ApprovedBy = "System",
-//                IsConfigured = true,
-//                PortfolioName = "Motor Comprehensive"
-//    },
-//    new CalculationConfiguration
-//    {
-//        Id = Guid.NewGuid().ToString(),
-//                Type = "MinimumPremium",
-//                TypeEnumValue = 2,
-//                DataType = "Decimal",
-//                Value = 1000.0000m,
-//                Level = "Portfolio",
-//                ValueType = "Amount",
-//                LowerLimit = 0,
-//                UpperLimit = 100000,
-//                LowerLimitEquals = true,
-//                UpperLimitEquals = true,
-//                PortfolioAlias = "test",
-//                EffectiveFrom = DateTime.Today,
-//                EffectiveTo = DateTime.Today.AddYears(1),
-//                ApprovalStatus = 1,
-//                ApprovedBy = "System",
-//                IsConfigured = true,
-//                PortfolioName = "Motor Comprehensive"
-//    }
-//};
 
-        var riskSetupModel = MapToCalculationConfigurationViewModel(calculationConfigData);
+        var riskSetupModel = CalculationConfigMapper.MapToCalculationConfigurationViewModel(calculationConfigData);
         var globalConfigData = _db.GlobalConfigurations.Where(x => !x.IsDeleted).ToList();
-        //var globalConfigData = new List<GlobalConfiguration> {
-        //    new GlobalConfiguration
-        //    {
-        //        Id = Guid.NewGuid().ToString(),
-        //        Type = "VatPercentage",
-        //        TypeEnumValue = 10,
-        //        DataType = "Decimal",
-        //        Value = 13.0000m,
-        //        Level = "Global",
-        //        ValueType = "Percentage",
-        //        LowerLimit = 0,
-        //        UpperLimit = 100,
-        //        LowerLimitEquals = true,
-        //        UpperLimitEquals = true,
-        //        IsConfigured = true
-        //    },
-        //    new GlobalConfiguration
-        //    {
-        //        Id = Guid.NewGuid().ToString(),
-        //        Type = "StampDuty",
-        //        TypeEnumValue = 11,
-        //        DataType = "Decimal",
-        //        Value = 20.0000m,
-        //        Level = "Global",
-        //        ValueType = "Amount",
-        //        LowerLimit = 0,
-        //        UpperLimit = 1000,
-        //        LowerLimitEquals = true,
-        //        UpperLimitEquals = true,
-        //        IsConfigured = true
-        //    } };
-        var globalriskSetupModel = MapToGlobalConfigurationViewModel(globalConfigData);
+        
+        var globalriskSetupModel = CalculationConfigMapper.MapToGlobalConfigurationViewModel(globalConfigData);
 
         var ageAndDepreciationTuple = new Tuple<DateViewModel, string>(null, "");
         //calculate period values
@@ -929,84 +855,6 @@ public class MotorcyclePremiumCalculator : IMotorcyclePremiumCalculator
     }
 
     #region Helper
-    public static List<CalculationConfigurationViewModel> MapToCalculationConfigurationViewModel(List<CalculationConfiguration> entities)
-    {
-        if (entities == null || entities.Count == 0)
-            return new List<CalculationConfigurationViewModel>();
-
-        return entities.Select(entity => new CalculationConfigurationViewModel
-        {
-
-            Id = entity.Id,
-
-            PortfolioAlias = entity.PortfolioAlias,
-            PortfolioName = entity.PortfolioName,
-
-            Type = entity.Type,
-            TypeEnumValue = entity.TypeEnumValue,
-
-            DataType = entity.DataType,
-            ValueType = entity.ValueType,
-
-            Value = entity.Value,
-            Level = entity.Level,
-
-            LowerLimit = entity.LowerLimit,
-            UpperLimit = entity.UpperLimit,
-            LowerLimitEquals = entity.LowerLimitEquals,
-            UpperLimitEquals = entity.UpperLimitEquals,
-
-            IsConfigured = entity.IsConfigured,
-
-            CreatedDate = entity.CreatedOn.ToString("yyyy-MM-dd"),
-
-            IsDeleted = entity.IsDeleted,
-
-            CreatedBy = entity.CreatedBy,
-            UpdatedBy = entity.LastModifiedBy
-        })
-        .ToList();
-    }
-    public static List<GlobalConfigurationViewModel> MapToGlobalConfigurationViewModel(List<GlobalConfiguration> entities)
-    {
-        if (entities == null || entities.Count == 0)
-            return new List<GlobalConfigurationViewModel>();
-
-        return entities
-        .Select((entity, index) => new GlobalConfigurationViewModel
-        {
-            SN = index + 1,
-
-            Id = entity.Id,
-
-            Type = entity.Type,
-            TypeEnumValue = entity.TypeEnumValue,
-
-            DataType = entity.DataType,
-            ValueType = entity.ValueType,
-
-            Value = entity.Value,
-            Level = entity.Level,
-
-            LowerLimit = entity.LowerLimit,
-            UpperLimit = entity.UpperLimit,
-            LowerLimitEquals = entity.LowerLimitEquals,
-            UpperLimitEquals = entity.UpperLimitEquals,
-
-            IsConfigured = entity.IsConfigured,
-
-            CreatedDate = entity.CreatedOn.ToString("yyyy-MM-dd"),
-
-            IsDeleted = entity.IsDeleted,
-
-            TypeName = entity.Type,
-
-            CreatedBy = entity.CreatedBy,
-            UpdatedBy = entity.LastModifiedBy
-        })
-        .ToList();
-
-    }
 
     private decimal GetProRataOrShortScaleAmount(decimal orgAmount)
     {

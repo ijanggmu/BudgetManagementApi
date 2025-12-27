@@ -9,8 +9,10 @@ namespace UnderwritingService.Calculation.PremiumCalculation.Abstract
     {
         Task<PremiumCalculationResultModel> CalculatePremium(CreatePolicyViewModel model);
         Task<PremiumCalculationResultModel> CalculateEndorsementPremium(EndorsementViewModel endorsementVM, PremiumCalculationResultModel premiumCalculation);
-    }public interface IMotorcyclePremiumCalculator
+    }public interface IPolicyPremiumCalculator
     {
+        IReadOnlyCollection<string> SupportedPortfolioAliases { get; }
+
         Task<PremiumCalculationResultModel> CalculatePremium(CreatePolicyViewModel model);
         Task<PremiumCalculationResultModel> CalculateEndorsementPremium(EndorsementViewModel endorsementVM, PremiumCalculationResultModel premiumCalculation);
     }

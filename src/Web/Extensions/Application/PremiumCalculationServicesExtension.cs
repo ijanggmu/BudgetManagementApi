@@ -1,7 +1,9 @@
+using Business.Common.PremiumCalculation.Abstract;
 using Business.Common.PremiumCalculation.Calculator;
 using Business.Common.PremiumCalculation.Calculator.Motor;
 using Business.Common.PremiumCalculation.Configuration;
 using Business.Common.PremiumCalculation.Engine;
+using Business.Common.PremiumCalculation.Factory;
 using Business.Common.PremiumCalculation.Service;
 using Microsoft.Extensions.DependencyInjection;
 using UnderwritingService.Calculation.PremiumCalculation.Abstract;
@@ -41,9 +43,10 @@ public static class PremiumCalculationServicesExtension
         services.AddScoped<ConfigurablePremiumCalculator>();
 
         // Factory (updated to use new calculator)
-        services.AddScoped<IPremiumCalculatorFactory, PremiumCalculatorFactory>();
+        services.AddScoped<IPremiumCalculatorFactory, UnderwritingService.Calculation.PremiumCalculation.Factory.PremiumCalculatorFactory>();
 
-        services.AddScoped<IMotorcyclePremiumCalculator, MotorcyclePremiumCalculator>();
+        services.AddScoped<IPolicyPremiumCalculator, MotorcyclePremiumCalculator>();
+        services.AddScoped<IPolicyPremiumCalculatorFactory, PolicyPremiumCalculatorFactory>();
 
 
         return services;
