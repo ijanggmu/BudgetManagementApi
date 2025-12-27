@@ -34,7 +34,6 @@ using Serilog;
 try
 {
     var builder = WebApplication.CreateBuilder(args);
-    ConfigureConfiguration(builder);
 
     builder.ConfigureSerilog();
 
@@ -61,6 +60,7 @@ try
         options.MultipartBodyLengthLimit = 10_000_000; // 10mb
     });
 
+    ConfigureConfiguration(builder);
 
     ValidateConfiguration(builder.Configuration, builder.Environment);
 
