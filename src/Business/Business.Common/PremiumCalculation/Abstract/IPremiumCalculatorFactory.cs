@@ -1,4 +1,4 @@
-﻿namespace UnderwritingService.Calculation.PremiumCalculation.Abstract
+namespace UnderwritingService.Calculation.PremiumCalculation.Abstract
 {
     public interface IPremiumCalculatorFactory
     {

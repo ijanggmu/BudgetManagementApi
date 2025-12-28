@@ -10,4 +10,9 @@ public interface IPolicyCalculatorService
     Task<Result<PremiumCalculationResponseModel>> CalculatePremiumAsync(PremiumCalculateRequestModel requestModel);
     Task<Decimal> CalculateUsdRate(TravelUSDRateRequestModel requestModel);
 }
+public interface IPolicyPremiumCalculatorService
+{
+    Task<Result<PremiumCalculationResultModel>> CalculatePolicyPremiumAsync(PremiumCalculateRequestModel requestModel);
+    Task<Decimal> CalculateUsdRate(TravelUSDRateRequestModel requestModel);
+}
 

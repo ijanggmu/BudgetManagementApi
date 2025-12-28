@@ -1,5 +1,6 @@
 using Data.Entities.AdminEntity;
 using Data.Entities.BaseEntity;
+using Data.Entities.Calculation;
 using Data.Entities.Common;
 using Data.Entities.CorporateEntity;
 using Data.Entities.CustomerEntity;
@@ -77,11 +78,14 @@ namespace Data.Context
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Prospect> Prospects { get; set; }
 
+
         // Premium Calculation
         public DbSet<PremiumCalculationConfiguration> PremiumCalculationConfigurations { get; set; }
         public DbSet<PremiumCalculationParameter> PremiumCalculationParameters { get; set; }
         public DbSet<PremiumCalculationRule> PremiumCalculationRules { get; set; }
         public DbSet<PremiumCalculationRateTable> PremiumCalculationRateTables { get; set; }
+        public DbSet<CalculationConfiguration> CalculationConfigurations { get; set; }
+        public DbSet<GlobalConfiguration> GlobalConfigurations { get; set; }
 
         // Branch and Designation
         public DbSet<Branch> Branches { get; set; }
