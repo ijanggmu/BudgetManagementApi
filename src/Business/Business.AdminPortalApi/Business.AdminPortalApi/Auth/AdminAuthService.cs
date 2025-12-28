@@ -111,7 +111,6 @@ StringCipherService stringCipherService) : IAdminAuthService
                 RefreshToken = refresh.Item1,
                 RefreshTokenExpiryInSeconds = refresh.Item2
             };
-            responseModel.Token = result.AccessToken;
 
             ipersonAccessor.SetAuthCookiesInClient(result, requestModel.Username);
 
