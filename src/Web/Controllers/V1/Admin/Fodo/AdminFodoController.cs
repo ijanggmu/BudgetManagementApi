@@ -10,6 +10,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Fodo;
 
+[AdminOrSuperAdmin] // All endpoints require Admin or SuperAdmin role
 public class AdminFodoController(IFodoService fodoService) : BaseAdminApiController
 {
     /// <summary>

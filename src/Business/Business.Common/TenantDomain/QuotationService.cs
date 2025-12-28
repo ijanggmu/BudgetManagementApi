@@ -229,33 +229,16 @@ public class QuotationService : IQuotationService
     {
         try
         {
-            var userId = _userProfileService.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Result<List<QuotationResponseDto>>.Failed("User not authenticated.");
-
-            // Get current user and their roles
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null || user.IsDeleted || user.IsDisabled)
-                return Result<List<QuotationResponseDto>>.Failed("User not found or inactive.");
-
-            var userRoles = await _db.UserRoles
-                .Where(ur => ur.UserId == userId && !ur.IsDeleted)
-                .Join(_db.Roles.Where(r => !r.IsDeleted),
-                    ur => ur.RoleId,
-                    r => r.Id,
-                    (ur, r) => r.Name)
-                .ToListAsync();
-
-            var isSuperAdmin = userRoles.Contains(SystemRoles.SuperAdmin);
-            var isAdmin = userRoles.Contains(SystemRoles.Admin);
-
-            if (!isSuperAdmin && !isAdmin)
-                return Result<List<QuotationResponseDto>>.Failed("Access denied. Admin or SuperAdmin role required.");
+            // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+            // Only check role for query filtering logic
+            var roleId = _userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
             // Build query with includes
             IQueryable<Quotation> query = _db.Set<Quotation>()
                 .Include(q => q.Items)
                 .AsNoTracking();
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             // For SuperAdmin, ignore the automatic tenant query filter to see all quotations across all tenants
             if (isSuperAdmin)
@@ -263,12 +246,6 @@ public class QuotationService : IQuotationService
                 query = query.IgnoreQueryFilters();
             }
             // For Tenant Admin, the automatic tenant query filter will already filter by their tenant
-            // But we can add an explicit filter for clarity and to ensure it works correctly
-            else if (!string.IsNullOrEmpty(user.TenantId))
-            {
-                // Tenant Admin: only show quotations from their tenant
-                query = query.Where(q => q.TenantId == user.TenantId);
-            }
 
 
             // Apply Sieve filtering and pagination
@@ -298,33 +275,15 @@ public class QuotationService : IQuotationService
     {
         try
         {
-            var userId = _userProfileService.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Result<QuotationResponseDto>.Failed("User not authenticated.");
-
-            // Get current user and their roles
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null || user.IsDeleted || user.IsDisabled)
-                return Result<QuotationResponseDto>.Failed("User not found or inactive.");
-
-            var userRoles = await _db.UserRoles
-                .Where(ur => ur.UserId == userId && !ur.IsDeleted)
-                .Join(_db.Roles.Where(r => !r.IsDeleted),
-                    ur => ur.RoleId,
-                    r => r.Id,
-                    (ur, r) => r.Name)
-                .ToListAsync();
-
-            var isSuperAdmin = userRoles.Contains(SystemRoles.SuperAdmin);
-            var isAdmin = userRoles.Contains(SystemRoles.Admin);
-
-            if (!isSuperAdmin && !isAdmin)
-                return Result<QuotationResponseDto>.Failed("Access denied. Admin or SuperAdmin role required.");
+            // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+            var roleId = _userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
             // Build query with includes
             IQueryable<Quotation> query = _db.Set<Quotation>()
                 .Include(q => q.Items)
                 .AsNoTracking();
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             // For SuperAdmin, ignore the automatic tenant query filter
             if (isSuperAdmin)
@@ -337,11 +296,7 @@ public class QuotationService : IQuotationService
             if (quotation == null)
                 return Result<QuotationResponseDto>.Failed("Quotation not found.");
 
-            // For Tenant Admin, verify the quotation belongs to their tenant
-            if (!isSuperAdmin && !string.IsNullOrEmpty(user.TenantId) && quotation.TenantId != user.TenantId)
-            {
-                return Result<QuotationResponseDto>.Failed("Access denied. Quotation does not belong to your tenant.");
-            }
+            // For Tenant Admin, global query filter ensures tenant isolation
 
             return Result<QuotationResponseDto>.Success(MapToDto(quotation));
         }
@@ -365,19 +320,8 @@ public class QuotationService : IQuotationService
             if (user == null || user.IsDeleted || user.IsDisabled)
                 return Result<List<QuotationResponseDto>>.Failed("User not found or inactive.");
 
-            var userRoles = await _db.UserRoles
-                .Where(ur => ur.UserId == userId && !ur.IsDeleted)
-                .Join(_db.Roles.Where(r => !r.IsDeleted),
-                    ur => ur.RoleId,
-                    r => r.Id,
-                    (ur, r) => r.Name)
-                .ToListAsync();
-
-            var isSuperAdmin = userRoles.Contains(SystemRoles.SuperAdmin);
-
-            // Only SuperAdmin can filter by tenantId
-            if (!isSuperAdmin)
-                return Result<List<QuotationResponseDto>>.Failed("Access denied. SuperAdmin role required to filter by tenantId.");
+            // Role authorization is handled by [SuperAdminOnly] filter attribute on controller
+            // This endpoint is SuperAdmin only, so we can always use IgnoreQueryFilters
 
             // Verify tenant exists
             var tenant = await _db.Set<Data.Entities.Tenant.Tenant>()

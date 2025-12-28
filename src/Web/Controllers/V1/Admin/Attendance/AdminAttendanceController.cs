@@ -10,6 +10,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Attendance;
 
+[AdminOrSuperAdmin] // All endpoints require Admin or SuperAdmin role
 public class AdminAttendanceController(IAttendanceService attendanceService) : BaseAdminApiController
 {
     /// <summary>

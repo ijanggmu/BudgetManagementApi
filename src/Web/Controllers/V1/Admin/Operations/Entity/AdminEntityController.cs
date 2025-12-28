@@ -9,6 +9,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Operations.Entity;
 
+[AdminOrSuperAdmin] // All endpoints require Admin or SuperAdmin role
 public class AdminEntityController(IEntitySettingsService entitySettingsService) : BaseAdminApiController
 {
     /// <summary>

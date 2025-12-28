@@ -10,6 +10,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Lead;
 
+[AdminOrSuperAdmin] // All endpoints require Admin or SuperAdmin role
 public class AdminLeadController(ILeadService leadService) : BaseAdminApiController
 {
     /// <summary>
@@ -50,6 +51,7 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
     /// <param name="to">Optional: Filter leads created until this date</param>
     /// <returns>Paginated list of leads for the specified tenant</returns>
     [HttpGet("tenant/{tenantId}")]
+    [SuperAdminOnly] // Only SuperAdmin can filter by tenantId
     [Permission(MenuPermissionConstant.AdminLeadsView)]
     public async Task<IActionResult> GetLeadsByTenantIdAsync(
         string tenantId,

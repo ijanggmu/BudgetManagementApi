@@ -10,6 +10,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Quotation;
 
+[AdminOrSuperAdmin] // All endpoints require Admin or SuperAdmin role
 public class AdminQuotationController(IQuotationService quotationService) : BaseAdminApiController
 {
     /// <summary>
@@ -50,6 +51,7 @@ public class AdminQuotationController(IQuotationService quotationService) : Base
     /// <param name="to">Optional: Filter quotations created until this date</param>
     /// <returns>Paginated list of quotations for the specified tenant</returns>
     [HttpGet("tenant/{tenantId}")]
+    [SuperAdminOnly] // Only SuperAdmin can filter by tenantId
     [Permission(MenuPermissionConstant.AdminQuotationsView)]
     public async Task<IActionResult> GetQuotationsByTenantIdAsync(
         string tenantId,

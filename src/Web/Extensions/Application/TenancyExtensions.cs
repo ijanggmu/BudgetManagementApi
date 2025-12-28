@@ -21,6 +21,7 @@ public static class TenancyExtensions
         services.TryAddScoped<ITenantSchemaProvider, TenantSchemaProvider>();
         services.TryAddScoped<ITenantSchemaEnsurer, TenantSchemaEnsurer>();
         services.TryAddScoped<ITenantMigrationRunner, TenantMigrationRunner>();
+        services.TryAddScoped<ITenantResolutionService, TenantResolutionService>();
         services.TryAddSingleton<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
         services.AddHostedService<TenantProvisioningHostedService>();
         return services;

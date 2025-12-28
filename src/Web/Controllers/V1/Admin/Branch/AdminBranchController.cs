@@ -12,6 +12,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Branch;
 
+[AdminOrSuperAdmin] // All endpoints require Admin or SuperAdmin role
 public class AdminBranchController(IBranchService branchService) : BaseAdminApiController
 {
     /// <summary>

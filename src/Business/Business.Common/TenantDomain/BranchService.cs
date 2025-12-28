@@ -22,26 +22,16 @@ public class BranchService(
 {
     public async Task<Result<List<BranchResponseDto>>> GetAllAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<List<BranchResponseDto>>.Failed("User not authenticated.");
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        // Only check role for query filtering logic
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<List<BranchResponseDto>>.Failed("User not found.");
+        IQueryable<Branch> query = db.Branches;
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-
-        IQueryable<Branch> query = db.Branches
-            .Where(b => !b.IsDeleted);
-
-        //if (isSuperAdmin)
-        //{
-        //    if (!string.IsNullOrEmpty(tenantId))
-        //        query = query.Where(b => b.TenantId == tenantId);
-        //    query = query.IgnoreQueryFilters();
-        //}
+        if (isSuperAdmin)
+            query = query.IgnoreQueryFilters();
 
         // Apply Sieve filtering and pagination
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
@@ -74,19 +64,13 @@ public class BranchService(
 
     public async Task<Result<BranchResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<BranchResponseDto>.Failed("User not authenticated.");
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<BranchResponseDto>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
         var query = db.Branches
-            .Where(b => b.Id == id && !b.IsDeleted);
+            .Where(b => b.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
             query = query.IgnoreQueryFilters();
@@ -115,33 +99,26 @@ public class BranchService(
 
     public async Task<Result<BranchResponseDto>> CreateAsync(CreateBranchDto dto, CancellationToken cancellationToken = default)
     {
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+
         var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<BranchResponseDto>.Failed("User not authenticated.");
-
         var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<BranchResponseDto>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-        var isAdmin = roles.Contains(SystemRoles.Admin);
-
-        if (!isSuperAdmin && !isAdmin)
-            return Result<BranchResponseDto>.Failed("Unauthorized access.");
-
-        var tenantId = isSuperAdmin ? user.TenantId : db.CurrentTenantId;
+        var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
 
         // Check if BranchCode already exists
+        // Note: IsDeleted filter is now applied globally
         var codeExists = await db.Branches
-            .AnyAsync(b => b.BranchCode == dto.BranchCode && b.TenantId == tenantId && !b.IsDeleted, cancellationToken);
+            .AnyAsync(b => b.BranchCode == dto.BranchCode && b.TenantId == tenantId, cancellationToken);
 
         if (codeExists)
             return Result<BranchResponseDto>.Failed("Branch Code already exists.");
 
         // Check if BranchName already exists for this tenant
+        // Note: IsDeleted filter is now applied globally
         var nameExists = await db.Branches
-            .AnyAsync(b => b.BranchName == dto.BranchName && b.TenantId == tenantId && !b.IsDeleted, cancellationToken);
+            .AnyAsync(b => b.BranchName == dto.BranchName && b.TenantId == tenantId, cancellationToken);
 
         if (nameExists)
             return Result<BranchResponseDto>.Failed("Branch Name already exists.");
@@ -181,19 +158,13 @@ public class BranchService(
 
     public async Task<Result<BranchResponseDto>> UpdateAsync(string id, UpdateBranchDto dto, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<BranchResponseDto>.Failed("User not authenticated.");
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<BranchResponseDto>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
         var query = db.Branches
-            .Where(b => b.Id == id && !b.IsDeleted);
+            .Where(b => b.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
             query = query.IgnoreQueryFilters();
@@ -206,8 +177,9 @@ public class BranchService(
         // Check if BranchCode already exists (if changed)
         if (dto.BranchCode != branch.BranchCode)
         {
+            // Note: IsDeleted filter is now applied globally
             var codeExists = await db.Branches
-                .AnyAsync(b => b.BranchCode == dto.BranchCode && b.TenantId == branch.TenantId && b.Id != id && !b.IsDeleted, cancellationToken);
+                .AnyAsync(b => b.BranchCode == dto.BranchCode && b.TenantId == branch.TenantId && b.Id != id, cancellationToken);
 
             if (codeExists)
                 return Result<BranchResponseDto>.Failed("Branch Code already exists.");
@@ -253,19 +225,13 @@ public class BranchService(
 
     public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<bool>.Failed("User not authenticated.");
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<bool>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
         var query = db.Branches
-            .Where(b => b.Id == id && !b.IsDeleted);
+            .Where(b => b.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
             query = query.IgnoreQueryFilters();
@@ -291,22 +257,13 @@ public class BranchService(
 
     public async Task<Result<ImportResult>> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
     {
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+
         var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<ImportResult>.Failed("User not authenticated.");
-
         var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<ImportResult>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-        var isAdmin = roles.Contains(SystemRoles.Admin);
-
-        if (!isSuperAdmin && !isAdmin)
-            return Result<ImportResult>.Failed("Unauthorized access.");
-
-        var tenantId = isSuperAdmin ? user.TenantId : db.CurrentTenantId;
+        var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
 
         var importResult = new ImportResult();
         var branchesToAdd = new List<Branch>();

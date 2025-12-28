@@ -12,6 +12,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Designation;
 
+[AdminOrSuperAdmin] // All endpoints require Admin or SuperAdmin role
 public class AdminDesignationController(IDesignationService designationService) : BaseAdminApiController
 {
     /// <summary>
