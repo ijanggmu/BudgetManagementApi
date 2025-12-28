@@ -21,6 +21,9 @@ namespace Models.Common.Policy.Calculation
 {
     public class PremiumCalculationResultModel
     {
+        public string Region { get; set; }
+        public string Plan { get; set; }
+        public decimal PremiumUSD { get; set; }
         #region CommonProperties
         public int NumberofPassengers { get; set; }
         public int AgeOfVehicle { get; set; }
@@ -76,8 +79,8 @@ namespace Models.Common.Policy.Calculation
 
         [Column(TypeName = "decimal(15, 4)")]
         public decimal ThirdPartyNoClaimDiscountAmount { get; set; }
-        [Column(TypeName = "decimal(15, 4)")]
-        public decimal PAofInsured { get; set; }
+        //[Column(TypeName = "decimal(15, 4)")]
+        //public decimal PAofInsured { get; set; }
 
         [Column(TypeName = "decimal(15, 4)")]
         public decimal SubTotalB { get; set; }
@@ -508,7 +511,7 @@ namespace Models.Common.Policy.Calculation
         public decimal TPLAmount { get; set; }
         public decimal TPLRate { get; set; }
         public decimal TPLSpecialDiscountAmount { get; set; }
-        public decimal TPLSuminsured { get; set; }
+        //public decimal TPLSuminsured { get; set; }
         public decimal TotalTPLSuminsured { get; set; }
         public decimal SumInsuredWithoutTPL { get; set; }
         #endregion
