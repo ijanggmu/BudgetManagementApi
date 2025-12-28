@@ -66,7 +66,7 @@ public class TenantResolutionService : ITenantResolutionService
         var l1CacheKey = $"tenant_slug_{slug}";
         if (httpContext?.Items.TryGetValue(l1CacheKey, out var cachedTenant) == true && cachedTenant is Tenant tenant)
         {
-            _logger.LogDebug("Tenant resolved from L1 cache (HttpContext): {Slug}", slug);
+            _logger.LogInformation("Tenant resolved from L1 cache (HttpContext): {Slug}", slug);
             return tenant;
         }
 
@@ -74,7 +74,7 @@ public class TenantResolutionService : ITenantResolutionService
         var cacheKey = $"{TenantBySlugCacheKeyPrefix}{slug}";
         if (!_memoryCache.TryGetValue(cacheKey, out Tenant? result))
         {
-            _logger.LogDebug("Tenant not in cache, querying database: {Slug}", slug);
+            _logger.LogInformation("Tenant not in cache, querying database: {Slug}", slug);
             result = await _db.Set<Tenant>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Slug == slug && t.IsActive);
@@ -86,7 +86,7 @@ public class TenantResolutionService : ITenantResolutionService
         }
         else
         {
-            _logger.LogDebug("Tenant resolved from L2 cache (MemoryCache): {Slug}", slug);
+            _logger.LogInformation("Tenant resolved from L2 cache (MemoryCache): {Slug}", slug);
         }
 
         // Store in L1 cache for this request
