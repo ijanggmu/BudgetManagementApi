@@ -21,8 +21,8 @@ public class AdminMarketingExecutiveController(IFodoService fodoService) : BaseA
     /// <returns>List of marketing executives</returns>
     [HttpPost]
     [Permission(MenuPermissionConstant.MarketingExecutivesView)]
-    public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
-        => HandleResult(await fodoService.GetFodosForAdminAsync(tenantId, cancellationToken));
+    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoService.GetFodosForAdminAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Get marketing executive by ID

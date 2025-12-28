@@ -5,6 +5,7 @@ using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Fodo;
+using Models.Common;
 using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Fodo;
@@ -14,12 +15,12 @@ public class AdminFodoController(IFodoService fodoService) : BaseAdminApiControl
     /// <summary>
     /// Get all fodos (Field Officer/Door Office Marketing) - for tenant admin: their tenant's fodos, for superadmin: all fodos or filtered by tenantId
     /// </summary>
-    /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
+    /// <param name="requestModel">Optional tenant ID filter (SuperAdmin only)</param>
     /// <returns>List of fodos</returns>
     [HttpPost]
     [Permission(MenuPermissionConstant.MarketingExecutivesView)]
-    public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
-        => HandleResult(await fodoService.GetFodosForAdminAsync(tenantId, cancellationToken));
+    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel = null, CancellationToken cancellationToken = default)
+        => HandleResult(await fodoService.GetFodosForAdminAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Get fodo by ID

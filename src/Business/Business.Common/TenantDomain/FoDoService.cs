@@ -22,7 +22,7 @@ public class FodoService(
     ISieveExtension sieveExtension)
     : IFodoService
 {
-    public async Task<Result<List<FodoResponseDto>>> GetFodosForAdminAsync(string tenantId = null, CancellationToken cancellationToken = default)
+    public async Task<Result<List<FodoResponseDto>>> GetFodosForAdminAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
         if (string.IsNullOrEmpty(userId))
@@ -46,18 +46,27 @@ public class FodoService(
             .Where(a => !a.IsDeleted && !a.User.IsDeleted);
 
         // For SuperAdmin: filter by tenantId if provided, otherwise show all
-        if (isSuperAdmin)
-        {
-            if (!string.IsNullOrEmpty(tenantId))
-            {
-                query = query.Where(a => a.TenantId == tenantId);
-            }
-            // If tenantId is null, show all fodos (global query filter will be ignored)
-            query = query.IgnoreQueryFilters();
-        }
+        //if (isSuperAdmin)
+        //{
+        //    if (!string.IsNullOrEmpty(tenantId))
+        //    {
+        //        query = query.Where(a => a.TenantId == tenantId);
+        //    }
+        //    // If tenantId is null, show all fodos (global query filter will be ignored)
+        //    query = query.IgnoreQueryFilters();
+        //}
+        //if (isSuperAdmin)
+        //{
+        //    if (!string.IsNullOrEmpty(tenantId))
+        //    {
+        //        query = query.Where(a => a.TenantId == tenantId);
+        //    }
+        //    // If tenantId is null, show all fodos (global query filter will be ignored)
+        //    query = query.IgnoreQueryFilters();
+        //}
         // For Admin: only show fodos from their tenant (global query filter applies)
-
-        var fodos = await query.ToListAsync(cancellationToken);
+        var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
+        var fodos = await result.ToListAsync(cancellationToken);
 
         // Get tenant names for all unique tenant IDs
         var tenantIds = fodos.Where(a => !string.IsNullOrEmpty(a.TenantId)).Select(a => a.TenantId).Distinct().ToList();
@@ -91,7 +100,15 @@ public class FodoService(
             CreatedOn = a.CreatedOn
         }).ToList();
 
-        return Result<List<FodoResponseDto>>.Success(dtos);
+        var pagination = new Pagination
+        {
+            TotalItems = totalCount,
+            TotalPages = totalPage,
+            PageSize = requestModel.PageSize,
+            CurrentPage = requestModel.PageNumber
+        };
+
+        return Result<List<FodoResponseDto>>.Success(dtos, pagination);
     }
 
     public async Task<Result<FodoResponseDto>> GetFodoByIdAsync(string id, CancellationToken cancellationToken = default)
