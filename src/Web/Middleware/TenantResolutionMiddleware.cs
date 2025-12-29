@@ -38,12 +38,7 @@ public class TenantResolutionMiddleware
         // Resolution order: explicit header -> subdomain -> userId lookup -> default
         var incoming = context.Request.Headers["X-Tenant"].FirstOrDefault();
         var host = context.Request.Headers.Origin.FirstOrDefault();
-        foreach (var header in context.Request.Headers)
-        {
-            // header.Key = header name
-            // header.Value = StringValues (can contain multiple values)
-            _logger.LogInformation("{HeaderName}: {HeaderValue}", header.Key, string.Join(", ", header.Value));
-        }
+      
         var subdomain = host.Split('.').Length > 2 ? host.Split('.')[0] : null;
 
         var slug = incoming ?? subdomain;
