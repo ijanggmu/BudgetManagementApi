@@ -268,8 +268,19 @@ namespace Data.Context
             // This is done in a single pass for better performance
             var entityTypes = builder.Model.GetEntityTypes().Select(et => et.ClrType).ToList();
             
+            // Entities that should NOT have global query filters applied
+            var excludedFromGlobalFilters = new[]
+            {
+                typeof(ApplicationRole),
+                typeof(ApplicationUserRoles)
+            };
+            
             foreach (var entityType in entityTypes)
             {
+                // Skip entities that should not have global query filters
+                if (excludedFromGlobalFilters.Contains(entityType))
+                    continue;
+                
                 var implementsITenantEntity = typeof(ITenantEntity).IsAssignableFrom(entityType);
                 var implementsIBaseEntity = ImplementsIBaseEntity(entityType);
                 
