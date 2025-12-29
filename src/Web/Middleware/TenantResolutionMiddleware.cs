@@ -115,6 +115,9 @@ public class TenantResolutionMiddleware
         // Security validation: Ensure user has access to the resolved tenant
         if (tenant != null)
         {
+            tenantContext.TenantId = tenant.Id;
+            tenantContext.Slug = tenant.Slug;
+
             var userId = userProfileService.GetUserId();
             if (!string.IsNullOrWhiteSpace(userId))
             {
