@@ -37,11 +37,34 @@ public class TenantResolutionMiddleware
     {
         // Resolution order: explicit header -> subdomain -> userId lookup -> default
         var incoming = context.Request.Headers["X-Tenant"].FirstOrDefault();
-        var host = context.Request.Headers.Origin.FirstOrDefault();
-      
-        var subdomain = host.Split('.').Length > 2 ? host.Split('.')[0] : null;
+        
+        // Extract subdomain from Origin header by parsing the URL and extracting hostname
+        string? subdomain = null;
+        var originHeader = context.Request.Headers.Origin.FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(originHeader))
+        {
+            try
+            {
+                // Parse the Origin URL (e.g., "https://hei.example.com" -> "hei.example.com")
+                if (Uri.TryCreate(originHeader, UriKind.Absolute, out var originUri))
+                {
+                    var hostname = originUri.Host; // This removes protocol and path, gives just the hostname
+                    // Only extract subdomain if it's a proper subdomain format (e.g., tenant.example.com)
+                    var hostParts = hostname.Split('.');
+                    if (hostParts.Length > 2)
+                    {
+                        subdomain = hostParts[0];
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse Origin header: {Origin}", originHeader);
+            }
+        }
 
         var slug = incoming ?? subdomain;
+        
         Data.Entities.Tenant.Tenant? tenant = null;
 
         // First try: resolve by slug (header or subdomain) - CACHED
