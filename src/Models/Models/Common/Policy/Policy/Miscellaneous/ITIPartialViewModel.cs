@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using Models.Common.Policy.Enum;
 using Models.WebApi.Customer.Policy;
 
 namespace Models.Common.Policy.Policy.Miscellaneous
@@ -50,6 +51,7 @@ namespace Models.Common.Policy.Policy.Miscellaneous
 
         public string TravellingCountry { get; set; }
         public TravelInsuranceType InsuranceType { get; set; }
+        public InternationalTravelInsuranceConfigType TravelPlanType { get; set; }
         public string TypeOfInsured { get; set; }
 
         [Required(ErrorMessage = "Province is required")]
@@ -81,6 +83,7 @@ namespace Models.Common.Policy.Policy.Miscellaneous
 
         public DateTime EffectiveDateBeforeEndorsement { get; set; }
         public DateTime ExpiryDateBeforeEndorsement { get; set; }
+        public string SelectedCurrency { get; set; }
     }
 
     public class ITIFamilyMembers

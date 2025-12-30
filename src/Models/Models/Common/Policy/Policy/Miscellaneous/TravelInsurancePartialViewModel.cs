@@ -88,6 +88,7 @@ namespace Models.Common.Policy.Policy.Miscellaneous
         public string SpecialAgencyCode { get; set; }
         public SpecialAgencyDetail SpecialAgencyDetail { get; set; }
         public bool IncludeDirectDiscount { get; set; }
+        public string SelectedCurrency { get; set; }
     }
 
     public class TravelInsuranceFamilyMembers

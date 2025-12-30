@@ -1,15 +1,18 @@
 using Business.Common.PremiumCalculation.Abstract;
+using Business.Common.PremiumCalculation.Calculator.Travel;
+using Business.Common.PremiumCalculation.Service;
 using Models.Common.Policy.Calculation;
 using Models.Common.Policy.Policy;
 using Models.Common.Policy.Policy.Miscellaneous;
+using Models.Common.Policy.ThirdPartyApi.e2e;
 using SharedKernel.Constant.Permission;
 using SharedKernel.Helper;
 using SharedKernel.Operation;
 
 namespace Business.Common.PolicyCalculator;
-public class PolicyPremiumCalculatorService(IPolicyPremiumCalculatorFactory policyPremiumCalculatorFactory) : IPolicyPremiumCalculatorService
-{
-    public async Task<Result<PremiumCalculationResultModel>> CalculatePolicyPremiumAsync(PremiumCalculateRequestModel requestModel)
+public class PolicyPremiumCalculatorService(IPolicyPremiumCalculatorFactory policyPremiumCalculatorFactory, ITravelRateService travelRateService) : IPolicyPremiumCalculatorService
+{ 
+    public async Task<Result<ICalculationPremiumJson>> CalculatePolicyPremiumAsync(PremiumCalculateRequestModel requestModel)
     {
         var request = new CreatePolicyViewModel();
         var premiumAmount = 0.0m;
@@ -267,7 +270,8 @@ public class PolicyPremiumCalculatorService(IPolicyPremiumCalculatorFactory poli
                     Ward = requestModel.TravelInsurance.Ward,
                     StreetAddress = requestModel.TravelInsurance.StreetAddress,
                     PremiumAmount = 58,
-                    ExchangeRate = 145
+                    ExchangeRate = 145,
+                    SelectedCurrency = "NPR"
                 },
                 PortfolioAlias = PortfolioClassConstants.TravelInsurance,
                 PortfolioId = "TI",
@@ -283,7 +287,7 @@ public class PolicyPremiumCalculatorService(IPolicyPremiumCalculatorFactory poli
             if (regionHelperResponse.IsSuccess)
                 region = regionHelperResponse.Data;
             else
-                return Result<PremiumCalculationResultModel>.Failed(regionHelperResponse.Error);
+                return Result<ICalculationPremiumJson>.Failed(regionHelperResponse.Error);
 
             planType = requestModel.InternationalTravelInsurance?.PlanType.ToString();
 
@@ -318,7 +322,7 @@ public class PolicyPremiumCalculatorService(IPolicyPremiumCalculatorFactory poli
                     StreetAddress = "Street Address",
                     PremiumAmount = premiumAmount,
                     Age = requestModel.InternationalTravelInsurance.Age.ToString(),
-
+                    SelectedCurrency = "NPR"
                 },
                 PortfolioAlias = PortfolioClassConstants.InternationalTravelInsurance,
                 PortfolioId = "ITI",
@@ -335,15 +339,14 @@ public class PolicyPremiumCalculatorService(IPolicyPremiumCalculatorFactory poli
         result.ExchangeRate = premiumAmount > 0 ? result.BasicPremium / premiumAmount : 0;
         result.Region = region;
         result.Plan = planType;
-
-        return Result<PremiumCalculationResultModel>.Success(result);
+        var response = PremiumCalculationJsonService.GetCalculationJson(request.PortfolioAlias, result);
+        return Result<ICalculationPremiumJson>.Success(response);
 
     }
     public async Task<decimal> CalculateUsdRate(TravelUSDRateRequestModel requestModel)
     {
-        //var result = await coreApiService.CalculateUsdRateAsync(requestModel);
-        //return result;
-        return 100;
+        var result = await travelRateService.GetTravelUSDRateAsync(requestModel);
+        return result;
     }
 }
 

@@ -86,6 +86,9 @@ namespace Data.Context
         public DbSet<PremiumCalculationRateTable> PremiumCalculationRateTables { get; set; }
         public DbSet<CalculationConfiguration> CalculationConfigurations { get; set; }
         public DbSet<GlobalConfiguration> GlobalConfigurations { get; set; }
+        public DbSet<CurrencyExchangeRateConfiguration> CurrencyExchangeRateConfigurations { get; set; }
+        public DbSet<TravelUSDRate> TravelUSDRates { get; set; }
+        public DbSet<HEOMITravelRate> HEOMITravelRates { get; set; }
 
         // Branch and Designation
         public DbSet<Branch> Branches { get; set; }

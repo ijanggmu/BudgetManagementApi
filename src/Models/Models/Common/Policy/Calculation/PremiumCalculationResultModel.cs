@@ -845,6 +845,7 @@ namespace Models.Common.Policy.Calculation
         public decimal CovidLoadingCharge { get; set; }
         public decimal CovidLoadingChargeRate { get; set; }
         public int TotalNumberOfDaysRemaining { get; set; }
+        public string SelectedCurrency { get; set; }
 
 
         //gpa 
@@ -860,6 +861,7 @@ namespace Models.Common.Policy.Calculation
         public decimal AdditionalRiskAmountBeforeShortScale { get; set; }
         public decimal AdditionalMedicalBenefitAmountBeforeShortScale { get; set; }
         public bool AdditionalRisk { get; set; }
+        public decimal PAofInsured { get; set; }
 
     }
     public class PremiumCalculationResponseModel
