@@ -124,31 +124,15 @@ public class AttendanceService(
     {
         try
         {
-            var currentUserId = userProfileService.GetUserId();
-            if (string.IsNullOrEmpty(currentUserId))
-                return Result<List<AttendanceResponseDto>>.Failed("User not authenticated.");
-
-            var user = await userManager.FindByIdAsync(currentUserId);
-            if (user == null || user.IsDeleted || user.IsDisabled)
-                return Result<List<AttendanceResponseDto>>.Failed("User not found or inactive.");
-
-            var userRoles = await db.UserRoles
-                .Where(ur => ur.UserId == currentUserId && !ur.IsDeleted)
-                .Join(db.Roles.Where(r => !r.IsDeleted),
-                    ur => ur.RoleId,
-                    r => r.Id,
-                    (ur, r) => r.Name)
-                .ToListAsync(cancellationToken);
-
-            var isSuperAdmin = userRoles.Contains(SystemRoles.SuperAdmin);
-            var isAdmin = userRoles.Contains(SystemRoles.Admin);
-
-            if (!isSuperAdmin && !isAdmin)
-                return Result<List<AttendanceResponseDto>>.Failed("Access denied. Admin or SuperAdmin role required.");
+            // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+            // Only check role for query filtering logic
+            var roleId = userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
             // Build query
             IQueryable<AttendanceEntry> query = db.Set<AttendanceEntry>()
                 .AsNoTracking();
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             // For SuperAdmin, ignore tenant filter to see all
             if (isSuperAdmin)
@@ -169,8 +153,9 @@ public class AttendanceService(
                 .ToDictionaryAsync(u => u.Id, u => u, cancellationToken);
 
             // Get FoDo information
+            // Note: IsDeleted filter is now applied globally
             var fodos = await db.Fodos
-                .Where(f => userIds.Contains(f.UserId) && !f.IsDeleted)
+                .Where(f => userIds.Contains(f.UserId))
                 .ToDictionaryAsync(f => f.UserId, f => f, cancellationToken);
 
             // Get tenant names

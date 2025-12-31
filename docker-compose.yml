@@ -23,8 +23,9 @@ services:
     container_name: letsencrypt-companion
     restart: always
     environment:
-      DEFAULT_EMAIL: "your-email@domain.com"
+      DEFAULT_EMAIL: "sthaejan00@gmail.com"
       NGINX_PROXY_CONTAINER: "nginx-proxy"
+      ACME_CA_URI: "https://acme-v02.api.letsencrypt.org/directory"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/nginx/certs
@@ -93,8 +94,8 @@ services:
       - /home/ubuntu/app/.secrets/.env.frontend.dev 
     environment:
       # For nginx-proxy SSL routing
-      VIRTUAL_HOST: cms.beemaedge.com
-      LETSENCRYPT_HOST: cms.beemaedge.com
+      VIRTUAL_HOST: "cms.beemaedge.com,hei.beemaedge.com"
+      LETSENCRYPT_HOST: "cms.beemaedge.com,hei.beemaedge.com"
       LETSENCRYPT_EMAIL: sthaejan00@gmail.com
       VIRTUAL_PORT: 3000                # Next.js runs on 3000 by default
 

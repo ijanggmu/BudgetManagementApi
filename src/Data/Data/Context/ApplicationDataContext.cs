@@ -24,6 +24,7 @@ using Microsoft.Extensions.Options;
 using SharedKernel.Config;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Models.Tenancy;
+using System.Reflection;
 
 namespace Data.Context
 {
@@ -103,6 +104,76 @@ namespace Data.Context
 
         public string? CurrentTenantId => _tenantContext?.TenantId;
 
+        /// <summary>
+        /// Checks if the entity type implements IBaseEntity (which includes IsDeleted).
+        /// </summary>
+        private static bool ImplementsIBaseEntity(Type entityType)
+        {
+            return typeof(IBaseEntity).IsAssignableFrom(entityType);
+        }
+
+        /// <summary>
+        /// Creates an expression for the IsDeleted filter: e.IsDeleted == false
+        /// </summary>
+        private static System.Linq.Expressions.Expression CreateIsDeletedFilterExpression(
+            System.Linq.Expressions.ParameterExpression parameter)
+        {
+            var isDeletedProperty = System.Linq.Expressions.Expression.Property(parameter, nameof(IBaseEntity.IsDeleted));
+            var falseConstant = System.Linq.Expressions.Expression.Constant(false);
+            return System.Linq.Expressions.Expression.Equal(isDeletedProperty, falseConstant);
+        }
+
+        /// <summary>
+        /// Creates an expression for the TenantId filter: e.TenantId == CurrentTenantId
+        /// </summary>
+        private System.Linq.Expressions.Expression CreateTenantIdFilterExpression(
+            System.Linq.Expressions.ParameterExpression parameter, Type entityType)
+        {
+            // Use reflection to get the TenantId property - this is only done once during model creation
+            var tenantIdProperty = entityType.GetProperty(nameof(ITenantEntity.TenantId));
+            if (tenantIdProperty == null)
+                throw new InvalidOperationException($"Entity type {entityType.Name} implements ITenantEntity but does not have TenantId property.");
+
+            var tenantIdProp = System.Linq.Expressions.Expression.Property(parameter, tenantIdProperty);
+            var ctxTenantIdProp = System.Linq.Expressions.Expression.Property(
+                System.Linq.Expressions.Expression.Constant(this), nameof(CurrentTenantId));
+            var tenantIdLeft = System.Linq.Expressions.Expression.Convert(tenantIdProp, typeof(string));
+            return System.Linq.Expressions.Expression.Equal(tenantIdLeft, ctxTenantIdProp);
+        }
+
+        /// <summary>
+        /// Applies global query filters to an entity type.
+        /// </summary>
+        private void ApplyGlobalQueryFilters(ModelBuilder builder, Type entityType, bool hasTenantId, bool hasIsDeleted)
+        {
+            if (!hasIsDeleted && !hasTenantId)
+                return;
+
+            var parameter = System.Linq.Expressions.Expression.Parameter(entityType, "e");
+            System.Linq.Expressions.Expression? filterExpression = null;
+
+            // Add TenantId filter if applicable
+            if (hasTenantId)
+            {
+                filterExpression = CreateTenantIdFilterExpression(parameter, entityType);
+            }
+
+            // Add IsDeleted filter if applicable
+            if (hasIsDeleted)
+            {
+                var isDeletedFilter = CreateIsDeletedFilterExpression(parameter);
+                filterExpression = filterExpression == null
+                    ? isDeletedFilter
+                    : System.Linq.Expressions.Expression.AndAlso(filterExpression, isDeletedFilter);
+            }
+
+            if (filterExpression != null)
+            {
+                var lambda = System.Linq.Expressions.Expression.Lambda(filterExpression, parameter);
+                builder.Entity(entityType).HasQueryFilter(lambda);
+            }
+        }
+
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new())
         {
             UpdateShadowFields();
@@ -120,95 +191,10 @@ namespace Data.Context
             var userId = _userProfileService.GetUserId();
             ChangeTracker.SetAuditableEntityPropertyValues(userId);
 
-            // Set TenantId for new entities implementing ITenantEntity
-            // Skip SuperAdmin users - they should have null TenantId
-            if (_tenantContext?.TenantId is string tid)
-            {
-                var addedTenantEntities = ChangeTracker.Entries()
-                    .Where(e => e.State == EntityState.Added && e.Entity is ITenantEntity)
-                    .Select(e => new { Entity = (ITenantEntity)e.Entity, Entry = e });
-
-                foreach (var item in addedTenantEntities)
-                {
-                    // Skip setting TenantId for SuperAdmin users
-                    if (item.Entity is ApplicationUser user && !string.IsNullOrEmpty(user.Id))
-                    {
-                        try
-                        {
-                            // Query roles directly from database to avoid circular dependency
-                            var isSuperAdmin = Set<ApplicationUserRoles>()
-                                .Where(ur => ur.UserId == user.Id && !ur.IsDeleted)
-                                .Join(Set<ApplicationRole>()
-                                    .Where(r => !r.IsDeleted),
-                                    ur => ur.RoleId,
-                                    r => r.Id,
-                                    (ur, r) => r.Name)
-                                .Contains(SystemRoles.SuperAdmin);
-
-                            if (isSuperAdmin)
-                            {
-                                // SuperAdmin should have null TenantId to access all tenants
-                                continue;
-                            }
-                        }
-                        catch
-                        {
-                            // If role check fails, proceed with normal TenantId assignment
-                        }
-                    }
-
-                    // Only set TenantId if it's null or empty
-                    if (string.IsNullOrEmpty(item.Entity.TenantId))
-                    {
-                        item.Entity.TenantId = tid;
-                    }
-                }
-
-                // Also update modified entities if TenantId is empty (for backward compatibility)
-                var modifiedTenantEntities = ChangeTracker.Entries()
-                    .Where(e => e.State == EntityState.Modified && e.Entity is ITenantEntity)
-                    .Select(e => new { Entity = (ITenantEntity)e.Entity, Entry = e });
-
-                foreach (var item in modifiedTenantEntities)
-                {
-                    // Skip setting TenantId for SuperAdmin users
-                    if (item.Entity is ApplicationUser user && !string.IsNullOrEmpty(user.Id))
-                    {
-                        try
-                        {
-                            // Query roles directly from database to avoid circular dependency
-                            var isSuperAdmin = Set<ApplicationUserRoles>()
-                                .Where(ur => ur.UserId == user.Id && !ur.IsDeleted)
-                                .Join(Set<ApplicationRole>()
-                                    .Where(r => !r.IsDeleted),
-                                    ur => ur.RoleId,
-                                    r => r.Id,
-                                    (ur, r) => r.Name)
-                                .Contains(SystemRoles.SuperAdmin);
-
-                            if (isSuperAdmin)
-                            {
-                                // SuperAdmin should have null TenantId to access all tenants
-                                // Also clear TenantId if it was previously set
-                                if (!string.IsNullOrEmpty(item.Entity.TenantId))
-                                {
-                                    item.Entity.TenantId = null;
-                                }
-                                continue;
-                            }
-                        }
-                        catch
-                        {
-                            // If role check fails, proceed with normal TenantId assignment
-                        }
-                    }
-
-                    if (string.IsNullOrEmpty(item.Entity.TenantId))
-                    {
-                        item.Entity.TenantId = tid;
-                    }
-                }
-            }
+            // Set TenantId automatically for entities implementing ITenantEntity
+            // Note: SuperAdmin users should have TenantId set to null explicitly when creating users
+            // This avoids expensive database queries during SaveChanges
+            ChangeTracker.SetTenantIdPropertyValues(_tenantContext?.TenantId);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -281,16 +267,35 @@ namespace Data.Context
                     .HasDatabaseName("IX_PremiumCalculationRateTable_ConfigId_TableName");
             });
 
-            // Global query filter by TenantId for tenanted entities
-            foreach (var entityType in builder.Model.GetEntityTypes().Where(t => typeof(TenantEntity).IsAssignableFrom(t.ClrType)))
+            // Apply global query filters for IsDeleted and TenantId
+            // This is done in a single pass for better performance
+            var entityTypes = builder.Model.GetEntityTypes().Select(et => et.ClrType).ToList();
+            
+            // Entities that should NOT have global query filters applied
+            var excludedFromGlobalFilters = new[]
             {
-                var parameter = System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e");
-                var tenantIdProp = System.Linq.Expressions.Expression.Property(parameter, nameof(TenantEntity.TenantId));
-                var ctxTenantIdProp = System.Linq.Expressions.Expression.Property(System.Linq.Expressions.Expression.Constant(this), nameof(CurrentTenantId));
-                var left = System.Linq.Expressions.Expression.Convert(tenantIdProp, typeof(string));
-                var body = System.Linq.Expressions.Expression.Equal(left, ctxTenantIdProp);
-                var lambda = System.Linq.Expressions.Expression.Lambda(body, parameter);
-                builder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+                typeof(ApplicationRole),
+                typeof(ApplicationUserRoles)
+            };
+            
+            foreach (var entityType in entityTypes)
+            {
+                // Skip entities that should not have global query filters
+                if (excludedFromGlobalFilters.Contains(entityType))
+                    continue;
+                
+                var implementsITenantEntity = typeof(ITenantEntity).IsAssignableFrom(entityType);
+                var implementsIBaseEntity = ImplementsIBaseEntity(entityType);
+                
+                // Skip if entity doesn't need any filters
+                if (!implementsITenantEntity && !implementsIBaseEntity)
+                    continue;
+
+                ApplyGlobalQueryFilters(
+                    builder, 
+                    entityType, 
+                    hasTenantId: implementsITenantEntity, 
+                    hasIsDeleted: implementsIBaseEntity);
             }
         }
     }

@@ -1,0 +1,44 @@
+Date,Developer Name,Role,Task ID,Task Description,Module,Start Time,End Time,Duration (Hours),Status,Notes
+2024-01-01,John Doe,Backend Developer,TASK-033,Authentication Verification,Authentication,09:00,13:00,4,Completed,Verified JWT token generation
+2024-01-01,John Doe,Backend Developer,TASK-035,Permission System,Authentication,14:00,18:00,4,Completed,Implemented permission attribute
+2024-01-02,John Doe,Backend Developer,TASK-035,Permission System,Authentication,09:00,13:00,4,Completed,Completed permission checks
+2024-01-02,John Doe,Backend Developer,TASK-034,Token Refresh,Authentication,14:00,17:00,3,In Progress,Started refresh token implementation
+2024-01-03,John Doe,Backend Developer,TASK-036,Tenant Management,SuperAdmin,09:00,13:00,4,Completed,Implemented tenant CRUD
+2024-01-03,John Doe,Backend Developer,TASK-043,Excel Export,Shared,14:00,18:00,4,Completed,Excel export service
+2024-01-04,John Doe,Backend Developer,TASK-036,Tenant Management,SuperAdmin,09:00,13:00,4,Completed,Completed tenant operations
+2024-01-04,John Doe,Backend Developer,TASK-042,Notification System,Shared,14:00,18:00,4,Completed,Notification service
+2024-01-05,John Doe,Backend Developer,TASK-036,Tenant Management,SuperAdmin,09:00,13:00,4,Completed,Testing tenant management
+2024-01-05,John Doe,Backend Developer,TASK-040,Premium Calculation,Marketing Executive,14:00,18:00,4,In Progress,Started premium calculation
+2024-01-06,John Doe,Backend Developer,TASK-039,Attendance Management,Marketing Executive,09:00,13:00,4,Completed,Check-in/out endpoints
+2024-01-06,John Doe,Backend Developer,TASK-039,Attendance Management,Marketing Executive,14:00,18:00,4,Completed,Attendance reporting
+2024-01-07,John Doe,Backend Developer,TASK-041,Reporting Service,Shared,09:00,13:00,4,Completed,Dashboard statistics
+2024-01-07,John Doe,Backend Developer,TASK-041,Reporting Service,Shared,14:00,18:00,4,Completed,Reporting endpoints
+2024-01-08,John Doe,Backend Developer,TASK-037,Lead Management,Shared,09:00,13:00,4,Completed,Lead CRUD operations
+2024-01-08,John Doe,Backend Developer,TASK-037,Lead Management,Shared,14:00,18:00,4,Completed,Lead activities
+2024-01-09,John Doe,Backend Developer,TASK-038,Quotation Management,Shared,09:00,13:00,4,Completed,Quotation CRUD
+2024-01-09,John Doe,Backend Developer,TASK-038,Quotation Management,Shared,14:00,18:00,4,Completed,PDF generation
+2024-01-10,John Doe,Backend Developer,TASK-040,Premium Calculation,Marketing Executive,09:00,13:00,4,In Progress,Premium calculation logic
+2024-01-10,John Doe,Backend Developer,TASK-048,API Documentation,Shared,14:00,17:00,3,In Progress,Swagger documentation
+2024-01-11,Jane Smith,Frontend Developer,TASK-001,Project Setup,Foundation,09:00,13:00,4,In Progress,Initialized React project
+2024-01-11,Jane Smith,Frontend Developer,TASK-001,Project Setup,Foundation,14:00,17:00,3,In Progress,Configured build tools
+2024-01-12,Jane Smith,Frontend Developer,TASK-001,Project Setup,Foundation,09:00,13:00,4,Completed,Completed project setup
+2024-01-12,Jane Smith,Frontend Developer,TASK-002,API Client Setup,Foundation,14:00,18:00,4,In Progress,Started API client
+2024-01-13,Jane Smith,Frontend Developer,TASK-002,API Client Setup,Foundation,09:00,13:00,4,In Progress,API interceptors
+2024-01-13,Jane Smith,Frontend Developer,TASK-003,State Management,Foundation,14:00,18:00,4,In Progress,Redux setup
+2024-01-14,Jane Smith,Frontend Developer,TASK-003,State Management,Foundation,09:00,13:00,4,Completed,Auth store created
+2024-01-14,Jane Smith,Frontend Developer,TASK-004,Login Page,Authentication,14:00,18:00,4,In Progress,Login form UI
+2024-01-15,Jane Smith,Frontend Developer,TASK-004,Login Page,Authentication,09:00,13:00,4,In Progress,Form validation
+2024-01-15,Jane Smith,Frontend Developer,TASK-004,Login Page,Authentication,14:00,17:00,3,Completed,Login page complete
+2024-01-16,Jane Smith,Frontend Developer,TASK-005,Token Refresh,Authentication,09:00,13:00,4,In Progress,Refresh token logic
+2024-01-16,Jane Smith,Frontend Developer,TASK-005,Token Refresh,Authentication,14:00,17:00,3,Completed,Token refresh complete
+2024-01-17,Jane Smith,Frontend Developer,TASK-006,Permission Guards,Authentication,09:00,13:00,4,Completed,Permission component
+2024-01-17,Jane Smith,Frontend Developer,TASK-032,Layout Components,Shared,14:00,18:00,4,In Progress,Main layout
+2024-01-18,Jane Smith,Frontend Developer,TASK-032,Layout Components,Shared,09:00,13:00,4,In Progress,Sidebar menu
+2024-01-18,Jane Smith,Frontend Developer,TASK-032,Layout Components,Shared,14:00,18:00,4,In Progress,Header component
+2024-01-19,Jane Smith,Frontend Developer,TASK-030,Data Table,Shared,09:00,13:00,4,In Progress,Table component
+2024-01-19,Jane Smith,Frontend Developer,TASK-030,Data Table,Shared,14:00,18:00,4,In Progress,Pagination and sorting
+2024-01-20,Jane Smith,Frontend Developer,TASK-031,Form Components,Shared,09:00,13:00,4,In Progress,Input components
+2024-01-20,Jane Smith,Frontend Developer,TASK-031,Form Components,Shared,14:00,18:00,4,In Progress,Select and date picker
+
+
+

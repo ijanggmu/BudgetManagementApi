@@ -28,24 +28,15 @@ public class AdminService(
 {
     public async Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(string? tenantId = null, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<List<AdminResponseDto>>.Failed("User not authenticated.");
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<List<AdminResponseDto>>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-        var isAdmin = roles.Contains(SystemRoles.Admin);
-
-        if (!isSuperAdmin && !isAdmin)
-            return Result<List<AdminResponseDto>>.Failed("Unauthorized access.");
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        // We only need to check if user is SuperAdmin for query filtering logic
+        
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
         IQueryable<Admin> query = db.Admins
-            .Include(a => a.User)
-            .Where(a => !a.IsDeleted && !a.User.IsDeleted);
+            .Include(a => a.User);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         // For SuperAdmin: filter by tenantId if provided, otherwise show all
         if (isSuperAdmin)
@@ -94,20 +85,14 @@ public class AdminService(
 
     public async Task<Result<AdminResponseDto>> GetAdminByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<AdminResponseDto>.Failed("User not authenticated.");
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<AdminResponseDto>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
         var query = db.Admins
             .Include(a => a.User)
-            .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+            .Where(a => a.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
             query = query.IgnoreQueryFilters();
@@ -148,27 +133,19 @@ public class AdminService(
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var userId = userProfileService.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Result<AdminResponseDto>.Failed("User not authenticated.");
-
-            var currentUser = await userManager.FindByIdAsync(userId);
-            if (currentUser == null)
-                return Result<AdminResponseDto>.Failed("User not found.");
-
-            var roles = await userManager.GetRolesAsync(currentUser);
-            var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-            var isAdmin = roles.Contains(SystemRoles.Admin);
-
-            if (!isSuperAdmin && !isAdmin)
-                return Result<AdminResponseDto>.Failed("Unauthorized access.");
+            // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+            var roleId = userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
             // Get tenant ID from current user (for Admin) or from context
-            var tenantId = isSuperAdmin ? currentUser.TenantId : db.CurrentTenantId;
+            var userId = userProfileService.GetUserId();
+            var user = await userManager.FindByIdAsync(userId);
+            var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
 
             // Check if username already exists
+            // Note: IsDeleted filter is now applied globally
             var usernameExists = await db.Users
-                .AnyAsync(u => u.UserName == dto.Username && !u.IsDeleted, cancellationToken);
+                .AnyAsync(u => u.UserName == dto.Username, cancellationToken);
 
             if (usernameExists)
                 return Result<AdminResponseDto>.Failed("Username already exists.");
@@ -176,8 +153,9 @@ public class AdminService(
             // Check if email already exists
             if (!string.IsNullOrWhiteSpace(dto.Email))
             {
+                // Note: IsDeleted filter is now applied globally
                 var emailExists = await db.Users
-                    .AnyAsync(u => u.Email == dto.Email && !u.IsDeleted, cancellationToken);
+                    .AnyAsync(u => u.Email == dto.Email, cancellationToken);
 
                 if (emailExists)
                     return Result<AdminResponseDto>.Failed("Email already exists.");
@@ -186,8 +164,9 @@ public class AdminService(
             // Validate roles if provided
             if (dto.Roles != null && dto.Roles.Any())
             {
+                // Note: IsDeleted filter is now applied globally
                 var validRoles = await roleManager.Roles
-                    .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
+                    .Where(r => dto.Roles.Contains(r.Name))
                     .Select(r => r.Name)
                     .ToListAsync(cancellationToken);
 
@@ -282,20 +261,14 @@ public class AdminService(
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var userId = userProfileService.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Result<AdminResponseDto>.Failed("User not authenticated.");
-
-            var currentUser = await userManager.FindByIdAsync(userId);
-            if (currentUser == null)
-                return Result<AdminResponseDto>.Failed("User not found.");
-
-            var roles = await userManager.GetRolesAsync(currentUser);
-            var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+            // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+            var roleId = userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
             var query = db.Admins
                 .Include(a => a.User)
-                .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+                .Where(a => a.Id == id);
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -312,8 +285,9 @@ public class AdminService(
             // Update user properties
             if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email != admin.User.Email)
             {
+                // Note: IsDeleted filter is now applied globally
                 var emailExists = await db.Users
-                    .AnyAsync(u => u.Email == dto.Email && u.Id != admin.UserId && !u.IsDeleted, cancellationToken);
+                    .AnyAsync(u => u.Email == dto.Email && u.Id != admin.UserId, cancellationToken);
 
                 if (emailExists)
                     return Result<AdminResponseDto>.Failed("Email already exists.");
@@ -323,8 +297,9 @@ public class AdminService(
 
             if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && dto.PhoneNumber != admin.User.PhoneNumber)
             {
+                // Note: IsDeleted filter is now applied globally
                 var phoneExists = await db.Users
-                    .AnyAsync(u => u.PhoneNumber == dto.PhoneNumber && u.Id != admin.UserId && !u.IsDeleted, cancellationToken);
+                    .AnyAsync(u => u.PhoneNumber == dto.PhoneNumber && u.Id != admin.UserId, cancellationToken);
 
                 if (phoneExists)
                     return Result<AdminResponseDto>.Failed("Phone number already exists.");
@@ -339,8 +314,9 @@ public class AdminService(
             if (dto.Roles != null)
             {
                 // Validate roles
+                // Note: IsDeleted filter is now applied globally
                 var validRoles = await roleManager.Roles
-                    .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
+                    .Where(r => dto.Roles.Contains(r.Name))
                     .Select(r => r.Name)
                     .ToListAsync(cancellationToken);
 
@@ -424,20 +400,15 @@ public class AdminService(
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
+            // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
             var userId = userProfileService.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Result<bool>.Failed("User not authenticated.");
-
-            var currentUser = await userManager.FindByIdAsync(userId);
-            if (currentUser == null)
-                return Result<bool>.Failed("User not found.");
-
-            var roles = await userManager.GetRolesAsync(currentUser);
-            var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+            var roleId = userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
             var query = db.Admins
                 .Include(a => a.User)
-                .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+                .Where(a => a.Id == id);
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();

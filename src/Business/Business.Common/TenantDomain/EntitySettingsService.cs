@@ -18,22 +18,13 @@ public class EntitySettingsService(
 {
     public async Task<Result<EntitySettingsResponseDto>> GetAsync(CancellationToken cancellationToken = default)
     {
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+
         var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<EntitySettingsResponseDto>.Failed("User not authenticated.");
-
         var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<EntitySettingsResponseDto>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-        var isAdmin = roles.Contains(SystemRoles.Admin);
-
-        if (!isSuperAdmin && !isAdmin)
-            return Result<EntitySettingsResponseDto>.Failed("Unauthorized access.");
-
-        var tenantId = isSuperAdmin ? user.TenantId : db.CurrentTenantId;
+        var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
         if (string.IsNullOrEmpty(tenantId))
             return Result<EntitySettingsResponseDto>.Failed("Tenant not found.");
 
@@ -86,22 +77,13 @@ public class EntitySettingsService(
 
     public async Task<Result<EntitySettingsResponseDto>> UpdateAsync(UpdateEntitySettingsDto dto, CancellationToken cancellationToken = default)
     {
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+
         var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<EntitySettingsResponseDto>.Failed("User not authenticated.");
-
         var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<EntitySettingsResponseDto>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-        var isAdmin = roles.Contains(SystemRoles.Admin);
-
-        if (!isSuperAdmin && !isAdmin)
-            return Result<EntitySettingsResponseDto>.Failed("Unauthorized access.");
-
-        var tenantId = isSuperAdmin ? user.TenantId : db.CurrentTenantId;
+        var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
         if (string.IsNullOrEmpty(tenantId))
             return Result<EntitySettingsResponseDto>.Failed("Tenant not found.");
 

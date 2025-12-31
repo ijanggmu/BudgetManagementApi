@@ -1,0 +1,56 @@
+Task ID,Module,Feature,Role,Priority,Status,Assigned To,Estimated Hours,Actual Hours,Start Date,End Date,Completion %,Dependencies,Notes
+TASK-001,Foundation,Project Setup,All,Critical,Not Started,Frontend Dev,8,0,,,,None,Initialize frontend project
+TASK-002,Foundation,API Client Setup,All,Critical,Not Started,Frontend Dev,8,0,,,,TASK-001,Create API client service
+TASK-003,Foundation,State Management,All,High,Not Started,Frontend Dev,8,0,,,,TASK-001,Set up Redux/Zustand
+TASK-004,Authentication,Login Page,All,Critical,Not Started,Frontend Dev,8,0,,,,TASK-002 TASK-003,Create login UI
+TASK-005,Authentication,Token Refresh,All,Critical,Not Started,Frontend Dev,6,0,,,,TASK-002,Implement auto refresh
+TASK-006,Authentication,Permission Guards,All,Critical,Not Started,Frontend Dev,4,0,,,,TASK-003,Create permission component
+TASK-007,SuperAdmin,Dashboard,SuperAdmin,High,Not Started,Frontend Dev,12,0,,,,TASK-002,Display system metrics
+TASK-008,SuperAdmin,Tenant Management,SuperAdmin,High,Not Started,Frontend Dev,30,0,,,,TASK-002,CRUD operations for tenants
+TASK-009,SuperAdmin,Role Management,SuperAdmin,High,Not Started,Frontend Dev,24,0,,,,TASK-002,CRUD and permission assignment
+TASK-010,SuperAdmin,Admin Management,SuperAdmin,High,Not Started,Frontend Dev,22,0,,,,TASK-002,CRUD for admin users
+TASK-011,SuperAdmin,Marketing Executive Management,SuperAdmin,High,Not Started,Frontend Dev,22,0,,,,TASK-002,CRUD for marketing executives
+TASK-012,SuperAdmin,Leads View,SuperAdmin,High,Not Started,Frontend Dev,12,0,,,,TASK-002,View all leads across tenants
+TASK-013,SuperAdmin,Quotations View,SuperAdmin,High,Not Started,Frontend Dev,12,0,,,,TASK-002,View all quotations across tenants
+TASK-014,SuperAdmin,System Logs,SuperAdmin,Medium,Not Started,Frontend Dev,10,0,,,,TASK-002,View system access logs
+TASK-015,Tenant Admin,Dashboard,Tenant Admin,High,Not Started,Frontend Dev,12,0,,,,TASK-002,Display tenant metrics
+TASK-016,Tenant Admin,Organization Details,Tenant Admin,Medium,Not Started,Frontend Dev,8,0,,,,TASK-002,View/edit organization info
+TASK-017,Tenant Admin,Branch Management,Tenant Admin,High,Not Started,Frontend Dev,24,0,,,,TASK-002,CRUD for branches
+TASK-018,Tenant Admin,Designation Management,Tenant Admin,High,Not Started,Frontend Dev,20,0,,,,TASK-002,CRUD for designations
+TASK-019,Tenant Admin,Marketing Executive Management,Tenant Admin,High,Not Started,Frontend Dev,22,0,,,,TASK-002,CRUD for marketing executives
+TASK-020,Tenant Admin,Lead Reporting,Tenant Admin,Medium,Not Started,Frontend Dev,12,0,,,,TASK-002,Reports and analytics
+TASK-021,Tenant Admin,Quotation Reporting,Tenant Admin,Medium,Not Started,Frontend Dev,12,0,,,,TASK-002,Reports and analytics
+TASK-022,Tenant Admin,Attendance Reporting,Tenant Admin,Medium,Not Started,Frontend Dev,10,0,,,,TASK-002,Reports and analytics
+TASK-023,Tenant Admin,Notifications,Tenant Admin,Medium,Not Started,Frontend Dev,8,0,,,,TASK-002,View and manage notifications
+TASK-024,Marketing Executive,Dashboard,Marketing Executive,High,Not Started,Frontend Dev,12,0,,,,TASK-002,Personal analytics and funnel
+TASK-025,Marketing Executive,Lead Management,Marketing Executive,High,Not Started,Frontend Dev,40,0,,,,TASK-002,CRUD for own leads
+TASK-026,Marketing Executive,Quotation Management,Marketing Executive,High,Not Started,Frontend Dev,48,0,,,,TASK-002,CRUD for own quotations
+TASK-027,Marketing Executive,Premium Calculator,Marketing Executive,High,Not Started,Frontend Dev,16,0,,,,TASK-002,Interactive calculator UI
+TASK-028,Marketing Executive,Attendance,Marketing Executive,High,Not Started,Frontend Dev,30,0,,,,TASK-002,Check-in/out and calendar
+TASK-029,Marketing Executive,Notifications,Marketing Executive,Medium,Not Started,Frontend Dev,8,0,,,,TASK-002,View notifications
+TASK-030,Shared Components,Data Table,All,High,Not Started,Frontend Dev,12,0,,,,TASK-001,Reusable table component
+TASK-031,Shared Components,Form Components,All,High,Not Started,Frontend Dev,10,0,,,,TASK-001,Input select date picker
+TASK-032,Shared Components,Layout Components,All,High,Not Started,Frontend Dev,22,0,,,,TASK-001 TASK-003,Sidebar header breadcrumb
+TASK-033,Backend,Authentication Verification,All,Critical,Completed,Backend Dev,4,4,2024-01-01,2024-01-01,100,None,Verify JWT implementation
+TASK-034,Backend,Token Refresh,All,High,In Progress,Backend Dev,6,3,2024-01-02,,50,None,Implement refresh mechanism
+TASK-035,Backend,Permission System,All,High,Completed,Backend Dev,8,8,2024-01-01,2024-01-03,100,None,Permission attribute working
+TASK-036,Backend,Tenant Management,SuperAdmin,High,Completed,Backend Dev,16,16,2024-01-01,2024-01-05,100,None,CRUD operations complete
+TASK-037,Backend,Lead Management,All,High,Completed,Backend Dev,24,24,2024-01-01,2024-01-08,100,None,CRUD and activities complete
+TASK-038,Backend,Quotation Management,All,High,Completed,Backend Dev,24,24,2024-01-01,2024-01-08,100,None,CRUD and PDF generation
+TASK-039,Backend,Attendance Management,Marketing Executive,High,Completed,Backend Dev,16,16,2024-01-01,2024-01-06,100,None,Check-in/out complete
+TASK-040,Backend,Premium Calculation,Marketing Executive,Medium,In Progress,Backend Dev,20,12,2024-01-05,,60,None,Basic structure exists
+TASK-041,Backend,Reporting Service,All,High,Completed,Backend Dev,16,16,2024-01-01,2024-01-07,100,None,Dashboard statistics
+TASK-042,Backend,Notification System,All,High,Completed,Backend Dev,12,12,2024-01-01,2024-01-04,100,None,Notification service complete
+TASK-043,Backend,Excel Export,All,Medium,Completed,Backend Dev,8,8,2024-01-01,2024-01-03,100,None,Export service working
+TASK-044,Backend,Unit Tests,All,Medium,Not Started,Backend Dev,40,0,,,,None,Write unit tests
+TASK-045,Backend,Integration Tests,All,High,Not Started,Backend Dev,32,0,,,,None,Write integration tests
+TASK-046,Backend,Performance Optimization,All,Medium,Not Started,Backend Dev,24,0,,,,None,Optimize queries and caching
+TASK-047,Backend,Security Audit,All,High,Not Started,Backend Dev,16,0,,,,None,Security review
+TASK-048,Backend,API Documentation,All,Medium,In Progress,Backend Dev,12,6,2024-01-10,,50,None,Swagger documentation
+TASK-049,Testing,Frontend Unit Tests,All,Medium,Not Started,Frontend Dev,48,0,,,,All Frontend Tasks,Component and service tests
+TASK-050,Testing,Frontend E2E Tests,All,High,Not Started,Frontend Dev,28,0,,,,All Frontend Tasks,End-to-end testing
+TASK-051,Testing,Performance Testing,All,Medium,Not Started,Frontend Dev,20,0,,,,All Frontend Tasks,Bundle optimization
+TASK-052,Testing,Accessibility,All,Medium,Not Started,Frontend Dev,28,0,,,,All Frontend Tasks,ARIA and keyboard navigation
+
+
+

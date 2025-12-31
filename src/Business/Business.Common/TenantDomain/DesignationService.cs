@@ -23,19 +23,13 @@ public class DesignationService(
 {
     public async Task<Result<List<DesignationResponseDto>>> GetAllAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<List<DesignationResponseDto>>.Failed("User not authenticated.");
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        // Only check role for query filtering logic
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<List<DesignationResponseDto>>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-
-        IQueryable<Designation> query = db.Designations
-            .Where(d => !d.IsDeleted);
+        IQueryable<Designation> query = db.Designations;
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
         {
@@ -68,19 +62,13 @@ public class DesignationService(
 
     public async Task<Result<DesignationResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<DesignationResponseDto>.Failed("User not authenticated.");
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<DesignationResponseDto>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
         var query = db.Designations
-            .Where(d => d.Id == id && !d.IsDeleted);
+            .Where(d => d.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
             query = query.IgnoreQueryFilters();
@@ -104,26 +92,18 @@ public class DesignationService(
 
     public async Task<Result<DesignationResponseDto>> CreateAsync(CreateDesignationDto dto, CancellationToken cancellationToken = default)
     {
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+
         var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<DesignationResponseDto>.Failed("User not authenticated.");
-
         var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<DesignationResponseDto>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-        var isAdmin = roles.Contains(SystemRoles.Admin);
-
-        if (!isSuperAdmin && !isAdmin)
-            return Result<DesignationResponseDto>.Failed("Unauthorized access.");
-
-        var tenantId = isSuperAdmin ? user.TenantId : db.CurrentTenantId;
+        var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
 
         // Check if Title already exists for this tenant
+        // Note: IsDeleted filter is now applied globally
         var titleExists = await db.Designations
-            .AnyAsync(d => d.Title == dto.Title && d.TenantId == tenantId && !d.IsDeleted, cancellationToken);
+            .AnyAsync(d => d.Title == dto.Title && d.TenantId == tenantId, cancellationToken);
 
         if (titleExists)
             return Result<DesignationResponseDto>.Failed("Designation Title already exists.");
@@ -153,19 +133,13 @@ public class DesignationService(
 
     public async Task<Result<DesignationResponseDto>> UpdateAsync(string id, UpdateDesignationDto dto, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<DesignationResponseDto>.Failed("User not authenticated.");
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<DesignationResponseDto>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
         var query = db.Designations
-            .Where(d => d.Id == id && !d.IsDeleted);
+            .Where(d => d.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
             query = query.IgnoreQueryFilters();
@@ -217,7 +191,8 @@ public class DesignationService(
         var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
 
         var query = db.Designations
-            .Where(d => d.Id == id && !d.IsDeleted);
+            .Where(d => d.Id == id);
+        // Note: IsDeleted filter is now applied globally
 
         if (isSuperAdmin)
             query = query.IgnoreQueryFilters();
@@ -243,22 +218,13 @@ public class DesignationService(
 
     public async Task<Result<ImportResult>> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
     {
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+
         var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<ImportResult>.Failed("User not authenticated.");
-
         var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<ImportResult>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-        var isAdmin = roles.Contains(SystemRoles.Admin);
-
-        if (!isSuperAdmin && !isAdmin)
-            return Result<ImportResult>.Failed("Unauthorized access.");
-
-        var tenantId = isSuperAdmin ? user.TenantId : db.CurrentTenantId;
+        var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
 
         var importResult = new ImportResult();
         var designationsToAdd = new List<Designation>();

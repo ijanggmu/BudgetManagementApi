@@ -24,46 +24,22 @@ public class FodoService(
 {
     public async Task<Result<List<FodoResponseDto>>> GetFodosForAdminAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<List<FodoResponseDto>>.Failed("User not authenticated.");
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<List<FodoResponseDto>>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-        var isAdmin = roles.Contains(SystemRoles.Admin);
-
-        if (!isSuperAdmin && !isAdmin)
-            return Result<List<FodoResponseDto>>.Failed("Unauthorized access.");
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        // Only check role for query filtering logic
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
         IQueryable<Fodo> query = db.Fodos
             .Include(a => a.User)
             .Include(a => a.Designation)
-            .Include(a => a.Branch)
-            .Where(a => !a.IsDeleted && !a.User.IsDeleted);
+            .Include(a => a.Branch);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
-        // For SuperAdmin: filter by tenantId if provided, otherwise show all
-        //if (isSuperAdmin)
-        //{
-        //    if (!string.IsNullOrEmpty(tenantId))
-        //    {
-        //        query = query.Where(a => a.TenantId == tenantId);
-        //    }
-        //    // If tenantId is null, show all fodos (global query filter will be ignored)
-        //    query = query.IgnoreQueryFilters();
-        //}
-        //if (isSuperAdmin)
-        //{
-        //    if (!string.IsNullOrEmpty(tenantId))
-        //    {
-        //        query = query.Where(a => a.TenantId == tenantId);
-        //    }
-        //    // If tenantId is null, show all fodos (global query filter will be ignored)
-        //    query = query.IgnoreQueryFilters();
-        //}
+        // For SuperAdmin, ignore the automatic tenant query filter to see all fodos across all tenants
+        if (isSuperAdmin)
+        {
+            query = query.IgnoreQueryFilters();
+        }
         // For Admin: only show fodos from their tenant (global query filter applies)
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
         var fodos = await result.ToListAsync(cancellationToken);
@@ -113,22 +89,16 @@ public class FodoService(
 
     public async Task<Result<FodoResponseDto>> GetFodoByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<FodoResponseDto>.Failed("User not authenticated.");
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Result<FodoResponseDto>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(user);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
         var query = db.Fodos
             .Include(a => a.User)
             .Include(a => a.Designation)
             .Include(a => a.Branch)
-            .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+            .Where(a => a.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
             query = query.IgnoreQueryFilters();
@@ -181,27 +151,19 @@ public class FodoService(
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var userId = userProfileService.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Result<FodoResponseDto>.Failed("User not authenticated.");
-
-            var currentUser = await userManager.FindByIdAsync(userId);
-            if (currentUser == null)
-                return Result<FodoResponseDto>.Failed("User not found.");
-
-            var roles = await userManager.GetRolesAsync(currentUser);
-            var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-            var isAdmin = roles.Contains(SystemRoles.Admin);
-
-            if (!isSuperAdmin && !isAdmin)
-                return Result<FodoResponseDto>.Failed("Unauthorized access.");
+            // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+            var roleId = userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
             // Get tenant ID from current user (for Admin) or from context
-            var tenantId = isSuperAdmin ? currentUser.TenantId : db.CurrentTenantId;
+            var userId = userProfileService.GetUserId();
+            var currentUser = await userManager.FindByIdAsync(userId);
+            var tenantId = isSuperAdmin ? currentUser?.TenantId : db.CurrentTenantId;
 
             // Check if phone number already exists
+            // Note: IsDeleted filter is now applied globally
             var phoneExists = await db.Users
-                .AnyAsync(u => u.PhoneNumber == dto.MobileNumber && !u.IsDeleted, cancellationToken);
+                .AnyAsync(u => u.PhoneNumber == dto.MobileNumber, cancellationToken);
 
             if (phoneExists)
                 return Result<FodoResponseDto>.Failed("Mobile number already exists.");
@@ -209,8 +171,9 @@ public class FodoService(
             // Check if email already exists
             if (!string.IsNullOrWhiteSpace(dto.Email))
             {
+                // Note: IsDeleted filter is now applied globally
                 var emailExists = await db.Users
-                    .AnyAsync(u => u.Email == dto.Email && !u.IsDeleted, cancellationToken);
+                    .AnyAsync(u => u.Email == dto.Email, cancellationToken);
 
                 if (emailExists)
                     return Result<FodoResponseDto>.Failed("Email already exists.");
@@ -226,8 +189,9 @@ public class FodoService(
             var username = $"{country.CountryDialingCode}{dto.MobileNumber}";
 
             // Check if username already exists
+            // Note: IsDeleted filter is now applied globally
             var usernameExists = await db.Users
-                .AnyAsync(u => u.UserName == username && !u.IsDeleted, cancellationToken);
+                .AnyAsync(u => u.UserName == username, cancellationToken);
 
             if (usernameExists)
                 return Result<FodoResponseDto>.Failed("Username already exists.");
@@ -235,8 +199,9 @@ public class FodoService(
             // Check if EmployeeId already exists
             if (!string.IsNullOrWhiteSpace(dto.EmployeeId))
             {
+                // Note: IsDeleted filter is now applied globally
                 var employeeIdExists = await db.Fodos
-                    .AnyAsync(f => f.EmployeeId == dto.EmployeeId && !f.IsDeleted, cancellationToken);
+                    .AnyAsync(f => f.EmployeeId == dto.EmployeeId, cancellationToken);
 
                 if (employeeIdExists)
                     return Result<FodoResponseDto>.Failed("Employee ID already exists.");
@@ -373,7 +338,8 @@ public class FodoService(
                 .Include(a => a.User)
                 .Include(a => a.Designation)
                 .Include(a => a.Branch)
-                .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+                .Where(a => a.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -386,8 +352,9 @@ public class FodoService(
             // Check if EmployeeId already exists (if changed)
             if (!string.IsNullOrWhiteSpace(dto.EmployeeId) && dto.EmployeeId != fodo.EmployeeId)
             {
+                // Note: IsDeleted filter is now applied globally
                 var employeeIdExists = await db.Fodos
-                    .AnyAsync(f => f.EmployeeId == dto.EmployeeId && f.Id != id && !f.IsDeleted, cancellationToken);
+                    .AnyAsync(f => f.EmployeeId == dto.EmployeeId && f.Id != id, cancellationToken);
 
                 if (employeeIdExists)
                     return Result<FodoResponseDto>.Failed("Employee ID already exists.");
@@ -431,8 +398,9 @@ public class FodoService(
             // Update user properties
             if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email != fodo.User.Email)
             {
+                // Note: IsDeleted filter is now applied globally
                 var emailExists = await db.Users
-                    .AnyAsync(u => u.Email == dto.Email && u.Id != fodo.UserId && !u.IsDeleted, cancellationToken);
+                    .AnyAsync(u => u.Email == dto.Email && u.Id != fodo.UserId, cancellationToken);
 
                 if (emailExists)
                     return Result<FodoResponseDto>.Failed("Email already exists.");
@@ -442,8 +410,9 @@ public class FodoService(
 
             if (!string.IsNullOrWhiteSpace(dto.MobileNumber) && dto.MobileNumber != fodo.User.PhoneNumber)
             {
+                // Note: IsDeleted filter is now applied globally
                 var phoneExists = await db.Users
-                    .AnyAsync(u => u.PhoneNumber == dto.MobileNumber && u.Id != fodo.UserId && !u.IsDeleted, cancellationToken);
+                    .AnyAsync(u => u.PhoneNumber == dto.MobileNumber && u.Id != fodo.UserId, cancellationToken);
 
                 if (phoneExists)
                     return Result<FodoResponseDto>.Failed("Mobile number already exists.");
@@ -513,7 +482,8 @@ public class FodoService(
 
             var query = db.Fodos
                 .Include(a => a.User)
-                .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+                .Where(a => a.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -558,7 +528,8 @@ public class FodoService(
 
             var query = db.Fodos
                 .Include(a => a.User)
-                .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+                .Where(a => a.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -599,7 +570,8 @@ public class FodoService(
 
             var query = db.Fodos
                 .Include(a => a.User)
-                .Where(a => a.Id == id && !a.IsDeleted && !a.User.IsDeleted);
+                .Where(a => a.Id == id);
+        // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -639,7 +611,8 @@ public class FodoService(
             var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
 
             var query = db.Fodos
-                .Where(a => a.Id == id && !a.IsDeleted);
+                .Where(a => a.Id == id);
+        // Note: IsDeleted filter is now applied globally
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -699,7 +672,8 @@ public class FodoService(
 
             var query = db.Fodos
                 .Include(a => a.User)
-                .Where(a => a.Id == id && !a.IsDeleted);
+                .Where(a => a.Id == id);
+        // Note: IsDeleted filter is now applied globally
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -710,12 +684,12 @@ public class FodoService(
                 return Result<List<object>>.Failed("Marketing Executive not found.");
 
             // Get leads created by this marketing executive
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
             var leadsQuery = db.Leads
-                .Where(l => l.OwnerUserId == fodo.UserId && !l.IsDeleted);
+                .Where(l => l.OwnerUserId == fodo.UserId);
 
-
-            if (!isSuperAdmin && !string.IsNullOrEmpty(currentUser.TenantId))
-                leadsQuery = leadsQuery.Where(l => l.TenantId == currentUser.TenantId);
+            if (isSuperAdmin)
+                leadsQuery = leadsQuery.IgnoreQueryFilters();
 
             leadsQuery.Include(l => l.Prospect)
                 .ThenInclude(p => p.PrimaryContact);
@@ -744,20 +718,14 @@ public class FodoService(
     {
         try
         {
-            var userId = userProfileService.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Result<List<object>>.Failed("User not authenticated.");
-
-            var currentUser = await userManager.FindByIdAsync(userId);
-            if (currentUser == null)
-                return Result<List<object>>.Failed("User not found.");
-
-            var roles = await userManager.GetRolesAsync(currentUser);
-            var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
+            // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+            var roleId = userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
             var query = db.Fodos
                 .Include(a => a.User)
-                .Where(a => a.Id == id && !a.IsDeleted);
+                .Where(a => a.Id == id);
+        // Note: IsDeleted filter is now applied globally
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -768,17 +736,17 @@ public class FodoService(
                 return Result<List<object>>.Failed("Marketing Executive not found.");
 
             // Get quotations for leads created by this marketing executive
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
             var leadIds = await db.Leads
-                .Where(l => l.OwnerUserId == fodo.UserId && !l.IsDeleted)
+                .Where(l => l.OwnerUserId == fodo.UserId)
                 .Select(l => l.ProspectId)
                 .ToListAsync(cancellationToken);
 
             var quotationsQuery = db.Quotations
-                .Where(q => leadIds.Contains(q.ProspectId) && !q.IsDeleted);
+                .Where(q => leadIds.Contains(q.ProspectId));
 
-
-            if (!isSuperAdmin && !string.IsNullOrEmpty(currentUser.TenantId))
-                quotationsQuery = quotationsQuery.Where(q => q.TenantId == currentUser.TenantId);
+            if (isSuperAdmin)
+                quotationsQuery = quotationsQuery.IgnoreQueryFilters();
             quotationsQuery.Include(q => q.Items);
             var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(quotationsQuery, requestModel);
             var quotations = await result.ToListAsync(cancellationToken);
@@ -801,22 +769,13 @@ public class FodoService(
 
     public async Task<Result<ImportResult>> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
     {
+        // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+
         var userId = userProfileService.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Result<ImportResult>.Failed("User not authenticated.");
-
         var currentUser = await userManager.FindByIdAsync(userId);
-        if (currentUser == null)
-            return Result<ImportResult>.Failed("User not found.");
-
-        var roles = await userManager.GetRolesAsync(currentUser);
-        var isSuperAdmin = roles.Contains(SystemRoles.SuperAdmin);
-        var isAdmin = roles.Contains(SystemRoles.Admin);
-
-        if (!isSuperAdmin && !isAdmin)
-            return Result<ImportResult>.Failed("Unauthorized access.");
-
-        var tenantId = isSuperAdmin ? currentUser.TenantId : db.CurrentTenantId;
+        var tenantId = isSuperAdmin ? currentUser?.TenantId : db.CurrentTenantId;
 
         var importResult = new ImportResult();
         var errors = new List<ImportError>();
@@ -850,12 +809,13 @@ public class FodoService(
                 return Result<ImportResult>.Failed($"Required columns are missing: {string.Join(", ", missingColumns)}");
 
             // Get all designations and branches for lookup
+            // Note: IsDeleted filter is now applied globally
             var designations = await db.Designations
-                .Where(d => d.TenantId == tenantId && !d.IsDeleted)
+                .Where(d => d.TenantId == tenantId)
                 .ToDictionaryAsync(d => d.Title.ToLower(), d => d.Id, cancellationToken);
 
             var branches = await db.Branches
-                .Where(b => b.TenantId == tenantId && !b.IsDeleted)
+                .Where(b => b.TenantId == tenantId)
                 .ToDictionaryAsync(b => b.BranchCode.ToLower(), b => b.Id, cancellationToken);
 
             var countries = await db.Countries.ToListAsync(cancellationToken);
@@ -913,8 +873,9 @@ public class FodoService(
                     }
 
                     // Check if email already exists
+                    // Note: IsDeleted filter is now applied globally
                     var emailExists = await db.Users
-                        .AnyAsync(u => u.Email == email && !u.IsDeleted, cancellationToken);
+                        .AnyAsync(u => u.Email == email, cancellationToken);
 
                     if (emailExists)
                     {
@@ -930,8 +891,9 @@ public class FodoService(
                     }
 
                     // Check if employee ID already exists
+                    // Note: IsDeleted filter is now applied globally
                     var employeeIdExists = await db.Fodos
-                        .AnyAsync(f => f.EmployeeId == employeeId && !f.IsDeleted, cancellationToken);
+                        .AnyAsync(f => f.EmployeeId == employeeId, cancellationToken);
 
                     if (employeeIdExists)
                     {
@@ -974,8 +936,9 @@ public class FodoService(
                     var username = $"{country.CountryDialingCode}{mobileNumber}";
 
                     // Check if username already exists
+                    // Note: IsDeleted filter is now applied globally
                     var usernameExists = await db.Users
-                        .AnyAsync(u => u.UserName == username && !u.IsDeleted, cancellationToken);
+                        .AnyAsync(u => u.UserName == username, cancellationToken);
 
                     if (usernameExists)
                     {
