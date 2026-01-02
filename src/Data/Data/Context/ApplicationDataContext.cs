@@ -203,7 +203,28 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
         base.OnModelCreating(builder);
 
         builder.Entity<ApplicationUser>(entity => { entity.ToTable(name: "Users"); });
-        builder.Entity<ApplicationRole>(entity => { entity.ToTable(name: "Roles"); });
+        
+        // Configure ApplicationRole: Remove unique constraint on NormalizedName and add composite unique index
+        builder.Entity<ApplicationRole>(entity => 
+        { 
+            entity.ToTable(name: "Roles");
+            
+            // Remove the default unique index on NormalizedName (from Identity framework)
+            // The base OnModelCreating creates a unique index on NormalizedName with name "RoleNameIndex"
+            // We need to remove it and create a composite unique index instead
+            entity.HasIndex(r => r.NormalizedName)
+                .HasDatabaseName("RoleNameIndex")
+                .IsUnique(false); // Remove unique constraint
+            
+            // Add composite unique index on NormalizedName and TenantId
+            // This allows the same role name to exist for different tenants
+            // Note: TenantId can be null for global roles (SuperAdmin), so null values are treated as distinct
+            entity.HasIndex(r => new { r.NormalizedName, r.TenantId })
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false") // Only enforce uniqueness on non-deleted roles
+                .HasDatabaseName("IX_Roles_NormalizedName_TenantId");
+        });
+        
         builder.Entity<ApplicationUserRoles>(entity => { entity.ToTable("UserRoles"); });
         builder.Entity<ApplicationRoleClaim>(b => { b.ToTable("RoleClaims"); });
 
