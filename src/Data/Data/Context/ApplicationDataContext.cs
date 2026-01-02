@@ -229,12 +229,19 @@ namespace Data.Context
 
             builder.Entity<Tenant>()
                 .HasOne(x => x.Branding)
-                .WithOne()
+                .WithOne(x => x.Tenant)
                 .HasForeignKey<CompanyBranding>(x => x.TenantId)
                 .HasPrincipalKey<Tenant>(x => x.Id);
 
             builder.Entity<CompanyBranding>()
                 .HasKey(x => x.TenantId);
+            
+            // Configure ITIFamilyMember relationship
+            builder.Entity<ITIFamilyMember>()
+                .HasOne(x => x.InternationalTravelInsurance)
+                .WithMany(x => x.FamilyMembers)
+                .HasForeignKey(x => x.InternationalTravelInsuranceId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Premium Calculation Configuration relationships and indexes
             builder.Entity<PremiumCalculationConfiguration>(entity =>
