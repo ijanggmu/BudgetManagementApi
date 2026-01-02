@@ -11,6 +11,7 @@ public class UserActivityConfiguration : IEntityTypeConfiguration<UserActivity>
         builder.HasIndex(x => x.UserName).IsUnique(false);
         builder.HasIndex(x => x.At).IsUnique(false);
         builder.HasIndex(x => x.EndAt).IsUnique(false);
+        builder.HasIndex(x => x.TenantId).IsUnique(false);
     }
 }
 
@@ -56,4 +57,9 @@ public class UserActivity
     public string Module { get; set; }
     public string CorrelationId { get; set; }
     public double ResponseTime { get; set; }
+    
+    /// <summary>
+    /// Tenant ID for multi-tenancy support. Allows filtering logs by tenant.
+    /// </summary>
+    public string? TenantId { get; set; }
 }

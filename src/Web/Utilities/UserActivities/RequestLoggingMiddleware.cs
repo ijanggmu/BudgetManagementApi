@@ -11,13 +11,13 @@ using Data.Entities.Audit.UserActivites;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IO;
 using SharedKernel.Constant;
+using SharedKernel.Models.Tenancy;
 
 namespace BeemaEdgeApi.Utilities.UserActivities;
 
 public class RequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;
-
     private readonly RecyclableMemoryStreamManager _recyclableMemoryStreamManager;
 
     public RequestLoggingMiddleware(RequestDelegate next)
@@ -26,7 +26,7 @@ public class RequestLoggingMiddleware
         _recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
     }
 
-    public async Task Invoke(HttpContext context, Channel<UserActivity> channel)
+    public async Task Invoke(HttpContext context, Channel<UserActivity> channel, ITenantContext tenantContext)
     {
         var routeAlias = context.Items["RouteAlias"] as string;
         var module = context.Items["Module"] as string;
@@ -102,6 +102,7 @@ public class RequestLoggingMiddleware
             requestActivity.UserName = context.User.Claims.Where(x => x.Type == ClaimTypes.Name)?.FirstOrDefault()?.Value;
             requestActivity.UserAgent = request.Headers["User-Agent"].ToString();
             requestActivity.CorrelationId = context.Items[SystemConstant.CorrelationId].ToString();
+            requestActivity.TenantId = tenantContext?.TenantId;
 
 
         }

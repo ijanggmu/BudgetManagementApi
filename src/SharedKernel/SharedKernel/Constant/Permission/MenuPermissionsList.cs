@@ -424,6 +424,22 @@ public static partial class MenuPermissionsList
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Reporting, false),
                         Children = null
                     },
+                    // 20-22. Operations > Notice Board
+                    new MenuItem
+                    {
+                        MenuId = 22,
+                        MenuName = "Notice Board",
+                        MenuSlug = "/noticeboard",
+                        Icon = "NotificationOutlined",
+                        Rank = 6,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.NoticeBoard, false),
+                        Children = null
+                    },
                 }
             },
 
@@ -505,22 +521,6 @@ public static partial class MenuPermissionsList
                         {
                             new Permission(MenuPermissionConstant.ConfigViewName, MenuPermissionConstant.ConfigView, false)
                         },
-                        Children = null
-                    },
-                    // 21-22. System > Notice Board
-                    new MenuItem
-                    {
-                        MenuId = 22,
-                        MenuName = "Notice Board",
-                        MenuSlug = "/noticeboard",
-                        Icon = "NotificationOutlined",
-                        Rank = 3,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.NoticeBoard, false),
                         Children = null
                     },
                 }

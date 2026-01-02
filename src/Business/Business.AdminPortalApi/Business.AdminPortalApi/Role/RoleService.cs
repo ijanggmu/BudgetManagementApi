@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using Data.Context;
 using Data.Entities.Identity;
+using Data.Infrastructure;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Models.Common;
 using Models.BeemaEdgeApi.Roles;
 using SharedKernel.Constant.Roles;
+using SharedKernel.Models.Tenancy;
 using SharedKernel.Operation;
 
 namespace Business.AdminPortalApi.Role;
@@ -16,7 +18,8 @@ namespace Business.AdminPortalApi.Role;
 public class RoleService(
        RoleManager<ApplicationRole> roleManager,
        ApplicationDataContext dataContext,
-       ISieveExtension sieveExtenstion
+       ISieveExtension sieveExtenstion,
+       ITenantContext tenantContext
            ) : IRoleService
 {
     public Result<List<string>> GetAllSystemRoles()
@@ -24,15 +27,36 @@ public class RoleService(
         return Result<List<string>>.Success(SystemRoles.GetAllDefaultRolesExceptSuperAdmin());
     }
 
-    public async Task<Result<List<string>>> GetAllRoleNamesAsync(CancellationToken cancellationToken = default) => Result<List<string>>.Success(await roleManager.Roles
-                                                                    .AsNoTracking()
-                                                                    .Where(a => !a.IsDeleted)
-                                                                    .OrderByDescending(x => x.CreatedOn)
-                                                                    .Select(x => x.Name)
-                                                                    .ToListAsync(cancellationToken));
+    public async Task<Result<List<string>>> GetAllRoleNamesAsync(CancellationToken cancellationToken = default)
+    {
+        var query = roleManager.Roles
+            .AsNoTracking()
+            .Where(a => !a.IsDeleted);
+        
+        // Filter by tenant for non-superadmin admins (tenant-wise roles)
+        // SuperAdmin can see all roles, tenant admins see their tenant's roles + global roles (TenantId == null)
+        if (!string.IsNullOrWhiteSpace(tenantContext?.TenantId))
+        {
+            query = query.Where(a => a.TenantId == tenantContext.TenantId || a.TenantId == null);
+        }
+        
+        var roleNames = await query
+            .OrderByDescending(x => x.CreatedOn)
+            .Select(x => x.Name)
+            .ToListAsync(cancellationToken);
+            
+        return Result<List<string>>.Success(roleNames);
+    }
     public async Task<Result<List<RoleResponseModel>>> GetAllRolesAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         Expression<Func<ApplicationRole, bool>> predicate = c => !c.IsDeleted;
+        
+        // Filter by tenant for non-superadmin admins (tenant-wise roles)
+        // SuperAdmin can see all roles, tenant admins see their tenant's roles + global roles (TenantId == null)
+        if (!string.IsNullOrWhiteSpace(tenantContext?.TenantId))
+        {
+            predicate = c => !c.IsDeleted && (c.TenantId == tenantContext.TenantId || c.TenantId == null);
+        }
 
         var query = roleManager.Roles
                                  .Where(predicate)
@@ -74,9 +98,13 @@ public class RoleService(
             return Result<MessageResponseModel>.Success(new MessageResponseModel("Role created successfully."));
         }
 
-        var checkIfRoleNameExists = await dataContext.Roles.AnyAsync(r => r.Name.ToLower() == roleNameLower && !r.IsDeleted, cancellationToken);
+        // Check if role name exists in the same tenant (or globally if TenantId is null)
+        var checkIfRoleNameExists = await dataContext.Roles
+            .AnyAsync(r => r.Name.ToLower() == roleNameLower 
+                && !r.IsDeleted 
+                && (r.TenantId == tenantContext.TenantId || r.TenantId == null), cancellationToken);
         if (checkIfRoleNameExists)
-            return Result<MessageResponseModel>.Failed("Role already exists.");
+            return Result<MessageResponseModel>.Failed("Role already exists in this tenant.");
 
         var role = new ApplicationRole
         {
@@ -84,6 +112,8 @@ public class RoleService(
             Name = model.RoleName,
             RoleType = model.RoleType,
             Description = model.RoleDescription,
+            // Set TenantId for tenant-wise role creation (non-superadmin admins)
+            TenantId = tenantContext?.TenantId
         };
 
         //if (!role.IsValidRoleType())
@@ -120,9 +150,14 @@ public class RoleService(
 
         var role = await roleManager.Roles.Where(x => x.Id == roleModel.RoleId).FirstOrDefaultAsync(cancellationToken);
         var modelNameWhiteSpaceRemoved = string.Concat(roleModel.RoleName.Where(c => !char.IsWhiteSpace(c)));
+        
+        // Check if role name exists in the same tenant (or globally if TenantId is null)
         var checkIfRoleNameExists = await roleManager.Roles
-            .AnyAsync(r => r.Name.ToLower() == roleModel.RoleName.Trim().ToLower() ||
-                           r.Name.ToLower() == modelNameWhiteSpaceRemoved.ToLower(), cancellationToken);
+            .AnyAsync(r => (r.Name.ToLower() == roleModel.RoleName.Trim().ToLower() ||
+                           r.Name.ToLower() == modelNameWhiteSpaceRemoved.ToLower())
+                           && !r.IsDeleted
+                           && r.Id != roleModel.RoleId
+                           && (r.TenantId == role.TenantId || (r.TenantId == null && role.TenantId == null)), cancellationToken);
         var nameNotChanged = role.Name.ToLower() == roleModel.RoleName.ToLower();
 
         if (role != null)

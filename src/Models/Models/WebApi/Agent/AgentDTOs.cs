@@ -64,6 +64,7 @@ public class CreateFodoDto
     public bool IsActive { get; set; } = true;
     public string Password { get; set; } = string.Empty;
     public string ConfirmPassword { get; set; } = string.Empty;
+    public List<string> Roles { get; set; }
 }
 
 public class UpdateFodoDto

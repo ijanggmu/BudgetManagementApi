@@ -4,9 +4,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Data.Context;
 using Data.Entities.Audit.UserActivites;
+using Data.Infrastructure;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
+using Infrastructure.Common.UserProfile;
 using Microsoft.EntityFrameworkCore;
 using Models.Common;
+using SharedKernel.Constant.Roles;
+using SharedKernel.Models.Tenancy;
 using SharedKernel.Operation;
 
 namespace AdminPortalApi.Controllers.V1.SystemLog;
@@ -36,17 +40,43 @@ public class AccessLogResponseModel
 public class SystemLogService : ISystemLogService
 {
     private readonly ISieveExtension _sieveExtension;
-
     private readonly AuditDataContext _auditContext;
-    public SystemLogService(ISieveExtension sieveExtension,
-        AuditDataContext auditContext)
+    private readonly ITenantContext _tenantContext;
+    private readonly ITenantResolutionService _tenantResolutionService;
+    private readonly IUserProfileService _userProfileService;
+
+    public SystemLogService(
+        ISieveExtension sieveExtension,
+        AuditDataContext auditContext,
+        ITenantContext tenantContext,
+        ITenantResolutionService tenantResolutionService,
+        IUserProfileService userProfileService)
     {
         _sieveExtension = sieveExtension;
         _auditContext = auditContext;
+        _tenantContext = tenantContext;
+        _tenantResolutionService = tenantResolutionService;
+        _userProfileService = userProfileService;
     }
+    
     public async Task<Result<List<AccessLogResponseModel>>> GetAllSystemAccessLogAsync(CommonPaginationRequestModel searchModel, CancellationToken cancellationToken = default)
     {
-        var query = _auditContext.UserActivities;
+        var query = _auditContext.UserActivities.AsQueryable();
+        
+        // Filter by tenant for non-superadmin admins
+        var userId = _userProfileService.GetUserId();
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            var userRoles = await _tenantResolutionService.GetUserRolesAsync(userId);
+            var isSuperAdmin = userRoles.Contains(SystemRoles.SuperAdmin);
+            
+            if (!isSuperAdmin && !string.IsNullOrWhiteSpace(_tenantContext?.TenantId))
+            {
+                // Non-superadmin: only show logs for their tenant
+                query = query.Where(x => x.TenantId == _tenantContext.TenantId);
+            }
+            // SuperAdmin: show all logs (no filter)
+        }
 
         var defaultSort = $"-{nameof(UserActivity.At)}";
 

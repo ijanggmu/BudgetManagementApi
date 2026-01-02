@@ -245,12 +245,40 @@ public class FodoService(
             if (!createUserResult.Succeeded)
                 return Result<FodoResponseDto>.Failed(createUserResult.Errors.FirstOrDefault()?.Description ?? "Failed to create user.");
 
-            // Add Agent role
+            // Always add MarketingExecutive role (default, non-removable)
             var roleResult = await userManager.AddToRoleAsync(user, SystemRoles.FoDo);
             if (!roleResult.Succeeded)
             {
                 await transaction.RollbackAsync();
-                return Result<FodoResponseDto>.Failed(roleResult.Errors.FirstOrDefault()?.Description ?? "Failed to assign role.");
+                return Result<FodoResponseDto>.Failed(roleResult.Errors.FirstOrDefault()?.Description ?? "Failed to assign MarketingExecutive role.");
+            }
+
+            // Add additional roles if provided
+            if (dto.Roles != null && dto.Roles.Any())
+            {
+                // Ensure MarketingExecutive is not in the list (it's always assigned)
+                var rolesToAdd = dto.Roles
+                    .Where(r => !string.IsNullOrWhiteSpace(r) && r.Trim() != SystemRoles.FoDo)
+                    .Distinct()
+                    .ToList();
+
+                foreach (var roleName in rolesToAdd)
+                {
+                    // Verify role exists
+                    var roleExists = await db.Roles.AnyAsync(r => r.Name == roleName.Trim() && !r.IsDeleted, cancellationToken);
+                    if (!roleExists)
+                    {
+                        await transaction.RollbackAsync();
+                        return Result<FodoResponseDto>.Failed($"Role '{roleName}' does not exist.");
+                    }
+
+                    var addRoleResult = await userManager.AddToRoleAsync(user, roleName.Trim());
+                    if (!addRoleResult.Succeeded)
+                    {
+                        await transaction.RollbackAsync();
+                        return Result<FodoResponseDto>.Failed($"Failed to assign role '{roleName}': {addRoleResult.Errors.FirstOrDefault()?.Description}");
+                    }
+                }
             }
 
             // Create Fodo entity
