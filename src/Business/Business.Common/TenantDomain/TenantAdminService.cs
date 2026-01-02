@@ -27,6 +27,7 @@ public class TenantAdminService : ITenantAdminService
     private readonly ApplicationDataContext _db;
     private readonly ISieveExtension _sieveExtension;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly IMailService _mailService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<TenantAdminService> _logger;
@@ -37,6 +38,7 @@ public class TenantAdminService : ITenantAdminService
         ApplicationDataContext db,
         ISieveExtension sieveExtension,
         UserManager<ApplicationUser> userManager,
+        RoleManager<ApplicationRole> roleManager,
         IMailService mailService,
         IConfiguration configuration,
         ILogger<TenantAdminService> logger,
@@ -46,6 +48,7 @@ public class TenantAdminService : ITenantAdminService
         _db = db;
         _sieveExtension = sieveExtension;
         _userManager = userManager;
+        _roleManager = roleManager;
         _mailService = mailService;
         _configuration = configuration;
         _logger = logger;
@@ -204,7 +207,10 @@ public class TenantAdminService : ITenantAdminService
                 FullName = dto.AdminUser.FullName,
                 UserId = adminUser.Id
             };
-            await _db.Admins.AddAsync(admin);
+            await _db.Admins.AddAsync(admin, cancellationToken);
+
+            // Seed tenant-specific roles (Admin and FoDo) for this tenant
+            await SeedTenantRolesAsync(tenant.Id);
 
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -238,7 +244,7 @@ public class TenantAdminService : ITenantAdminService
                     </html>";
 
                 var mailRequest = new MailRequest(
-                    to: new Collection<string> { adminUser.Email },
+                    to: [adminUser.Email],
                     subject: $"Welcome to {dto.Name} - Admin Account Created",
                     emailType: "TenantAdminWelcome",
                     body: emailBody
@@ -393,6 +399,52 @@ public class TenantAdminService : ITenantAdminService
         {
             _logger.LogError(ex, "Error exporting tenants to Excel: {Message}", ex.Message);
             return Result<byte[]>.Failed($"An error occurred while exporting: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Seeds tenant-specific roles (Admin and FoDo) for a tenant.
+    /// These roles are scoped to the tenant and can be customized per tenant.
+    /// </summary>
+    private async Task SeedTenantRolesAsync(string tenantId)
+    {
+        // Check if roles already exist for this tenant
+        var existingAdminRole = await _db.Roles
+            .FirstOrDefaultAsync(r => r.Name == SystemRoles.Admin && r.TenantId == tenantId);
+        
+        var existingFoDoRole = await _db.Roles
+            .FirstOrDefaultAsync(r => r.Name == SystemRoles.FoDo && r.TenantId == tenantId);
+
+        // Create Admin role for tenant if it doesn't exist
+        if (existingAdminRole == null)
+        {
+            var adminRole = new ApplicationRole
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = SystemRoles.Admin,
+                Description = $"Tenant Admin Role for {tenantId}",
+                RoleLevel = SystemRoles.AdminLevel,
+                RoleType = SystemRoles.Admin,
+                TenantId = tenantId
+            };
+            await _roleManager.CreateAsync(adminRole);
+            _logger.LogInformation("Created Admin role for tenant {TenantId}", tenantId);
+        }
+
+        // Create FoDo (MarketingExecutive) role for tenant if it doesn't exist
+        if (existingFoDoRole == null)
+        {
+            var fodoRole = new ApplicationRole
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = SystemRoles.FoDo,
+                Description = $"Marketing Executive Role for {tenantId}",
+                RoleLevel = SystemRoles.FoDoLevel,
+                RoleType = SystemRoles.FoDo,
+                TenantId = tenantId
+            };
+            await _roleManager.CreateAsync(fodoRole);
+            _logger.LogInformation("Created FoDo role for tenant {TenantId}", tenantId);
         }
     }
 }

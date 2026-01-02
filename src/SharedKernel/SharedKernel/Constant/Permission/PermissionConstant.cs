@@ -291,6 +291,12 @@ public class MenuItem
     public bool ToHide { get; set; } = false;
     public bool HideChildren { get; set; }
 
+    /// <summary>
+    /// List of roles that can see this menu item. 
+    /// If null or empty, menu is visible to all roles.
+    /// Values: "SuperAdmin", "Admin", "FoDo", "MarketingExecutive", or "All"
+    /// </summary>
+    public List<string>? AllowedRoles { get; set; }
 
     public List<Permission> Permissions { get; set; }
     public List<MenuItem> Children { get; set; }

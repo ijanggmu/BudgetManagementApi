@@ -23,6 +23,7 @@ public static partial class MenuPermissionsList
                 IsMenu = true,
                 ToHide = false,
                 HideChildren = false,
+                AllowedRoles = new List<string> { "All" }, // Dashboard visible to all roles
                 Permissions =
                 [
                     new Permission(MenuPermissionConstant.DashboardViewName, MenuPermissionConstant.DashboardView, true),
@@ -51,6 +52,7 @@ public static partial class MenuPermissionsList
                 IsMenu = true,
                 ToHide = false,
                 HideChildren = false,
+                AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Administration visible to SuperAdmin and TenantAdmin
                 Permissions = new List<Permission>
                 {
                     new Permission(MenuPermissionConstant.AdministrationViewName, MenuPermissionConstant.AdministrationView, false)
@@ -70,6 +72,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin" }, // Tenants only for SuperAdmin
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Tenants, false),
                         Children = null
                     },
@@ -86,6 +89,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "Admin" }, // Organization Details for TenantAdmin
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Branding, false),
                         Children = null
                     },
@@ -102,6 +106,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "Admin" }, // Branch for TenantAdmin
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Branch, false),
                         Children = null
                     },
@@ -118,6 +123,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "Admin" }, // Designation for TenantAdmin
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Designation, false),
                         Children = null
                     },
@@ -134,6 +140,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Roles for SuperAdmin and TenantAdmin
                         Permissions =
                         [
                             .. PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Roles, false),
@@ -154,6 +161,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin" }, // Admin Management for SuperAdmin and TenantAdmin
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminManagement, false),
                         Children = null
                     },
@@ -175,6 +183,7 @@ public static partial class MenuPermissionsList
                 IsMenu = true,
                 ToHide = false,
                 HideChildren = false,
+                AllowedRoles = new List<string> { "SuperAdmin", "Admin", "FoDo" }, // Sales & Marketing for all admin roles
                 Permissions = new List<Permission>
                 {
                     new Permission(MenuPermissionConstant.SalesMarketingViewName, MenuPermissionConstant.SalesMarketingView, false)
@@ -194,6 +203,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Marketing Executives for SuperAdmin and TenantAdmin
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutives, false),
                         Children = null
                     },
@@ -210,6 +220,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Admin Leads for SuperAdmin and TenantAdmin
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminLeads, false),
                         Children = null
                     },
@@ -226,6 +237,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Admin Quotations for SuperAdmin and TenantAdmin
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminQuotations, false),
                         Children = null
                     },
@@ -242,6 +254,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "FoDo" }, // Marketing Executive Leads for FoDo only
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutiveLeads, false),
                         Children = null
                     },
@@ -258,6 +271,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "FoDo" }, // Marketing Executive Quotations for FoDo only
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutiveQuotations, false),
                         Children = null
                     },
@@ -274,6 +288,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "FoDo" }, // Marketing Executive Attendance for FoDo only
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.CommonAttendance, false),
                         Children = null
                     },
@@ -295,6 +310,7 @@ public static partial class MenuPermissionsList
                 IsMenu = true,
                 ToHide = false,
                 HideChildren = false,
+                AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Operations for SuperAdmin and TenantAdmin
                 Permissions = new List<Permission>
                 {
                     new Permission(MenuPermissionConstant.OperationsViewName, MenuPermissionConstant.OperationsView, false)
@@ -437,6 +453,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Notice Board for SuperAdmin and TenantAdmin
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.NoticeBoard, false),
                         Children = null
                     },
@@ -458,6 +475,7 @@ public static partial class MenuPermissionsList
                 IsMenu = true,
                 ToHide = false,
                 HideChildren = false,
+                AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // System for SuperAdmin and TenantAdmin
                 Permissions = new List<Permission>
                 {
                     new Permission(MenuPermissionConstant.SystemViewName, MenuPermissionConstant.SystemView, false)
