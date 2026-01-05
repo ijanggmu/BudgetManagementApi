@@ -1,6 +1,5 @@
-using System.Collections.ObjectModel;
-using System.Net;
 using Business.AdminPortalApi.ExcelExport;
+using Business.Common.File;
 using Business.Common.Mail;
 using Common.Mail;
 using Data.Context;
@@ -11,11 +10,9 @@ using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
-using SharedKernel.Constant;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 using Tenant = Data.Entities.Tenant.Tenant;
@@ -31,8 +28,8 @@ public class TenantAdminService : ITenantAdminService
     private readonly IMailService _mailService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<TenantAdminService> _logger;
-    private readonly IHostEnvironment _hostEnvironment;
     private readonly IExcelExportService _excelExportService;
+    private readonly IFileService _fileService;
 
     public TenantAdminService(
         ApplicationDataContext db,
@@ -42,8 +39,8 @@ public class TenantAdminService : ITenantAdminService
         IMailService mailService,
         IConfiguration configuration,
         ILogger<TenantAdminService> logger,
-        IHostEnvironment hostEnvironment,
-        IExcelExportService excelExportService)
+        IExcelExportService excelExportService,
+        IFileService fileService)
     {
         _db = db;
         _sieveExtension = sieveExtension;
@@ -52,49 +49,35 @@ public class TenantAdminService : ITenantAdminService
         _mailService = mailService;
         _configuration = configuration;
         _logger = logger;
-        _hostEnvironment = hostEnvironment;
         _excelExportService = excelExportService;
+        _fileService = fileService;
     }
 
-    public async Task<Result<List<TenantsResponseDto>>> ListAsync(CommonPaginationRequestModel? requestModel = null, CancellationToken cancellationToken = default)
+    public async Task<Result<List<TenantsResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel = null, CancellationToken cancellationToken = default)
     {
-        var query = _db.Set<Tenant>()
+        var query = _db.Tenants
             .Include(t => t.Branding)
-            .AsNoTracking()
-            .OrderBy(t => t.Name);
+            .AsNoTracking();
 
-        if (requestModel != null)
-        {
-            var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
-            var tenants = await result.Select(t => new TenantsResponseDto(
-                t.Id,
-                t.Name,
-                t.Slug,
-                t.IsActive,
-                t.Branding.Version,
-                t.CreatedOn
-            )).ToListAsync();
+        var (result, totalCount, totalPage) = await _sieveExtension.ApplySieve(query, requestModel);
 
-            var pagination = new Pagination
-            {
-                TotalItems = totalCount,
-                TotalPages = totalPage,
-                PageSize = requestModel.PageSize,
-                CurrentPage = requestModel.PageNumber
-            };
-            return Result<List<TenantsResponseDto>>.Success(tenants, pagination);
-        }
-
-        var allTenants = await query.Select(t => new TenantsResponseDto(
+        var tenants = await result.Select(t => new TenantsResponseDto(
             t.Id,
             t.Name,
             t.Slug,
             t.IsActive,
             t.Branding.Version,
             t.CreatedOn
-        )).ToListAsync();
+        )).ToListAsync(cancellationToken: cancellationToken);
 
-        return Result<List<TenantsResponseDto>>.Success(allTenants);
+        var pagination = new Pagination
+        {
+            TotalItems = totalCount,
+            TotalPages = totalPage,
+            PageSize = requestModel.PageSize,
+            CurrentPage = requestModel.PageNumber
+        };
+        return Result<List<TenantsResponseDto>>.Success(tenants, pagination);
     }
 
     public async Task<Result<TenantResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
@@ -103,22 +86,28 @@ public class TenantAdminService : ITenantAdminService
             .Include(x => x.Branding)
             .AsNoTracking()
             .Where(t => t.Id == id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken: cancellationToken);
 
         if (tenant == null)
             return Result<TenantResponseDto>.Failed("Tenant not found.");
 
-        BrandingResponseDto? branding = null;
+        BrandingResponseDto branding = null;
         if (tenant.Branding != null)
         {
             branding = new BrandingResponseDto(
                 tenant.Branding.TenantId,
+                tenant.Branding.LogoUrl,
                 tenant.Branding.LogoUrl,
                 tenant.Branding.PaletteJson,
                 tenant.Branding.TypographyJson,
                 tenant.Branding.Version,
                 tenant.Branding.CreatedOn
             );
+        }
+        if (string.IsNullOrEmpty(branding.LogoUrl))
+        {
+            var logoUrl = await _fileService.GetFilePresignedUrlAsync(branding.LogoUrl);
+            branding = branding with { LogoPath = logoUrl };
         }
 
         var response = new TenantResponseDto(
@@ -136,10 +125,10 @@ public class TenantAdminService : ITenantAdminService
 
     public async Task<Result<TenantsResponseDto>> CreateAsync(CreateTenantDto dto, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            if (await _db.Tenants.AnyAsync(t => t.Slug == dto.Slug))
+            if (await _db.Tenants.AnyAsync(t => t.Slug == dto.Slug, cancellationToken: cancellationToken))
                 return Result<TenantsResponseDto>.Failed("Tenant with this slug already exists.");
 
             // Check if admin user email/username already exists
@@ -156,8 +145,8 @@ public class TenantAdminService : ITenantAdminService
                 IsActive = dto.IsActive,
             };
 
-            await _db.Tenants.AddAsync(tenant);
-            await _db.SaveChangesAsync(); // Save to get tenant ID
+            await _db.Tenants.AddAsync(tenant, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken); // Save to get tenant ID
 
             var companyBranding = new CompanyBranding
             {
@@ -168,7 +157,7 @@ public class TenantAdminService : ITenantAdminService
                 Version = dto.ThemeVersion > 0 ? dto.ThemeVersion : dto.CompanyBranding.Version
             };
 
-            await _db.CompanyBrandings.AddAsync(companyBranding);
+            await _db.CompanyBrandings.AddAsync(companyBranding, cancellationToken);
 
             // Create admin user with password from frontend
             var adminUser = new ApplicationUser
@@ -212,8 +201,8 @@ public class TenantAdminService : ITenantAdminService
             // Seed tenant-specific roles (Admin and FoDo) for this tenant
             await SeedTenantRolesAsync(tenant.Id);
 
-            await _db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             // Send welcome email to admin user
             try
@@ -274,7 +263,7 @@ public class TenantAdminService : ITenantAdminService
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             _logger.LogError(ex, "Error creating tenant: {Message}", ex.Message);
             throw;
         }
@@ -282,18 +271,18 @@ public class TenantAdminService : ITenantAdminService
 
     public async Task<Result<TenantsResponseDto>> UpdateAsync(string id, UpdateTenantDto dto, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var existing = await _db.Set<Tenant>()
+            var existing = await _db.Tenants
                 .Include(t => t.Branding)
-                .FirstOrDefaultAsync(t => t.Id == id);
+                .FirstOrDefaultAsync(t => t.Id == id, cancellationToken: cancellationToken);
             if (existing == null)
                 return Result<TenantsResponseDto>.Failed("Tenant not found.");
 
             if (!string.IsNullOrEmpty(dto.Slug) && dto.Slug != existing.Slug)
             {
-                if (await _db.Set<Tenant>().AnyAsync(t => t.Slug == dto.Slug && t.Id != id))
+                if (await _db.Tenants.AnyAsync(t => t.Slug == dto.Slug && t.Id != id, cancellationToken: cancellationToken))
                     return Result<TenantsResponseDto>.Failed("Tenant with this slug already exists.");
                 existing.Slug = dto.Slug;
             }
@@ -304,11 +293,13 @@ public class TenantAdminService : ITenantAdminService
             if (dto.IsActive.HasValue)
                 existing.IsActive = dto.IsActive.Value;
 
-            if (dto.ThemeVersion.HasValue && existing.Branding != null)
-                existing.Branding.Version = dto.ThemeVersion.Value;
+            existing.Branding.Version = dto.CompanyBranding.Version;
+            existing.Branding.LogoUrl = dto.CompanyBranding.LogoUrl;
+            existing.Branding.PaletteJson = dto.CompanyBranding.PaletteJson;
+            existing.Branding.TypographyJson = dto.CompanyBranding.TypographyJson;
 
-            await _db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             var response = new TenantsResponseDto(
                 existing.Id,
@@ -331,16 +322,19 @@ public class TenantAdminService : ITenantAdminService
 
     public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var existing = await _db.Set<Tenant>().FirstOrDefaultAsync(t => t.Id == id);
+            var existing = await _db.Tenants
+                                    .Include(x => x.Branding)
+                                    .FirstOrDefaultAsync(t => t.Id == id, cancellationToken: cancellationToken);
             if (existing == null)
                 return Result<bool>.Failed("Tenant not found.");
 
-            _db.Remove(existing);
-            await _db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            _db.CompanyBrandings.Remove(existing.Branding);
+            _db.Tenants.Remove(existing);
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             return Result<bool>.Success(true);
         }
@@ -411,7 +405,7 @@ public class TenantAdminService : ITenantAdminService
         // Check if roles already exist for this tenant
         var existingAdminRole = await _db.Roles
             .FirstOrDefaultAsync(r => r.Name == SystemRoles.Admin && r.TenantId == tenantId);
-        
+
         var existingFoDoRole = await _db.Roles
             .FirstOrDefaultAsync(r => r.Name == SystemRoles.FoDo && r.TenantId == tenantId);
 

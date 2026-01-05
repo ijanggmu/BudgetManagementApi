@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Models.WebApi.TenantDTOs;
 
 public record CreateLeadPublicDto(string FullName, string Email, string? Phone, string ProductCode);
@@ -18,32 +11,32 @@ public record QuotationItemDto(Guid CoverageId, decimal SumInsured);
 public record ComputeQuotationDto(DateOnly AsOf, IDictionary<string, object> Inputs);
 
 // Tenant DTOs
-public record CreateTenantDto(string Name, string Slug, CreateCompanyBrandingDto CompanyBranding, CreateTenantAdminDto AdminUser, bool IsActive = true, int ThemeVersion = 1);
+public record CreateTenantDto(string Name, string Slug, CreateCompanyBrandingDto CompanyBranding, CreateTenantAdminDto AdminUser, bool IsActive = true);
 public record CreateTenantAdminDto(string Email, string Username, string FullName, string Password);
 public record CreateCompanyBrandingDto(string LogoUrl = default!,    // CDN/blob URL
      string PaletteJson = "{}",    // AA contrast enforced
      string TypographyJson = "{}",
      int Version = 1);
 
-public record UpdateTenantDto(string? Name, string? Slug, bool? IsActive, int? ThemeVersion);
+public record UpdateTenantDto(string? Name, string? Slug, bool? IsActive, CreateCompanyBrandingDto CompanyBranding);
 public record TenantsResponseDto(string Id, string Name, string Slug, bool IsActive, int ThemeVersion, DateTime CreatedOn);
 public record TenantResponseDto(
-    string Id, 
-    string Name, 
-    string Slug, 
-    bool IsActive, 
-    int ThemeVersion, 
+    string Id,
+    string Name,
+    string Slug,
+    bool IsActive,
+    int ThemeVersion,
     DateTime CreatedOn,
     BrandingResponseDto? Branding = null);
 
 // Tenant Login DTOs
 public record TenantLoginRequestDto(string Slug, string Username, string Password);
 public record TenantLoginResponseDto(
-    string AccessToken, 
-    int AccessTokenExpiryInSeconds, 
-    string RefreshToken, 
-    int RefreshTokenExpiryInSeconds, 
-    string TenantId, 
+    string AccessToken,
+    int AccessTokenExpiryInSeconds,
+    string RefreshToken,
+    int RefreshTokenExpiryInSeconds,
+    string TenantId,
     string TenantName,
     BrandingResponseDto? Branding = null);
 
@@ -54,6 +47,7 @@ public record TenantDropdownDto(string Id, string Name, string Slug);
 public record BrandingResponseDto(
     string TenantId,
     string LogoUrl,
+    string LogoPath,
     string PaletteJson,
     string TypographyJson,
     int Version,

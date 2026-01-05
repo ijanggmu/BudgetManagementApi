@@ -19,17 +19,17 @@ public record CreateAdminDto(
     string FullName,
     string Email,
     string Username,
-    string? PhoneNumber,
+    string PhoneNumber,
     string Password,
     string ConfirmPassword,
-    List<string>? Roles
+    List<string> Roles
 );
 
 public record UpdateAdminDto(
-    string? FullName,
-    string? Email,
-    string? PhoneNumber,
-    bool? IsDisabled,
-    List<string>? Roles
+    string FullName,
+    string Email,
+    string PhoneNumber,
+    bool IsDisabled,
+    List<string> Roles
 );
 

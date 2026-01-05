@@ -21,8 +21,8 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <returns>List of admins</returns>
     [HttpGet]
     [Permission(MenuPermissionConstant.AdminManagementView)]
-    public async Task<IActionResult> ListAsync([FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
-        => HandleResult(await adminService.GetAdminsForAdminAsync(tenantId, cancellationToken));
+    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel, [FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
+        => HandleResult(await adminService.GetAdminsForAdminAsync(requestModel, tenantId, cancellationToken));
 
     /// <summary>
     /// Get admin by ID

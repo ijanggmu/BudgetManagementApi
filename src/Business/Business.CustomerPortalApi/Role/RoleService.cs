@@ -160,7 +160,7 @@ public class RoleService : IRoleService
         var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var role = await _context.Roles.FindAsync(new object[] { roleId }, cancellationToken);
+            var role = await _context.Roles.FindAsync([roleId], cancellationToken);
 
             if (role == null)
                 return Result<MessageResponseModel>.Failed("Invalid Role.");
