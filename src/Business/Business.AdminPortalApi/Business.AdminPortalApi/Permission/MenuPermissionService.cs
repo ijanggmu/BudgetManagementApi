@@ -1,17 +1,17 @@
 using System.Collections.Immutable;
-using System.Threading;
 using Data.Context;
 using Data.Entities.Identity;
 using Infrastructure.Common.UserProfile;
 using Microsoft.EntityFrameworkCore;
+using Models.BeemaEdgeApi.Roles;
 using Models.Common;
 using Models.Common.Menu;
-using Models.BeemaEdgeApi.Roles;
 using SharedKernel.Constant.Permission;
 using SharedKernel.Operation;
 using static SharedKernel.Constant.Permission.MenuPermissionsList;
 
 namespace Business.AdminPortalApi.Permission;
+
 public class MenuPermissionService : IMenuPermissionService
 {
     private readonly ApplicationDataContext _context;
@@ -78,7 +78,14 @@ public class MenuPermissionService : IMenuPermissionService
                                                  .Select(x => x.Permissions)
                                                  .FirstOrDefault();
 
-        var groupedPermissions = MenuPermissionsList._list;
+        // Get the role name and map it to the AllowedRoles format
+        var roleName = existingRole.Name;
+        var roleForFiltering = MapRoleNameToAllowedRole(roleName);
+
+        // Filter menus based on the role's AllowedRoles
+        var groupedPermissions = MenuPermissionsList._list
+            .Where(menu => IsMenuAllowedForRole(menu, roleForFiltering))
+            .ToList();
 
         foreach (var menuItem in groupedPermissions)
         {
@@ -96,7 +103,7 @@ public class MenuPermissionService : IMenuPermissionService
                 rolePermissionViewModel.RolePermissionGroup.Add(rolePermissionGroup);
             }
 
-            AddPermissionsWithChildren(menuItem, existingPermissions, rolePermissionGroup);
+            AddPermissionsWithChildren(menuItem, existingPermissions, rolePermissionGroup, roleForFiltering);
         }
 
         return Result<RolePermissionViewModel>.Success(rolePermissionViewModel);
@@ -104,7 +111,49 @@ public class MenuPermissionService : IMenuPermissionService
 
     }
 
-    private void AddPermissionsWithChildren(MenuItem menuItem, List<string> permissions, RolePermissionGroup rolePermissionGroup)
+    /// <summary>
+    /// Maps role name to the AllowedRoles format used in menu configuration
+    /// </summary>
+    private string? MapRoleNameToAllowedRole(string roleName)
+    {
+        if (string.IsNullOrWhiteSpace(roleName))
+            return null;
+
+        // Map role names to AllowedRoles format
+        return roleName switch
+        {
+            var name when name.Equals(SharedKernel.Constant.Roles.SystemRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase) => "SuperAdmin",
+            var name when name.Equals(SharedKernel.Constant.Roles.SystemRoles.Admin, StringComparison.OrdinalIgnoreCase) => "Admin",
+            var name when name.Equals(SharedKernel.Constant.Roles.SystemRoles.FoDo, StringComparison.OrdinalIgnoreCase) ||
+                         name.Equals(SharedKernel.Constant.Roles.SystemRoles.MarketingExecutive, StringComparison.OrdinalIgnoreCase) => "FoDo",
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Checks if a menu item is allowed for the given role
+    /// </summary>
+    private bool IsMenuAllowedForRole(MenuItem menu, string? roleForFiltering)
+    {
+        // If no role restriction, allow for all
+        if (menu.AllowedRoles == null || !menu.AllowedRoles.Any())
+            return true;
+
+        // If "All" is in allowed roles, allow for all
+        if (menu.AllowedRoles.Contains("All", StringComparer.OrdinalIgnoreCase))
+            return true;
+
+        // If no role provided, deny access
+        if (string.IsNullOrWhiteSpace(roleForFiltering))
+            return false;
+
+        // Check if role matches any of the allowed roles
+        return menu.AllowedRoles.Any(allowedRole =>
+            string.Equals(allowedRole, roleForFiltering, StringComparison.OrdinalIgnoreCase)
+        );
+    }
+
+    private void AddPermissionsWithChildren(MenuItem menuItem, List<string> permissions, RolePermissionGroup rolePermissionGroup, string? roleForFiltering = null)
     {
         foreach (var permission in menuItem.Permissions)
         {
@@ -120,7 +169,12 @@ public class MenuPermissionService : IMenuPermissionService
 
         if (menuItem.Children != null)
         {
-            foreach (var child in menuItem.Children)
+            // Filter children based on role's AllowedRoles
+            var filteredChildren = menuItem.Children
+                .Where(child => IsMenuAllowedForRole(child, roleForFiltering))
+                .ToList();
+
+            foreach (var child in filteredChildren)
             {
                 RolePermissionGroup childRolePermissionGroup = new RolePermissionGroup
                 {
@@ -129,7 +183,7 @@ public class MenuPermissionService : IMenuPermissionService
                     HideChildren = child.HideChildren
                 };
                 rolePermissionGroup.Childrens.Add(childRolePermissionGroup);
-                AddPermissionsWithChildren(child, permissions, childRolePermissionGroup);
+                AddPermissionsWithChildren(child, permissions, childRolePermissionGroup, roleForFiltering);
             }
         }
     }
