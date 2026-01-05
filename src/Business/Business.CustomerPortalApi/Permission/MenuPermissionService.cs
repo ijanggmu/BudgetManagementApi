@@ -45,7 +45,7 @@ public class MenuPermissionService : IMenuPermissionService
         if (!permissions.Any())
             return Result<MenuModel>.Success(new MenuModel());
 
-        var menus = MenuManager.GetMenusForPermissions(permissions);
+        var menus = MenuManager.GetMenusForPermissions(permissions, [.. roleNameList]);
 
         return Result<MenuModel>.Success(new MenuModel { MenuList = menus });
 

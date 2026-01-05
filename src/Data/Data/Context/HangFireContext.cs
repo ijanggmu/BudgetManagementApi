@@ -1,9 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Data.Context;
-public class HangfireDataContext : DbContext
+public class HangfireDataContext(DbContextOptions<HangfireDataContext> options) : DbContext(options)
 {
-    public HangfireDataContext(DbContextOptions<HangfireDataContext> options) : base(options)
-    {
-    }
 }

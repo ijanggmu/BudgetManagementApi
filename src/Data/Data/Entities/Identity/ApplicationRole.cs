@@ -1,4 +1,4 @@
-﻿using Data.Entities.BaseEntity;
+using Data.Entities.BaseEntity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +8,6 @@ public class ApplicationRoleConfiguration : IEntityTypeConfiguration<Application
 {
     public void Configure(EntityTypeBuilder<ApplicationRole> builder)
     {
-      
     }
 }
 

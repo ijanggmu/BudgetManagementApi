@@ -1,4 +1,4 @@
-﻿using Data.Entities.BaseEntity;
+using Data.Entities.BaseEntity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

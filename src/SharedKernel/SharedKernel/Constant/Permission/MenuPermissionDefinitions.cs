@@ -86,8 +86,8 @@ public static class MenuPermissionDefinitions
     public static readonly MenuPermissionSet Config = PermissionHelper.GeneratePermissions(
         "21-17", "Config", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
 
-    // System - Notice Board
-    public static readonly MenuPermissionSet NoticeBoard = PermissionHelper.GeneratePermissions("21-22", "Notice Board", includeExport: false);
+    // Operations - Notice Board (moved from System)
+    public static readonly MenuPermissionSet NoticeBoard = PermissionHelper.GeneratePermissions("20-22", "Notice Board", includeExport: false);
 
     // Common Utilities (for lookup endpoints)
     public static readonly MenuPermissionSet CommonUtilities = PermissionHelper.GeneratePermissions(

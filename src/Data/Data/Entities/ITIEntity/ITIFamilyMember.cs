@@ -9,6 +9,6 @@ public class ITIFamilyMember : ApplicationBaseEntity
     public string PassportNumber { get; set; }
     public DateTime? DateOfBirth { get; set; }
     public string Gender { get; set; }
-    public int InternationalTravelInsuranceId { get; set; }
+    public string InternationalTravelInsuranceId { get; set; }
     public InternationalTravelInsurance InternationalTravelInsurance { get; set; }
 }

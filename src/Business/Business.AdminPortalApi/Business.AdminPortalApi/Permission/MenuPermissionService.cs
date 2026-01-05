@@ -31,7 +31,7 @@ public class MenuPermissionService : IMenuPermissionService
         if (string.IsNullOrEmpty(roleId))
             return Result<MenuModel>.Success(new MenuModel());
 
-        var roleNameList = roleId.Split(",");
+        var roleNameList = roleId.Split(",").Select(r => r.Trim()).ToList();
 
         var permissionList = (from role in _context.Roles
                               join roleClaim in _context.RoleClaims
@@ -45,7 +45,10 @@ public class MenuPermissionService : IMenuPermissionService
         if (!permissions.Any())
             return Result<MenuModel>.Success(new MenuModel());
 
-        var menus = MenuManager.GetMenusForPermissions(permissions);
+        // Get user roles for menu filtering
+        var userRoles = roleNameList.ToList();
+
+        var menus = MenuManager.GetMenusForPermissions(permissions, userRoles);
 
         return Result<MenuModel>.Success(new MenuModel { MenuList = menus });
 

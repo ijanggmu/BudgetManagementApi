@@ -4,6 +4,7 @@ using Data.Entities.Common;
 using Data.Entities.Tenant;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using static System.Net.WebRequestMethods;
 
@@ -19,7 +20,11 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Property(e => e.UserTotpBackUpCodes)
                     .HasConversion(
                         v => JsonSerializer.Serialize(v, new JsonSerializerOptions()),
-                        v => JsonSerializer.Deserialize<List<UserTotpBackUpCode>>(v, new JsonSerializerOptions()));
+                        v => JsonSerializer.Deserialize<List<UserTotpBackUpCode>>(v, new JsonSerializerOptions()),
+                        new ValueComparer<List<UserTotpBackUpCode>>(
+                            (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
+                            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                            c => c.ToList()));
 
         builder.HasMany(c => c.Otp)
               .WithOne(cd => cd.User)

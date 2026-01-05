@@ -50,15 +50,9 @@ try
         options.Providers.Add<GzipCompressionProvider>();
     });
 
-    builder.Services.Configure<KestrelServerOptions>(options =>
-    {
-        options.Limits.MaxRequestBodySize = 10_000_000; // 10mb
-    });
+    builder.Services.Configure<KestrelServerOptions>(options => options.Limits.MaxRequestBodySize = 10_000_000);
 
-    builder.Services.Configure<FormOptions>(options =>
-    {
-        options.MultipartBodyLengthLimit = 10_000_000; // 10mb
-    });
+    builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = 10_000_000);
 
     ConfigureConfiguration(builder);
 
