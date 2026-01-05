@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Data.Migrations.Core
 {
     [DbContext(typeof(ApplicationDataContext))]
-    partial class ApplicationDataContextModelSnapshot : ModelSnapshot
+    [Migration("20251230143403_TravelConfig")]
+    partial class TravelConfig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -792,7 +795,10 @@ namespace Data.Migrations.Core
                     b.Property<string>("Gender")
                         .HasColumnType("text");
 
-                    b.Property<string>("InternationalTravelInsuranceId")
+                    b.Property<int>("InternationalTravelInsuranceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("InternationalTravelInsuranceId1")
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")
@@ -812,7 +818,7 @@ namespace Data.Migrations.Core
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InternationalTravelInsuranceId");
+                    b.HasIndex("InternationalTravelInsuranceId1");
 
                     b.ToTable("ITIFamilyMembers");
                 });
@@ -934,12 +940,8 @@ namespace Data.Migrations.Core
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedName")
-                        .HasDatabaseName("RoleNameIndex");
-
-                    b.HasIndex("NormalizedName", "TenantId")
                         .IsUnique()
-                        .HasDatabaseName("IX_Roles_NormalizedName_TenantId")
-                        .HasFilter("\"IsDeleted\" = false");
+                        .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("Roles", (string)null);
                 });
@@ -1232,55 +1234,6 @@ namespace Data.Migrations.Core
                     b.HasKey("Id");
 
                     b.ToTable("SmsLogs");
-                });
-
-            modelBuilder.Entity("Data.Entities.Marine.MarineTariffSchedule", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("AllRiskValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("BasicRiskValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("MinimumRisk")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("Product")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductCategory")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductCategoryCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductDescription")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MarineTariffSchedules");
                 });
 
             modelBuilder.Entity("Data.Entities.MotorEntity.Motor", b =>
@@ -2119,6 +2072,9 @@ namespace Data.Migrations.Core
                     b.Property<string>("PaletteJson")
                         .HasColumnType("text");
 
+                    b.Property<string>("TenantId1")
+                        .HasColumnType("text");
+
                     b.Property<string>("TypographyJson")
                         .HasColumnType("text");
 
@@ -2126,6 +2082,8 @@ namespace Data.Migrations.Core
                         .HasColumnType("integer");
 
                     b.HasKey("TenantId");
+
+                    b.HasIndex("TenantId1");
 
                     b.ToTable("CompanyBrandings");
                 });
@@ -3068,7 +3026,7 @@ namespace Data.Migrations.Core
                 {
                     b.HasOne("Data.Entities.ITIEntity.InternationalTravelInsurance", "InternationalTravelInsurance")
                         .WithMany("FamilyMembers")
-                        .HasForeignKey("InternationalTravelInsuranceId")
+                        .HasForeignKey("InternationalTravelInsuranceId1")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("InternationalTravelInsurance");
@@ -3159,11 +3117,15 @@ namespace Data.Migrations.Core
 
             modelBuilder.Entity("Data.Entities.Tenant.CompanyBranding", b =>
                 {
-                    b.HasOne("Data.Entities.Tenant.Tenant", "Tenant")
+                    b.HasOne("Data.Entities.Tenant.Tenant", null)
                         .WithOne("Branding")
                         .HasForeignKey("Data.Entities.Tenant.CompanyBranding", "TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Data.Entities.Tenant.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId1");
 
                     b.Navigation("Tenant");
                 });

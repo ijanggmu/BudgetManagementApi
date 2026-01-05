@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Data.Migrations.Core
 {
     [DbContext(typeof(ApplicationDataContext))]
-    partial class ApplicationDataContextModelSnapshot : ModelSnapshot
+    [Migration("20251230055721_CurrencyConfig")]
+    partial class CurrencyConfig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -283,110 +286,6 @@ namespace Data.Migrations.Core
                     b.HasKey("Id");
 
                     b.ToTable("CurrencyExchangeRateConfigurations");
-                });
-
-            modelBuilder.Entity("Data.Entities.Common.HEOMITravelRate", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double>("FamilyRate")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("IndividualRate")
-                        .HasColumnType("double precision");
-
-                    b.Property<bool>("IsAnnualTrip")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("PeriodFrom")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PeriodTo")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Plan")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("HEOMITravelRates");
-                });
-
-            modelBuilder.Entity("Data.Entities.Common.TravelUSDRate", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<int>("AgeFrom")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("AgeTo")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Currency")
-                        .HasColumnType("text");
-
-                    b.Property<string>("DestintionIncludes")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("FamilyRate")
-                        .HasColumnType("decimal(15, 2)");
-
-                    b.Property<string>("Group")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("IndividaulRate")
-                        .HasColumnType("decimal(15, 2)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Issuer")
-                        .HasColumnType("text");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("MultipleEntries")
-                        .HasColumnType("text");
-
-                    b.Property<int>("PeriodFrom")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PeriodTo")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("PlanType")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TravelUSDRates");
                 });
 
             modelBuilder.Entity("Data.Entities.CorporateEntity.Corporate", b =>
@@ -792,7 +691,10 @@ namespace Data.Migrations.Core
                     b.Property<string>("Gender")
                         .HasColumnType("text");
 
-                    b.Property<string>("InternationalTravelInsuranceId")
+                    b.Property<int>("InternationalTravelInsuranceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("InternationalTravelInsuranceId1")
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")
@@ -812,7 +714,7 @@ namespace Data.Migrations.Core
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InternationalTravelInsuranceId");
+                    b.HasIndex("InternationalTravelInsuranceId1");
 
                     b.ToTable("ITIFamilyMembers");
                 });
@@ -934,12 +836,8 @@ namespace Data.Migrations.Core
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedName")
-                        .HasDatabaseName("RoleNameIndex");
-
-                    b.HasIndex("NormalizedName", "TenantId")
                         .IsUnique()
-                        .HasDatabaseName("IX_Roles_NormalizedName_TenantId")
-                        .HasFilter("\"IsDeleted\" = false");
+                        .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("Roles", (string)null);
                 });
@@ -1232,55 +1130,6 @@ namespace Data.Migrations.Core
                     b.HasKey("Id");
 
                     b.ToTable("SmsLogs");
-                });
-
-            modelBuilder.Entity("Data.Entities.Marine.MarineTariffSchedule", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("AllRiskValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("BasicRiskValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("MinimumRisk")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("Product")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductCategory")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductCategoryCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductDescription")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MarineTariffSchedules");
                 });
 
             modelBuilder.Entity("Data.Entities.MotorEntity.Motor", b =>
@@ -2119,6 +1968,9 @@ namespace Data.Migrations.Core
                     b.Property<string>("PaletteJson")
                         .HasColumnType("text");
 
+                    b.Property<string>("TenantId1")
+                        .HasColumnType("text");
+
                     b.Property<string>("TypographyJson")
                         .HasColumnType("text");
 
@@ -2126,6 +1978,8 @@ namespace Data.Migrations.Core
                         .HasColumnType("integer");
 
                     b.HasKey("TenantId");
+
+                    b.HasIndex("TenantId1");
 
                     b.ToTable("CompanyBrandings");
                 });
@@ -3068,7 +2922,7 @@ namespace Data.Migrations.Core
                 {
                     b.HasOne("Data.Entities.ITIEntity.InternationalTravelInsurance", "InternationalTravelInsurance")
                         .WithMany("FamilyMembers")
-                        .HasForeignKey("InternationalTravelInsuranceId")
+                        .HasForeignKey("InternationalTravelInsuranceId1")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("InternationalTravelInsurance");
@@ -3159,11 +3013,15 @@ namespace Data.Migrations.Core
 
             modelBuilder.Entity("Data.Entities.Tenant.CompanyBranding", b =>
                 {
-                    b.HasOne("Data.Entities.Tenant.Tenant", "Tenant")
+                    b.HasOne("Data.Entities.Tenant.Tenant", null)
                         .WithOne("Branding")
                         .HasForeignKey("Data.Entities.Tenant.CompanyBranding", "TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Data.Entities.Tenant.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId1");
 
                     b.Navigation("Tenant");
                 });

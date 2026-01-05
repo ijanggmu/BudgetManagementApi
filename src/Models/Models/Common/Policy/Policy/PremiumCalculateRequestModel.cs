@@ -29,9 +29,12 @@ namespace Models.Common.Policy.Policy
         [RequiredIf(nameof(InsuranceType), (int)InsuranceType.InternationalTravel, ErrorMessage = "International travel insurance is required.")]
         public InternationalTravelInsurancePremiumCalculatorRequestModel InternationalTravelInsurance { get; set; }
 
+        // Backward compatibility - deprecated, use FireInsurance instead
+        [Obsolete("Use FireInsurance with FireInsuranceType.Household instead")]
         [RequiredIf(nameof(InsuranceType), (int)InsuranceType.Home, ErrorMessage = "Home insurance is required.")]
         public HomeInsuranceRequestModel HomeInsurance { get; set; }
 
+        [Obsolete("Use FireInsurance with FireInsuranceType.Property instead")]
         [RequiredIf(nameof(InsuranceType), (int)InsuranceType.Property, ErrorMessage = "Property insurance is required.")]
         public PropertyInsuranceRequestModel PropertyInsurance { get; set; }
 
