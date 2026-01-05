@@ -1,6 +1,9 @@
 using Business.Common.PremiumCalculation.Abstract;
 using Business.Common.PremiumCalculation.Calculator;
+using Business.Common.PremiumCalculation.Calculator.Fire;
+using Business.Common.PremiumCalculation.Calculator.Marine;
 using Business.Common.PremiumCalculation.Calculator.Motor;
+using Business.Common.PremiumCalculation.Calculator.Travel;
 using Business.Common.PremiumCalculation.Configuration;
 using Business.Common.PremiumCalculation.Engine;
 using Business.Common.PremiumCalculation.Factory;
@@ -46,8 +49,19 @@ public static class PremiumCalculationServicesExtension
         services.AddScoped<IPremiumCalculatorFactory, UnderwritingService.Calculation.PremiumCalculation.Factory.PremiumCalculatorFactory>();
 
         services.AddScoped<IPolicyPremiumCalculator, MotorcyclePremiumCalculator>();
+        services.AddScoped<IPolicyPremiumCalculator, ElectricMotorcyclePremiumCalculator>();
+        services.AddScoped<IPolicyPremiumCalculator, TravelInsurancePremiumCalculator>();
+        services.AddScoped<IPolicyPremiumCalculator, ITIPremiumCalculator>();
+        services.AddScoped<IPolicyPremiumCalculator, MarinePremiumCalculator>();
+        services.AddScoped<IPolicyPremiumCalculator, FirePremiumCalculator>();
+        services.AddScoped<IPolicyPremiumCalculator, CommercialVehiclePremiumCalculator>();
         services.AddScoped<IPolicyPremiumCalculatorFactory, PolicyPremiumCalculatorFactory>();
-
+        services.AddScoped<ICurrencyExchangeRateConfigurationService, CurrencyExchangeRateConfigurationService>();
+        services.AddScoped<ITravelRateService, TravelRateService>();
+        services.AddScoped<IMarineTariffScheduleService, MarineTariffScheduleService>();
+        services.AddScoped<IShortScaleService, ShortScaleService>();
+        services.AddScoped<IPropertySubsidySILimitService, PropertySubsidySILimitService>();
+        services.AddScoped<IPropertyRiskConfigurationService, PropertyRiskConfigurationService>();
 
         return services;
     }

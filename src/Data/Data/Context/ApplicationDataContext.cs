@@ -9,6 +9,7 @@ using Data.Entities.FodoEntity;
 using Data.Entities.Identity;
 using Data.Entities.ITIEntity;
 using Data.Entities.Log;
+using Data.Entities.Marine;
 using Data.Entities.MotorEntity;
 using Data.Entities.Payment;
 using Data.Entities.PolicyE2e;
@@ -70,17 +71,23 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
     public DbSet<Prospect> Prospects { get; set; }
 
 
-    // Premium Calculation
-    public DbSet<PremiumCalculationConfiguration> PremiumCalculationConfigurations { get; set; }
-    public DbSet<PremiumCalculationParameter> PremiumCalculationParameters { get; set; }
-    public DbSet<PremiumCalculationRule> PremiumCalculationRules { get; set; }
-    public DbSet<PremiumCalculationRateTable> PremiumCalculationRateTables { get; set; }
-    public DbSet<CalculationConfiguration> CalculationConfigurations { get; set; }
-    public DbSet<GlobalConfiguration> GlobalConfigurations { get; set; }
+        // Premium Calculation
+        public DbSet<PremiumCalculationConfiguration> PremiumCalculationConfigurations { get; set; }
+        public DbSet<PremiumCalculationParameter> PremiumCalculationParameters { get; set; }
+        public DbSet<PremiumCalculationRule> PremiumCalculationRules { get; set; }
+        public DbSet<PremiumCalculationRateTable> PremiumCalculationRateTables { get; set; }
+        public DbSet<CalculationConfiguration> CalculationConfigurations { get; set; }
+        public DbSet<GlobalConfiguration> GlobalConfigurations { get; set; }
+        public DbSet<CurrencyExchangeRateConfiguration> CurrencyExchangeRateConfigurations { get; set; }
+        public DbSet<TravelUSDRate> TravelUSDRates { get; set; }
+        public DbSet<HEOMITravelRate> HEOMITravelRates { get; set; }
 
-    // Branch and Designation
-    public DbSet<Branch> Branches { get; set; }
-    public DbSet<Designation> Designations { get; set; }
+        // Branch and Designation
+        public DbSet<Branch> Branches { get; set; }
+        public DbSet<Designation> Designations { get; set; }
+        public DbSet<MarineTariffSchedule> MarineTariffSchedules { get; set; }
+        public DbSet<PropertySubsidySILimit> PropertySubsidySILimits { get; set; }
+        public DbSet<PropertyRiskConfiguration> PropertyRiskConfigurations { get; set; }
 
     #endregion  DbSets
 

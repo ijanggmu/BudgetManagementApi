@@ -11,6 +11,7 @@ using Models.Common.Policy.Policy.Miscellaneous;
 using Models.Common.Policy.Policy.Miscellaneous.MBPI;
 using Models.BeemaEdgeApi.Customer.Policy;
 using SharedKernel.Attributes;
+using Models.Common.Policy.Enum;
 
 namespace Models.Common.Policy.Policy
 {
@@ -340,9 +341,11 @@ namespace Models.Common.Policy.Policy
     public class CommercialVehicleInsuranceModel
     {
         public VechileType VechileType { get; set; }
+        public CommercialVehicleClassEnum CommercialVehicleClassType { get; set; }
         public KilowattRange KilloWattRange { get; set; }
         public decimal MarketValue { get; set; }
         public decimal SumInsuredAmount { get; set; }
+
         public VechileEngineCapacityCategory EngineCapacity { get; set; }
         public int YearOfRegistration { get; set; }
         public decimal TrailorValue { get; set; }
@@ -451,16 +454,225 @@ namespace Models.Common.Policy.Policy
         Fuel,
         Electric
     }
-    public class HomeInsuranceRequestModel
+    /// <summary>
+    /// Enum to differentiate between Fire Insurance types
+    /// </summary>
+    public enum FireInsuranceType
     {
-        public decimal SumInsuredAmount { get; set; }  // e.g., 100000
+        Household,
+        Property,
+        LossOfProfit
     }
 
+    /// <summary>
+    /// Unified Fire Insurance Request Model for Household, Property, and LossOfProfit
+    /// Use FireInsuranceType enum to differentiate between the three types
+    /// </summary>
+    public class FireInsuranceRequestModel
+    {
+        /// <summary>
+        /// Type of Fire Insurance: Household, Property, or LossOfProfit
+        /// </summary>
+        [Required(ErrorMessage = "Fire insurance type is required")]
+        public FireInsuranceType FireInsuranceType { get; set; }
+
+        // Common fields for Household and Property
+        /// <summary>
+        /// Sum Insured Amount - Required for Household and Property
+        /// </summary>
+        public decimal? SumInsuredAmount { get; set; }
+        
+        /// <summary>
+        /// Risk Code - Required for Household and Property calculations
+        /// </summary>
+        public string RiskCode { get; set; }
+        
+        /// <summary>
+        /// Risk Type - Used for Property insurance (SimpleRisk or ComplexRisk)
+        /// </summary>
+        public RiskType? RiskType { get; set; }
+        
+        /// <summary>
+        /// Include RSMDT coverage - Optional for Household and Property
+        /// </summary>
+        public bool IsRSMDT { get; set; } = false;
+        
+        /// <summary>
+        /// Building Composition - Optional, defaults to FirstClass
+        /// </summary>
+        public BuildingComposition BuildingComposition { get; set; } = BuildingComposition.FirstClass;
+        
+        /// <summary>
+        /// Loading Multiplier - Optional, used for second class buildings
+        /// </summary>
+        public decimal LoadingMultiplier { get; set; } = 0;
+        
+        /// <summary>
+        /// Is Direct Discount Applicable - Used for Property insurance
+        /// </summary>
+        public bool IsDirectDiscountApplicable { get; set; } = false;
+        
+        /// <summary>
+        /// Provide Government Subsidy - Optional for Property
+        /// </summary>
+        public bool ProvideSubsidy { get; set; } = false;
+        
+        /// <summary>
+        /// Subsidy Class ID - Required if ProvideSubsidy is true
+        /// </summary>
+        public string SubsidyClassID { get; set; }
+        
+        /// <summary>
+        /// Subsidy Rate - Required if ProvideSubsidy is true
+        /// </summary>
+        public decimal SubsidyRate { get; set; } = 0;
+        
+        /// <summary>
+        /// Provide Lockdown Discount - Optional for Property
+        /// </summary>
+        public bool ProvideLockdownDiscount { get; set; } = false;
+
+        // Content fields for Household and Property
+        /// <summary>
+        /// Equipment value - Optional content field
+        /// </summary>
+        public decimal Equipment { get; set; } = 0;
+        
+        /// <summary>
+        /// Raw Materials value - Optional content field
+        /// </summary>
+        public decimal RawMaterials { get; set; } = 0;
+        
+        /// <summary>
+        /// Work In Progress value - Optional content field
+        /// </summary>
+        public decimal WorkInProgress { get; set; } = 0;
+        
+        /// <summary>
+        /// Finished Goods value - Optional content field
+        /// </summary>
+        public decimal FinishedGoods { get; set; } = 0;
+        
+        /// <summary>
+        /// Semi Finished Goods value - Optional content field
+        /// </summary>
+        public decimal SemiFinishedGoods { get; set; } = 0;
+        
+        /// <summary>
+        /// Money and Jewellery value - Optional content field
+        /// </summary>
+        public decimal MoneyAndJewellery { get; set; } = 0;
+        
+        /// <summary>
+        /// Furniture Fixture or Fitting value - Optional content field
+        /// </summary>
+        public decimal FurnitureFixtureOrFitting { get; set; } = 0;
+        
+        /// <summary>
+        /// Other Items value - Optional content field
+        /// </summary>
+        public decimal OtherItems { get; set; } = 0;
+        
+        /// <summary>
+        /// Art value - Optional content field
+        /// </summary>
+        public decimal Art { get; set; } = 0;
+
+        // LossOfProfit specific fields
+        /// <summary>
+        /// Annual Revenue - Required for LossOfProfit
+        /// </summary>
+        public decimal? AnnualRevenue { get; set; }
+        
+        /// <summary>
+        /// Insured Amount - Required for LossOfProfit
+        /// </summary>
+        public decimal? InsuredAmount { get; set; }
+        
+        /// <summary>
+        /// Annual Premium - Required for LossOfProfit
+        /// </summary>
+        public decimal? AnnualPremium { get; set; }
+        
+        /// <summary>
+        /// Policy Period In Days - Required for LossOfProfit (1-365)
+        /// </summary>
+        public int? PolicyPeriodInDays { get; set; }
+        
+        /// <summary>
+        /// Is RSMDT Selected - Optional for LossOfProfit
+        /// </summary>
+        public bool IsRSMDTSelected { get; set; } = false;
+        
+        /// <summary>
+        /// RSMDT Premium - Optional for LossOfProfit
+        /// </summary>
+        public decimal? RSMDTPremium { get; set; }
+        
+        /// <summary>
+        /// Risk Address - Optional for LossOfProfit
+        /// </summary>
+        public string RiskAddress { get; set; }
+        
+        /// <summary>
+        /// Selected Policy Number - Optional for LossOfProfit
+        /// </summary>
+        public string SelectedPolicyNumber { get; set; }
+        
+        /// <summary>
+        /// Deductibles - Optional for LossOfProfit
+        /// </summary>
+        public string Deductibles { get; set; }
+        
+        /// <summary>
+        /// Maximum Indemnity Period - Optional for LossOfProfit
+        /// </summary>
+        public string MaximumIndemnityPeriod { get; set; }
+    }
+
+    // Keep these for backward compatibility (deprecated - use FireInsuranceRequestModel instead)
+    [Obsolete("Use FireInsuranceRequestModel with FireInsuranceType.Household instead")]
+    public class HomeInsuranceRequestModel
+    {
+        public decimal SumInsuredAmount { get; set; }
+        public string RiskCode { get; set; }
+        public bool IsRSMDT { get; set; }
+        public BuildingComposition BuildingComposition { get; set; } = BuildingComposition.FirstClass;
+        public decimal LoadingMultiplier { get; set; } = 0;
+        public decimal Equipment { get; set; } = 0;
+        public decimal RawMaterials { get; set; } = 0;
+        public decimal WorkInProgress { get; set; } = 0;
+        public decimal FinishedGoods { get; set; } = 0;
+        public decimal SemiFinishedGoods { get; set; } = 0;
+        public decimal MoneyAndJewellery { get; set; } = 0;
+        public decimal FurnitureFixtureOrFitting { get; set; } = 0;
+        public decimal OtherItems { get; set; } = 0;
+        public decimal Art { get; set; } = 0;
+    }
+
+    [Obsolete("Use FireInsuranceRequestModel with FireInsuranceType.Property instead")]
     public class PropertyInsuranceRequestModel
     {
-        public decimal SumInsuredAmount { get; set; }  // e.g., Min 2 Crore NPR (20000000)
-        public RiskType RiskType { get; set; }         // e.g., SimpleRisk
-        public bool IsDirectDiscountApplicable { get; set; } // true = Yes, false = No
+        public decimal SumInsuredAmount { get; set; }
+        public RiskType RiskType { get; set; }
+        public bool IsDirectDiscountApplicable { get; set; }
+        public string RiskCode { get; set; }
+        public bool IsRSMDT { get; set; }
+        public BuildingComposition BuildingComposition { get; set; } = BuildingComposition.FirstClass;
+        public decimal LoadingMultiplier { get; set; } = 0;
+        public bool ProvideSubsidy { get; set; } = false;
+        public string SubsidyClassID { get; set; }
+        public decimal SubsidyRate { get; set; } = 0;
+        public bool ProvideLockdownDiscount { get; set; } = false;
+        public decimal Equipment { get; set; } = 0;
+        public decimal RawMaterials { get; set; } = 0;
+        public decimal WorkInProgress { get; set; } = 0;
+        public decimal FinishedGoods { get; set; } = 0;
+        public decimal SemiFinishedGoods { get; set; } = 0;
+        public decimal MoneyAndJewellery { get; set; } = 0;
+        public decimal FurnitureFixtureOrFitting { get; set; } = 0;
+        public decimal OtherItems { get; set; } = 0;
+        public decimal Art { get; set; } = 0;
     }
     public class PropertyInsuranceResponseModel
     {
@@ -498,7 +710,8 @@ namespace Models.Common.Policy.Policy
 
     public enum Currency
     {
-        NepaleseRupee,
+        //NepaleseRupee,
+        NPR
         // Add other currencies if applicable
     }
 
