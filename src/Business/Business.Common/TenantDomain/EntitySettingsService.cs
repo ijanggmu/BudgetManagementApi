@@ -1,10 +1,10 @@
-using System.Threading;
+using Business.Common.File;
 using Data.Context;
-using Data.Entities.Tenant;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Models.BeemaEdgeApi.Entity;
+using Models.Common;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 
@@ -13,7 +13,8 @@ namespace Business.Common.TenantDomain;
 public class EntitySettingsService(
     ApplicationDataContext db,
     UserManager<Data.Entities.Identity.ApplicationUser> userManager,
-    IUserProfileService userProfileService)
+    IUserProfileService userProfileService,
+    IFileService fileService)
     : IEntitySettingsService
 {
     public async Task<Result<EntitySettingsResponseDto>> GetAsync(CancellationToken cancellationToken = default)
@@ -24,58 +25,44 @@ public class EntitySettingsService(
 
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
+
         var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
+
         if (string.IsNullOrEmpty(tenantId))
             return Result<EntitySettingsResponseDto>.Failed("Tenant not found.");
 
         var tenant = await db.Tenants
-            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
-
-        if (tenant == null)
-            return Result<EntitySettingsResponseDto>.Failed("Tenant not found.");
-
-        var branding = await db.CompanyBrandings
-            .FirstOrDefaultAsync(b => b.TenantId == tenantId, cancellationToken);
-
-        if (tenant == null)
-            return Result<EntitySettingsResponseDto>.Failed("Tenant not found.");
-
-        // Extract primary color from PaletteJson (simplified - you may need to parse JSON)
-        var primaryColor = "#000000"; // Default
-        if (branding != null && !string.IsNullOrEmpty(branding.PaletteJson))
-        {
-            // Simple extraction - in production, parse JSON properly
-            if (branding.PaletteJson.Contains("\"primary\""))
+            .Include(x => x.Branding)
+            .Where(t => t.Id == tenantId)
+            .AsNoTracking()
+            .Select(x => new EntitySettingsResponseDto
             {
-                // Extract primary color from JSON
-                // This is a simplified version - you should use proper JSON parsing
-                var primaryIndex = branding.PaletteJson.IndexOf("\"primary\"");
-                if (primaryIndex > 0)
-                {
-                    var colorStart = branding.PaletteJson.IndexOf("#", primaryIndex);
-                    if (colorStart > 0 && colorStart < primaryIndex + 50)
-                    {
-                        var colorEnd = branding.PaletteJson.IndexOf("\"", colorStart + 1);
-                        if (colorEnd > colorStart)
-                            primaryColor = branding.PaletteJson.Substring(colorStart, colorEnd - colorStart);
-                    }
-                }
-            }
-        }
+                TenantId = x.Id,
+                PaletteJson = x.Branding != null ? x.Branding.PaletteJson : string.Empty,
+                LogoUrl = x.Branding != null ? x.Branding.LogoUrl : string.Empty,
+                UnderwriterDigitalSignatureUrl = x.UnderwriterDigitalSignatureUrl,
+                UnderwriterName = x.UnderwriterName
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        var dto = new EntitySettingsResponseDto
-        {
-            TenantId = tenant.Id,
-            PrimaryColor = primaryColor,
-            LogoUrl = branding?.LogoUrl ?? string.Empty,
-            UnderwriterDigitalSignatureUrl = tenant.UnderwriterDigitalSignatureUrl,
-            UnderwriterName = tenant.UnderwriterName
-        };
+        if (tenant == null)
+            return Result<EntitySettingsResponseDto>.Failed("Tenant not found.");
 
-        return Result<EntitySettingsResponseDto>.Success(dto);
+        var underwriterDigitalSignatureSignedUrl = string.IsNullOrEmpty(tenant.UnderwriterDigitalSignatureUrl)
+            ? string.Empty
+            : await fileService.GetFilePresignedUrlAsync(tenant.UnderwriterDigitalSignatureUrl);
+
+        var logoSignedUrl = string.IsNullOrEmpty(tenant.LogoUrl)
+            ? string.Empty
+            : await fileService.GetFilePresignedUrlAsync(tenant.LogoUrl);
+
+        tenant.UnderwriterDigitalSignatureUrl = underwriterDigitalSignatureSignedUrl;
+        tenant.LogoUrl = logoSignedUrl;
+
+        return Result<EntitySettingsResponseDto>.Success(tenant);
     }
 
-    public async Task<Result<EntitySettingsResponseDto>> UpdateAsync(UpdateEntitySettingsDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result<MessageResponseModel>> UpdateAsync(UpdateEntitySettingsDto dto, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
         var roleId = userProfileService.GetRoleId();
@@ -85,13 +72,13 @@ public class EntitySettingsService(
         var user = await userManager.FindByIdAsync(userId);
         var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
         if (string.IsNullOrEmpty(tenantId))
-            return Result<EntitySettingsResponseDto>.Failed("Tenant not found.");
+            return Result<MessageResponseModel>.Failed("Tenant not found.");
 
         var tenant = await db.Tenants
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
 
         if (tenant == null)
-            return Result<EntitySettingsResponseDto>.Failed("Tenant not found.");
+            return Result<MessageResponseModel>.Failed("Tenant not found.");
 
         // Update underwriter fields
         if (!string.IsNullOrWhiteSpace(dto.UnderwriterDigitalSignatureUrl))
@@ -103,36 +90,8 @@ public class EntitySettingsService(
         db.Tenants.Update(tenant);
         await db.SaveChangesAsync(cancellationToken);
 
-        // Reload branding
-        var branding = await db.CompanyBrandings
-            .FirstOrDefaultAsync(b => b.TenantId == tenantId, cancellationToken);
 
-        var primaryColor = "#000000";
-        if (branding != null && !string.IsNullOrEmpty(branding.PaletteJson))
-        {
-            var primaryIndex = branding.PaletteJson.IndexOf("\"primary\"");
-            if (primaryIndex > 0)
-            {
-                var colorStart = branding.PaletteJson.IndexOf("#", primaryIndex);
-                if (colorStart > 0 && colorStart < primaryIndex + 50)
-                {
-                    var colorEnd = branding.PaletteJson.IndexOf("\"", colorStart + 1);
-                    if (colorEnd > colorStart)
-                        primaryColor = branding.PaletteJson.Substring(colorStart, colorEnd - colorStart);
-                }
-            }
-        }
-
-        var responseDto = new EntitySettingsResponseDto
-        {
-            TenantId = tenant.Id,
-            PrimaryColor = primaryColor,
-            LogoUrl = branding?.LogoUrl ?? string.Empty,
-            UnderwriterDigitalSignatureUrl = tenant.UnderwriterDigitalSignatureUrl,
-            UnderwriterName = tenant.UnderwriterName
-        };
-
-        return Result<EntitySettingsResponseDto>.Success(responseDto);
+        return Result<MessageResponseModel>.Success(new MessageResponseModel("Organization Updated Successfully."));
     }
 }
 
