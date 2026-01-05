@@ -8,7 +8,7 @@ namespace Business.Common.TenantDomain;
 
 public interface IAdminService
 {
-    Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(string? tenantId = null, CancellationToken cancellationToken = default);
+    Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(CommonPaginationRequestModel requestModel, string? tenantId = null, CancellationToken cancellationToken = default);
     Task<Result<AdminResponseDto>> GetAdminByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<Result<AdminResponseDto>> CreateAsync(CreateAdminDto dto, CancellationToken cancellationToken = default);
     Task<Result<AdminResponseDto>> UpdateAsync(string id, UpdateAdminDto dto, CancellationToken cancellationToken = default);

@@ -1,6 +1,3 @@
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Business.AdminPortalApi.ExcelExport;
 using Data.Context;
 using Data.Entities.AdminEntity;
@@ -13,7 +10,6 @@ using Models.Common;
 using Models.WebApi.TenantDTOs;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
-using Tenant = Data.Entities.Tenant.Tenant;
 
 namespace Business.Common.TenantDomain;
 
@@ -26,11 +22,11 @@ public class AdminService(
     IExcelExportService excelExportService)
     : IAdminService
 {
-    public async Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(string? tenantId = null, CancellationToken cancellationToken = default)
+    public async Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(CommonPaginationRequestModel requestModel, string tenantId = null, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
         // We only need to check if user is SuperAdmin for query filtering logic
-        
+
         var roleId = userProfileService.GetRoleId();
         var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
@@ -49,8 +45,9 @@ public class AdminService(
             query = query.IgnoreQueryFilters();
         }
         // For Admin: only show admins from their tenant (global query filter applies)
+        var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
 
-        var admins = await query.ToListAsync(cancellationToken);
+        var admins = await result.ToListAsync(cancellationToken);
 
         // Get tenant names for all unique tenant IDs
         var tenantIds = admins.Where(a => !string.IsNullOrEmpty(a.TenantId)).Select(a => a.TenantId).Distinct().ToList();
@@ -60,8 +57,8 @@ public class AdminService(
         foreach (var admin in admins)
         {
             var userRoles = await userManager.GetRolesAsync(admin.User);
-            var tenantName = !string.IsNullOrEmpty(admin.TenantId) && tenants.ContainsKey(admin.TenantId) 
-                ? tenants[admin.TenantId] 
+            var tenantName = !string.IsNullOrEmpty(admin.TenantId) && tenants.ContainsKey(admin.TenantId)
+                ? tenants[admin.TenantId]
                 : string.Empty;
 
             dtos.Add(new AdminResponseDto(
@@ -73,14 +70,21 @@ public class AdminService(
                 admin.UserId,
                 admin.TenantId ?? string.Empty,
                 tenantName,
-                userRoles.ToList(),
+                [.. userRoles],
                 admin.User.IsDisabled,
                 admin.User.EmailConfirmed,
                 admin.CreatedOn
             ));
         }
+        var pagination = new Pagination
+        {
+            TotalPages = totalPage,
+            CurrentPage = requestModel.PageNumber,
+            PageSize = requestModel.PageSize,
+            TotalItems = totalCount,
+        };
 
-        return Result<List<AdminResponseDto>>.Success(dtos);
+        return Result<List<AdminResponseDto>>.Success(dtos, pagination);
     }
 
     public async Task<Result<AdminResponseDto>> GetAdminByIdAsync(string id, CancellationToken cancellationToken = default)
@@ -119,7 +123,7 @@ public class AdminService(
             admin.UserId,
             admin.TenantId ?? string.Empty,
             tenantName,
-            userRoles.ToList(),
+            [.. userRoles],
             admin.User.IsDisabled,
             admin.User.EmailConfirmed,
             admin.CreatedOn
@@ -162,7 +166,7 @@ public class AdminService(
             }
 
             // Validate roles if provided
-            if (dto.Roles != null && dto.Roles.Any())
+            if (dto.Roles != null && dto.Roles.Count != 0)
             {
                 // Note: IsDeleted filter is now applied globally
                 var validRoles = await roleManager.Roles
@@ -197,8 +201,8 @@ public class AdminService(
                 return Result<AdminResponseDto>.Failed(createUserResult.Errors.FirstOrDefault()?.Description ?? "Failed to create user.");
 
             // Assign roles - default to Admin if no roles specified
-            var rolesToAssign = dto.Roles != null && dto.Roles.Any() 
-                ? dto.Roles 
+            var rolesToAssign = dto.Roles != null && dto.Roles.Any()
+                ? dto.Roles
                 : new List<string> { SystemRoles.Admin };
 
             foreach (var roleName in rolesToAssign)
@@ -307,8 +311,7 @@ public class AdminService(
                 admin.User.PhoneNumber = dto.PhoneNumber;
             }
 
-            if (dto.IsDisabled.HasValue)
-                admin.User.IsDisabled = dto.IsDisabled.Value;
+            admin.User.IsDisabled = dto.IsDisabled;
 
             // Update roles if provided
             if (dto.Roles != null)
@@ -329,7 +332,7 @@ public class AdminService(
 
                 // Get current roles
                 var currentRoles = await userManager.GetRolesAsync(admin.User);
-                
+
                 // Remove roles that are not in the new list
                 var rolesToRemove = currentRoles.Except(dto.Roles).ToList();
                 if (rolesToRemove.Any())
