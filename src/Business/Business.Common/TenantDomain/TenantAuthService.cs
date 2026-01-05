@@ -70,9 +70,9 @@ public class TenantAuthService(
         var refresh = await tokenService.CreateRefreshToken(user);
 
         var presignUrlTenantLogo = string.Empty;
-        if (string.IsNullOrEmpty(tenant.Branding.LogoUrl))
+        if (!string.IsNullOrEmpty(tenant.Branding.LogoUrl))
         {
-             presignUrlTenantLogo = await fileService.GetFilePresignedUrlAsync(tenant.Branding.LogoUrl);
+            presignUrlTenantLogo = await fileService.GetFilePresignedUrlAsync(tenant.Branding.LogoUrl);
         }
         // Prepare branding response
         BrandingResponseDto branding = null;
