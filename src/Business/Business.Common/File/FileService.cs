@@ -85,7 +85,7 @@ public class FileService : IFileService, IDisposable
                 .WithObjectSize(memoryStream.Length)
                 .WithContentType("application/octet-stream");
 
-            await _minioClient.PutObjectAsync(putArgs);
+            var request = await _minioClient.PutObjectAsync(putArgs);
             return Result<FileUploadSummaryResponseModel>.Success(new FileUploadSummaryResponseModel { FilePath = filePath });
         }
         catch (MinioException ex)
