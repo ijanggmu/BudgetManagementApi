@@ -28,8 +28,8 @@ public class PropertySubsidySILimitService : IPropertySubsidySILimitService
 
     public List<PropertySubsidySILimitViewModel> GetAllSubsidySI()
     {
-        var SubsidySI = _db.PropertySubsidySILimits.Where(x => !x.IsDeleted).OrderBy(x => x.SILimit);
-        return SubsidySI.Select(x => new PropertySubsidySILimitViewModel
+        return _db.PropertySubsidySILimits.Where(x => !x.IsDeleted).OrderBy(x => x.SILimit)
+        .Select(x => new PropertySubsidySILimitViewModel
         {
             Id = x.Id,
             SILimit = x.SILimit,
@@ -41,16 +41,16 @@ public class PropertySubsidySILimitService : IPropertySubsidySILimitService
     public async Task<PropertySubsidySILimitViewModel> GetSingleSubsidySILimit(string id)
     {
         return _db.PropertySubsidySILimits
-    .Where(x => x.Id == id)
-    .Select(x => new PropertySubsidySILimitViewModel
-    {
-        Id = x.Id,
-        SILabel = x.SILabel,
-        SILimit = x.SILimit,
-        CreatedBy = x.CreatedBy,
-        CreatedDate = x.CreatedOn.ToString()
-    })
-    .FirstOrDefault();
+        .Where(x => x.Id == id)
+        .Select(x => new PropertySubsidySILimitViewModel
+        {
+            Id = x.Id,
+            SILabel = x.SILabel,
+            SILimit = x.SILimit,
+            CreatedBy = x.CreatedBy,
+            CreatedDate = x.CreatedOn.ToString()
+        })
+        .FirstOrDefault();
 
     }
 
