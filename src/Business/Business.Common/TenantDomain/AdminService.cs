@@ -57,9 +57,8 @@ public class AdminService(
         foreach (var admin in admins)
         {
             var userRoles = await userManager.GetRolesAsync(admin.User);
-            var tenantName = !string.IsNullOrEmpty(admin.TenantId) && tenants.ContainsKey(admin.TenantId)
-                ? tenants[admin.TenantId]
-                : string.Empty;
+            var tenantName = !string.IsNullOrEmpty(admin.TenantId) && tenants.TryGetValue(admin.TenantId, out string value)
+                ? value : string.Empty;
 
             dtos.Add(new AdminResponseDto(
                 admin.Id,
