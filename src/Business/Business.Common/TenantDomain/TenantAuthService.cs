@@ -1,4 +1,5 @@
 using System.Net;
+using Business.Common.File;
 using Business.Common.Token;
 using Data.Context;
 using Data.Entities.Identity;
@@ -13,32 +14,18 @@ using Tenant = Data.Entities.Tenant.Tenant;
 
 namespace Business.Common.TenantDomain;
 
-public class TenantAuthService : ITenantAuthService
+public class TenantAuthService(
+    ApplicationDataContext db,
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
+    ITokenService tokenService,
+    IUserProfileService userProfileService,
+    IFileService fileService) : ITenantAuthService
 {
-    private readonly ApplicationDataContext _db;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly ITokenService _tokenService;
-    private readonly IUserProfileService _userProfileService;
-
-    public TenantAuthService(
-        ApplicationDataContext db,
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        ITokenService tokenService,
-        IUserProfileService userProfileService)
-    {
-        _db = db;
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _tokenService = tokenService;
-        _userProfileService = userProfileService;
-    }
-
     public async Task<Result<TenantLoginResponseDto>> LoginAsync(TenantLoginRequestDto request)
     {
         // First, verify the tenant exists and is active
-        var tenant = await _db.Set<Tenant>()
+        var tenant = await db.Set<Tenant>()
             .Include(t => t.Branding)
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Slug == request.Slug && t.IsActive);
@@ -47,22 +34,22 @@ public class TenantAuthService : ITenantAuthService
             return Result<TenantLoginResponseDto>.Failed("Invalid tenant or tenant is inactive.");
 
         // Find user by username
-        var user = await _userManager.FindByNameAsync(request.Username);
+        var user = await userManager.FindByNameAsync(request.Username);
         if (user == null || user.IsDeleted)
             return Result<TenantLoginResponseDto>.Failed("Invalid username or password.");
 
         // Check if user has Admin role
-        var roles = await _userManager.GetRolesAsync(user);
+        var roles = await userManager.GetRolesAsync(user);
         if (!roles.Contains(SystemRoles.Admin) && !roles.Contains(SystemRoles.SuperAdmin))
             return Result<TenantLoginResponseDto>.Failed("User does not have tenant admin access.");
 
         // Verify password
-        var signInResult = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
+        var signInResult = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
 
         if (signInResult == SignInResult.Failed)
         {
             user.AccessFailedCount++;
-            await _userManager.UpdateAsync(user);
+            await userManager.UpdateAsync(user);
             return Result<TenantLoginResponseDto>.Failed("Invalid username or password.");
         }
 
@@ -79,16 +66,22 @@ public class TenantAuthService : ITenantAuthService
             return Result<TenantLoginResponseDto>.Failed("Invalid username or password.");
 
         // Generate tokens
-        var tokenModel = _tokenService.CreateToken(user, roles.ToList());
-        var refresh = await _tokenService.CreateRefreshToken(user);
+        var tokenModel = tokenService.CreateToken(user, [.. roles]);
+        var refresh = await tokenService.CreateRefreshToken(user);
 
+        var presignUrlTenantLogo = string.Empty;
+        if (string.IsNullOrEmpty(tenant.Branding.LogoUrl))
+        {
+             presignUrlTenantLogo = await fileService.GetFilePresignedUrlAsync(tenant.Branding.LogoUrl);
+        }
         // Prepare branding response
-        BrandingResponseDto? branding = null;
+        BrandingResponseDto branding = null;
         if (tenant.Branding != null)
         {
             branding = new BrandingResponseDto(
                 tenant.Branding.TenantId,
                 tenant.Branding.LogoUrl,
+                presignUrlTenantLogo,
                 tenant.Branding.PaletteJson,
                 tenant.Branding.TypographyJson,
                 tenant.Branding.Version,
@@ -115,7 +108,7 @@ public class TenantAuthService : ITenantAuthService
             RefreshTokenExpiryInSeconds = refresh.Item2
         };
 
-        _userProfileService.SetAuthCookiesInClient(tokenResult, request.Username);
+        userProfileService.SetAuthCookiesInClient(tokenResult, request.Username);
 
         return Result<TenantLoginResponseDto>.Success(response, statusCode: HttpStatusCode.NoContent);
     }

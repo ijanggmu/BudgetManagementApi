@@ -1,6 +1,4 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+using Business.Common.File;
 using Data.Context;
 using Data.Entities.Identity;
 using Data.Entities.Tenant;
@@ -8,6 +6,7 @@ using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Models.Common;
 using Models.WebApi.TenantDTOs;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Models.Tenancy;
@@ -15,59 +14,52 @@ using SharedKernel.Operation;
 
 namespace Business.Common.TenantDomain;
 
-public class BrandingService : IBrandingService
+public class BrandingService(
+    ApplicationDataContext db,
+    ITenantContext tenant,
+    IUserProfileService userProfileService,
+    UserManager<ApplicationUser> userManager,
+    ILogger<BrandingService> logger,
+    IFileService fileService) : IBrandingService
 {
-    private readonly ApplicationDataContext _db;
-    private readonly ITenantContext _tenant;
-    private readonly IUserProfileService _userProfileService;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ILogger<BrandingService> _logger;
-
-    public BrandingService(
-        ApplicationDataContext db,
-        ITenantContext tenant,
-        IUserProfileService userProfileService,
-        UserManager<ApplicationUser> userManager,
-        ILogger<BrandingService> logger)
-    {
-        _db = db;
-        _tenant = tenant;
-        _userProfileService = userProfileService;
-        _userManager = userManager;
-        _logger = logger;
-    }
-
-    private static BrandingResponseDto MapToDto(CompanyBranding branding)
-    {
-        return new BrandingResponseDto(
-            branding.TenantId,
-            branding.LogoUrl,
-            branding.PaletteJson,
-            branding.TypographyJson,
-            branding.Version,
-            branding.CreatedOn
-        );
-    }
-
     public async Task<Result<BrandingResponseDto>> GetAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            if (_tenant.TenantId is null)
+            if (tenant.TenantId is null)
                 return Result<BrandingResponseDto>.Failed("Tenant not resolved.");
 
-            var branding = await _db.Set<CompanyBranding>()
+            var branding = await db.CompanyBrandings
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.TenantId == _tenant.TenantId, cancellationToken);
+                .Select(branding => new BrandingResponseDto(
+                                branding.TenantId,
+                                branding.LogoUrl,
+                                null,
+                                branding.PaletteJson,
+                                branding.TypographyJson,
+                                branding.Version,
+                                branding.CreatedOn
+                            ))
+                .FirstOrDefaultAsync(x => x.TenantId == tenant.TenantId, cancellationToken);
 
             if (branding is null)
                 return Result<BrandingResponseDto>.Failed("Branding not found for current tenant.");
 
-            return Result<BrandingResponseDto>.Success(MapToDto(branding));
+            if (!string.IsNullOrWhiteSpace(branding.LogoUrl))
+            {
+                var presignedUrl = await fileService
+                    .GetFilePresignedUrlAsync(branding.LogoUrl);
+
+                branding = branding with
+                {
+                    LogoPath = presignedUrl
+                };
+            }
+            return Result<BrandingResponseDto>.Success(branding);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving branding: {Message}", ex.Message);
+            logger.LogError(ex, "Error retrieving branding: {Message}", ex.Message);
             return Result<BrandingResponseDto>.Failed($"An error occurred while retrieving branding: {ex.Message}");
         }
     }
@@ -76,18 +68,18 @@ public class BrandingService : IBrandingService
     {
         try
         {
-            var userId = _userProfileService.GetUserId();
+            var userId = userProfileService.GetUserId();
             if (string.IsNullOrEmpty(userId))
                 return Result<BrandingResponseDto>.Failed("User not authenticated.");
 
             // Get current user and their roles
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await userManager.FindByIdAsync(userId);
             if (user == null || user.IsDeleted || user.IsDisabled)
                 return Result<BrandingResponseDto>.Failed("User not found or inactive.");
 
-            var userRoles = await _db.UserRoles
+            var userRoles = await db.UserRoles
                 .Where(ur => ur.UserId == userId && !ur.IsDeleted)
-                .Join(_db.Roles.Where(r => !r.IsDeleted),
+                .Join(db.Roles.Where(r => !r.IsDeleted),
                     ur => ur.RoleId,
                     r => r.Id,
                     (ur, r) => r.Name)
@@ -100,44 +92,64 @@ public class BrandingService : IBrandingService
                 return Result<BrandingResponseDto>.Failed("Access denied. SuperAdmin role required to access branding by tenantId.");
 
             // Verify tenant exists
-            var tenant = await _db.Set<Tenant>()
+            var tenant = await db.Set<Tenant>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Id == tenantId && t.IsActive, cancellationToken);
 
             if (tenant == null)
                 return Result<BrandingResponseDto>.Failed("Tenant not found or inactive.");
 
-            var branding = await _db.Set<CompanyBranding>()
+            var branding = await db.CompanyBrandings
+                .Where(x => x.TenantId == tenantId)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
+                .Select(branding => new BrandingResponseDto(
+                                        branding.TenantId,
+                                        branding.LogoUrl,
+                                        null,
+                                        branding.PaletteJson,
+                                        branding.TypographyJson,
+                                        branding.Version,
+                                        branding.CreatedOn))
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (branding is null)
                 return Result<BrandingResponseDto>.Failed("Branding not found for the specified tenant.");
 
-            return Result<BrandingResponseDto>.Success(MapToDto(branding));
+            if (!string.IsNullOrWhiteSpace(branding.LogoUrl))
+            {
+                var presignedUrl = await fileService
+                    .GetFilePresignedUrlAsync(branding.LogoUrl);
+
+                branding = branding with
+                {
+                    LogoPath = presignedUrl
+                };
+            }
+
+            return Result<BrandingResponseDto>.Success(branding);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving branding by tenantId: {Message}", ex.Message);
+            logger.LogError(ex, "Error retrieving branding by tenantId: {Message}", ex.Message);
             return Result<BrandingResponseDto>.Failed($"An error occurred while retrieving branding: {ex.Message}");
         }
     }
 
-    public async Task<Result<BrandingResponseDto>> UpdateAsync(UpdateBrandingDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result<MessageResponseModel>> UpdateAsync(UpdateBrandingDto dto, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            if (_tenant.TenantId is null)
-                return Result<BrandingResponseDto>.Failed("Tenant not resolved.");
+            if (tenant.TenantId is null)
+                return Result<MessageResponseModel>.Failed("Tenant not resolved.");
 
-            var branding = await _db.Set<CompanyBranding>()
-                .FirstOrDefaultAsync(x => x.TenantId == _tenant.TenantId, cancellationToken);
+            var branding = await db.CompanyBrandings
+                .FirstOrDefaultAsync(x => x.TenantId == tenant.TenantId, cancellationToken);
 
             if (branding is null)
             {
-                branding = new CompanyBranding { TenantId = _tenant.TenantId };
-                _db.Add(branding);
+                branding = new CompanyBranding { TenantId = tenant.TenantId };
+                db.Add(branding);
             }
 
             // Update properties if provided
@@ -152,16 +164,16 @@ public class BrandingService : IBrandingService
 
             branding.Version += 1;
 
-            await _db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            return Result<BrandingResponseDto>.Success(MapToDto(branding));
+            return Result<MessageResponseModel>.Success(new MessageResponseModel("Brand Updated Successfully."));
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
-            _logger.LogError(ex, "Error updating branding: {Message}", ex.Message);
-            return Result<BrandingResponseDto>.Failed($"An error occurred while updating branding: {ex.Message}");
+            logger.LogError(ex, "Error updating branding: {Message}", ex.Message);
+            throw;
         }
     }
 }

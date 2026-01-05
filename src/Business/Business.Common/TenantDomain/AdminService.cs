@@ -456,7 +456,7 @@ public class AdminService(
                     tenantId = tenantIdMatch.Groups[1].Value.Trim();
             }
 
-            var result = await GetAdminsForAdminAsync(tenantId, cancellationToken);
+            var result = await GetAdminsForAdminAsync(requestModel, tenantId, cancellationToken);
             if (!result.IsSuccess || result.Data == null)
                 return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve admin data.");
 

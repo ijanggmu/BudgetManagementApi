@@ -154,7 +154,7 @@ public class TenantAdminService : ITenantAdminService
                 LogoUrl = dto.CompanyBranding.LogoUrl,
                 PaletteJson = dto.CompanyBranding.PaletteJson,
                 TypographyJson = dto.CompanyBranding.TypographyJson,
-                Version = dto.ThemeVersion > 0 ? dto.ThemeVersion : dto.CompanyBranding.Version
+                Version = dto.CompanyBranding.Version
             };
 
             await _db.CompanyBrandings.AddAsync(companyBranding, cancellationToken);
