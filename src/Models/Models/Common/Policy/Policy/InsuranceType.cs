@@ -10,9 +10,10 @@ namespace Models.Common.Policy.Policy
         ThirdPartyCommercialVehicle,
         Travel,
         InternationalTravel,
+        Marine,
         Home,
         Property,
-        Marine
+
     }
 }
 

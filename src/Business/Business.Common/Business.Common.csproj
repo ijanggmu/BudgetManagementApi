@@ -24,7 +24,6 @@
 
   <ItemGroup>
     <Folder Include="Constant\" />
-    <Folder Include="PremiumCalculation\Calculator\Factory\" />
   </ItemGroup>
 
 </Project>

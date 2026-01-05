@@ -9,6 +9,7 @@ using Data.Entities.FodoEntity;
 using Data.Entities.Identity;
 using Data.Entities.ITIEntity;
 using Data.Entities.Log;
+using Data.Entities.Marine;
 using Data.Entities.MotorEntity;
 using Data.Entities.Payment;
 using Data.Entities.PolicyE2e;
@@ -94,6 +95,9 @@ namespace Data.Context
         // Branch and Designation
         public DbSet<Branch> Branches { get; set; }
         public DbSet<Designation> Designations { get; set; }
+        public DbSet<MarineTariffSchedule> MarineTariffSchedules { get; set; }
+        public DbSet<PropertySubsidySILimit> PropertySubsidySILimits { get; set; }
+        public DbSet<PropertyRiskConfiguration> PropertyRiskConfigurations { get; set; }
 
         #endregion  DbSets
 
