@@ -40,17 +40,16 @@ StringCipherService stringCipherService) : IAdminAuthService
             return Result<LoginAdminResponseModel>.Failed("Username or password is invalid.");
 
 
-        var isAdminRoledUser = await (from ur in dbContext.UserRoles
-                                      join r in dbContext.Roles on ur.RoleId equals r.Id
-                                      join u in dbContext.Users on ur.UserId equals u.Id
-                                      where ur.UserId == user.Id
-                                      && (r.Name == SystemRoles.Admin || r.Name == SystemRoles.SuperAdmin)
-                                      && !ur.IsDeleted
-                                      select ur)
-                                      .AnyAsync(ct);
+        //var isAdminRoledUser = await (from ur in dbContext.UserRoles
+        //                              join r in dbContext.Roles on ur.RoleId equals r.Id
+        //                              join u in dbContext.Users on ur.UserId equals u.Id
+        //                              where ur.UserId == user.Id
+        //                              && !ur.IsDeleted
+        //                              select ur)
+        //                              .AnyAsync(ct);
 
-        if (!isAdminRoledUser)
-            return Result<LoginAdminResponseModel>.Failed("Username or password is invalid.");
+        //if (!isAdminRoledUser)
+        //    return Result<LoginAdminResponseModel>.Failed("Username or password is invalid.");
 
         var identityResult =
              await signInManager.CheckPasswordSignInAsync(user, requestModel.Password, lockoutOnFailure: false);
