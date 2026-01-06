@@ -9,8 +9,8 @@ public class CreateTenantDtoValidator : AbstractValidator<CreateTenantDto>
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Slug).NotEmpty().MaximumLength(100).Matches("^[a-z0-9-]+$").WithMessage("Slug must contain only lowercase letters, numbers, and hyphens");
-        RuleFor(x => x.ThemeVersion).GreaterThan(0);
-        
+        RuleFor(x => x.CompanyBranding.Version).GreaterThan(0);
+
         // Validate AdminUser
         RuleFor(x => x.AdminUser).NotNull().WithMessage("Admin user information is required.");
         RuleFor(x => x.AdminUser.Email)
@@ -38,7 +38,7 @@ public class UpdateTenantDtoValidator : AbstractValidator<UpdateTenantDto>
         RuleFor(x => x.Name).MaximumLength(200).When(x => !string.IsNullOrEmpty(x.Name));
         RuleFor(x => x.Slug).MaximumLength(100).Matches("^[a-z0-9-]+$").When(x => !string.IsNullOrEmpty(x.Slug))
             .WithMessage("Slug must contain only lowercase letters, numbers, and hyphens");
-        RuleFor(x => x.ThemeVersion).GreaterThan(0).When(x => x.ThemeVersion.HasValue);
+        RuleFor(x => x.CompanyBranding.Version).GreaterThan(0);
     }
 }
 

@@ -1,13 +1,12 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Business.Common.TenantDomain;
+using Microsoft.AspNetCore.Mvc;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
-using System.Threading;
 using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.FoDo.Lead;

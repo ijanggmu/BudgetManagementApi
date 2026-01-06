@@ -28,20 +28,17 @@ IUserProfileService ipersonAccessor,
 ITotpService totpService,
 StringCipherService stringCipherService) : IAdminAuthService
 {
-    public async Task<Result<LoginAdminResponseModel>> LoginAsync(AdminLoginRequestModel requestModel,CancellationToken ct)
+    public async Task<Result<LoginAdminResponseModel>> LoginAsync(AdminLoginRequestModel requestModel, CancellationToken ct)
     {
 
-        var admin = await dbContext.Admins
-                .Include(x => x.User)
-                .Where(x => x.User.UserName == requestModel.Username
-                && !x.User.IsDeleted
+        var user = await dbContext.Users
+                .Where(x => x.UserName == requestModel.Username
                 && !x.IsDeleted)
                 .FirstOrDefaultAsync(ct);
 
-        if (admin == null || admin.User == null)
+        if (user == null)
             return Result<LoginAdminResponseModel>.Failed("Username or password is invalid.");
 
-        var user = admin.User;
 
         var isAdminRoledUser = await (from ur in dbContext.UserRoles
                                       join r in dbContext.Roles on ur.RoleId equals r.Id
@@ -120,7 +117,7 @@ StringCipherService stringCipherService) : IAdminAuthService
                 var tenant = await dbContext.Tenants
                     .Include(t => t.Branding)
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.Id == user.TenantId);
+                    .FirstOrDefaultAsync(t => t.Id == user.TenantId, cancellationToken: ct);
 
                 if (tenant?.Branding != null)
                 {
@@ -144,7 +141,7 @@ StringCipherService stringCipherService) : IAdminAuthService
         return Result<LoginAdminResponseModel>.Success(responseModel);
 
     }
-    public async Task<Result<MessageResponseModel>> Login2FaAsync(Verify2FaAdminRequestModel requestModel,CancellationToken ct)
+    public async Task<Result<MessageResponseModel>> Login2FaAsync(Verify2FaAdminRequestModel requestModel, CancellationToken ct)
     {
         var user = await dbContext.Users
             .Where(x => x.TotpToken == requestModel.Token)
@@ -300,7 +297,7 @@ StringCipherService stringCipherService) : IAdminAuthService
         }
     }
 
-    public async Task<Result<MessageResponseModel>> LogoutAsync(HttpResponse response,CancellationToken ct)
+    public async Task<Result<MessageResponseModel>> LogoutAsync(HttpResponse response, CancellationToken ct)
     {
         var refreshToken = ipersonAccessor.GetRefreshToken();
         var username = ipersonAccessor.GetUsername();

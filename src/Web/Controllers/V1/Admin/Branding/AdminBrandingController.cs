@@ -22,7 +22,7 @@ public class AdminBrandingController(IBrandingService brandingService) : BaseAdm
     {
         if (!string.IsNullOrEmpty(tenantId))
             return HandleResult(await brandingService.GetByTenantIdAsync(tenantId, cancellationToken));
-        
+
         return HandleResult(await brandingService.GetAsync(cancellationToken));
     }
 

@@ -57,9 +57,8 @@ public class AdminService(
         foreach (var admin in admins)
         {
             var userRoles = await userManager.GetRolesAsync(admin.User);
-            var tenantName = !string.IsNullOrEmpty(admin.TenantId) && tenants.ContainsKey(admin.TenantId)
-                ? tenants[admin.TenantId]
-                : string.Empty;
+            var tenantName = !string.IsNullOrEmpty(admin.TenantId) && tenants.TryGetValue(admin.TenantId, out string value)
+                ? value : string.Empty;
 
             dtos.Add(new AdminResponseDto(
                 admin.Id,
@@ -456,7 +455,7 @@ public class AdminService(
                     tenantId = tenantIdMatch.Groups[1].Value.Trim();
             }
 
-            var result = await GetAdminsForAdminAsync(tenantId, cancellationToken);
+            var result = await GetAdminsForAdminAsync(requestModel, tenantId, cancellationToken);
             if (!result.IsSuccess || result.Data == null)
                 return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve admin data.");
 

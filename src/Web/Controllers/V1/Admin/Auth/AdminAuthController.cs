@@ -12,16 +12,20 @@ namespace BeemaEdgeApi.Controllers.V1.Admin.Auth
     public class AdminAuthController(IAdminAuthService adminAuthService) : BaseAdminApiController
     {
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] AdminLoginRequestModel requestModel, CancellationToken cancellationToken = default) => HandleResult(await adminAuthService.LoginAsync(requestModel, cancellationToken));
+        public async Task<IActionResult> Login([FromBody] AdminLoginRequestModel requestModel, CancellationToken cancellationToken = default)
+            => HandleResult(await adminAuthService.LoginAsync(requestModel, cancellationToken));
 
         [HttpPost("login2FA")]
-        public async Task<IActionResult> Login2FA([FromBody] Verify2FaAdminRequestModel requestModel, CancellationToken cancellationToken = default) => HandleResult(await adminAuthService.Login2FaAsync(requestModel, cancellationToken));
+        public async Task<IActionResult> Login2FA([FromBody] Verify2FaAdminRequestModel requestModel, CancellationToken cancellationToken = default)
+            => HandleResult(await adminAuthService.Login2FaAsync(requestModel, cancellationToken));
 
         [HttpPost("refresh")]
-        public async Task<IActionResult> RefreshToken(CancellationToken cancellationToken = default) => HandleResult(await adminAuthService.RefreshTokenAsync(cancellationToken));
+        public async Task<IActionResult> RefreshToken(CancellationToken cancellationToken = default)
+            => HandleResult(await adminAuthService.RefreshTokenAsync(cancellationToken));
 
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout(CancellationToken cancellationToken = default) => HandleResult(await adminAuthService.LogoutAsync(HttpContext.Response, cancellationToken));
+        public async Task<IActionResult> Logout(CancellationToken cancellationToken = default)
+            => HandleResult(await adminAuthService.LogoutAsync(HttpContext.Response, cancellationToken));
     }
 }
 

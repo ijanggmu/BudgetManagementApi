@@ -97,14 +97,14 @@ public class TenantAdminService : ITenantAdminService
             branding = new BrandingResponseDto(
                 tenant.Branding.TenantId,
                 tenant.Branding.LogoUrl,
-                tenant.Branding.LogoUrl,
+                null,
                 tenant.Branding.PaletteJson,
                 tenant.Branding.TypographyJson,
                 tenant.Branding.Version,
                 tenant.Branding.CreatedOn
             );
         }
-        if (string.IsNullOrEmpty(branding.LogoUrl))
+        if (!string.IsNullOrEmpty(branding.LogoUrl))
         {
             var logoUrl = await _fileService.GetFilePresignedUrlAsync(branding.LogoUrl);
             branding = branding with { LogoPath = logoUrl };
@@ -154,7 +154,7 @@ public class TenantAdminService : ITenantAdminService
                 LogoUrl = dto.CompanyBranding.LogoUrl,
                 PaletteJson = dto.CompanyBranding.PaletteJson,
                 TypographyJson = dto.CompanyBranding.TypographyJson,
-                Version = dto.ThemeVersion > 0 ? dto.ThemeVersion : dto.CompanyBranding.Version
+                Version = dto.CompanyBranding.Version
             };
 
             await _db.CompanyBrandings.AddAsync(companyBranding, cancellationToken);
