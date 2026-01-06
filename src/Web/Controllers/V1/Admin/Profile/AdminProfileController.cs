@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.AdminPortalApi.Profile;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Customer.CustomerIdentity;
 using SharedKernel.Constant.Permission;
@@ -15,6 +16,8 @@ public class AdminProfileController(IAdminProfileService adminProfileService) : 
     /// Get current admin user profile
     /// </summary>
     /// <returns>Admin profile information</returns>
+    ///
+    [AllowAnonymous]
     [HttpGet]
     //[Permission(MenuPermissionConstant.ProfileView)]
     public async Task<IActionResult> GetAsync(CancellationToken cancellationToken = default)

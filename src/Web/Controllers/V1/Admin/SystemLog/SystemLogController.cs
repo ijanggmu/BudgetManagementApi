@@ -3,12 +3,14 @@ using System.Threading.Tasks;
 using AdminPortalApi.Controllers.V1.SystemLog;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models.Common;
 using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.SystemLog;
 
+[AllowAnonymous]
 public class SystemLogController(ISystemLogService systemLogService) : BaseAdminApiController
 {
     /// <summary>
