@@ -1,17 +1,19 @@
+using System;
 using System.Collections.Immutable;
 using System.Threading;
 using Data.Context;
 using Data.Entities.Identity;
 using Infrastructure.Common.UserProfile;
 using Microsoft.EntityFrameworkCore;
+using Models.BeemaEdgeApi.Roles;
 using Models.Common;
 using Models.Common.Menu;
-using Models.BeemaEdgeApi.Roles;
 using SharedKernel.Constant.Permission;
 using SharedKernel.Operation;
 using static SharedKernel.Constant.Permission.MenuPermissionsList;
 
 namespace Business.BeemaEdgeApi.Permission;
+
 public class MenuPermissionService : IMenuPermissionService
 {
     private readonly ApplicationDataContext _context;
@@ -67,7 +69,7 @@ public class MenuPermissionService : IMenuPermissionService
         {
             RoleId = existingRole.Id,
             RoleName = existingRole.Name,
-            RolePermissionGroup = new List<RolePermissionGroup>()
+            RolePermissionGroup = new List<RolePermissionGroup>(),
         };
 
         var existingPermissions = _context.RoleClaims
@@ -75,7 +77,16 @@ public class MenuPermissionService : IMenuPermissionService
                                                  .Select(x => x.Permissions)
                                                  .FirstOrDefault();
 
-        var groupedPermissions = MenuPermissionsList._list;
+        var groupedPermissions = MenuPermissionsList._list.Where(menu => menu.AllowedRoles == null ||
+                          !menu.AllowedRoles.Any() ||
+                          menu.AllowedRoles.Contains("All", StringComparer.OrdinalIgnoreCase) ||
+                          menu.AllowedRoles.Any(allowedRole =>
+                              string.Equals(allowedRole, existingRole.RoleType, StringComparison.OrdinalIgnoreCase) ||
+                              (string.Equals(allowedRole, "SuperAdmin", StringComparison.OrdinalIgnoreCase) && existingRole.RoleType == "SuperAdmin") ||
+                              (string.Equals(allowedRole, "Admin", StringComparison.OrdinalIgnoreCase) && (existingRole.RoleType == "Admin" || existingRole.RoleType == "TenantAdmin")) ||
+                              (string.Equals(allowedRole, "FoDo", StringComparison.OrdinalIgnoreCase) && (existingRole.RoleType == "FoDo" || existingRole.RoleType == "MarketingExecutive"))
+                          ))
+            .ToList();
 
         foreach (var menuItem in groupedPermissions)
         {
@@ -93,7 +104,7 @@ public class MenuPermissionService : IMenuPermissionService
                 rolePermissionViewModel.RolePermissionGroup.Add(rolePermissionGroup);
             }
 
-            AddPermissionsWithChildren(menuItem, existingPermissions, rolePermissionGroup);
+            AddPermissionsWithChildren(menuItem, existingPermissions, rolePermissionGroup, existingRole.RoleType);
         }
 
         return Result<RolePermissionViewModel>.Success(rolePermissionViewModel);
@@ -101,7 +112,7 @@ public class MenuPermissionService : IMenuPermissionService
 
     }
 
-    private void AddPermissionsWithChildren(MenuItem menuItem, List<string> permissions, RolePermissionGroup rolePermissionGroup)
+    private void AddPermissionsWithChildren(MenuItem menuItem, List<string> permissions, RolePermissionGroup rolePermissionGroup, string roleType)
     {
         foreach (var permission in menuItem.Permissions)
         {
@@ -126,7 +137,7 @@ public class MenuPermissionService : IMenuPermissionService
                     HideChildren = child.HideChildren
                 };
                 rolePermissionGroup.Childrens.Add(childRolePermissionGroup);
-                AddPermissionsWithChildren(child, permissions, childRolePermissionGroup);
+                AddPermissionsWithChildren(child, permissions, childRolePermissionGroup, roleType);
             }
         }
     }
