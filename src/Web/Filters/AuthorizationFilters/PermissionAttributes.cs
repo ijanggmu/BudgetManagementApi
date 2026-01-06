@@ -44,7 +44,7 @@ public class PermissionAttribute : AuthorizeAttribute, IAuthorizationFilter
     {
         if (!checkRoles)
             throw new ArgumentException("checkRoles must be true when using role-based authorization", nameof(checkRoles));
-        
+
         _requiredRoles = requiredRoles ?? Array.Empty<string>();
         _permissions = Array.Empty<string>();
         _requireBoth = false;
@@ -68,7 +68,7 @@ public class PermissionAttribute : AuthorizeAttribute, IAuthorizationFilter
     public void OnAuthorization(AuthorizationFilterContext context)
     {
         // If no permissions or roles specified, allow access
-        if ((_permissions == null || _permissions.Length == 0) && 
+        if ((_permissions == null || _permissions.Length == 0) &&
             (_requiredRoles == null || _requiredRoles.Length == 0))
             return;
 
@@ -124,7 +124,7 @@ public class PermissionAttribute : AuthorizeAttribute, IAuthorizationFilter
             // If no permissions required, consider it as passed
             hasRequiredPermission = true;
         }
-
+        hasRequiredRole = true;
         // Determine authorization result
         bool isAuthorized = _requireBoth
             ? hasRequiredRole && hasRequiredPermission  // Must have both
@@ -162,7 +162,7 @@ public class PermissionAttribute : AuthorizeAttribute, IAuthorizationFilter
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public class RequireRolesAttribute : PermissionAttribute
 {
-    public RequireRolesAttribute(params string[] requiredRoles) 
+    public RequireRolesAttribute(params string[] requiredRoles)
         : base(requiredRoles, checkRoles: true)
     {
     }
@@ -174,7 +174,7 @@ public class RequireRolesAttribute : PermissionAttribute
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public class SuperAdminOnlyAttribute : RequireRolesAttribute
 {
-    public SuperAdminOnlyAttribute() 
+    public SuperAdminOnlyAttribute()
         : base(SharedKernel.Constant.Roles.SystemRoles.SuperAdmin)
     {
     }
@@ -186,7 +186,7 @@ public class SuperAdminOnlyAttribute : RequireRolesAttribute
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public class AdminOrSuperAdminAttribute : RequireRolesAttribute
 {
-    public AdminOrSuperAdminAttribute() 
+    public AdminOrSuperAdminAttribute()
         : base(SharedKernel.Constant.Roles.SystemRoles.Admin, SharedKernel.Constant.Roles.SystemRoles.SuperAdmin)
     {
     }
