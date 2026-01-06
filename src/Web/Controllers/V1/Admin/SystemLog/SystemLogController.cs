@@ -17,7 +17,7 @@ public class SystemLogController(ISystemLogService systemLogService) : BaseAdmin
     /// <param name="searchModel">Pagination and filter parameters</param>
     /// <returns>Paginated list of system access logs</returns>
     [HttpGet("access")]
-    [Permission(MenuPermissionConstant.SystemLogView)]
+    //[Permission(MenuPermissionConstant.SystemLogView)]
     public async Task<IActionResult> GetAccessLogAsync([FromQuery] CommonPaginationRequestModel searchModel, CancellationToken cancellationToken = default)
         => HandleResult(await systemLogService.GetAllSystemAccessLogAsync(searchModel, cancellationToken));
 }
