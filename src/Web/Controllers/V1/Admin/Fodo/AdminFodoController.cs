@@ -20,7 +20,7 @@ public class AdminFodoController(IFodoService fodoService) : BaseAdminApiControl
     /// <returns>List of fodos</returns>
     [HttpPost]
     [Permission(MenuPermissionConstant.MarketingExecutivesView)]
-    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel = null, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel = null, CancellationToken cancellationToken = default)
         => HandleResult(await fodoService.GetFodosForAdminAsync(requestModel, cancellationToken));
 
     /// <summary>

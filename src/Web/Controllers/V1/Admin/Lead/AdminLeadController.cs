@@ -24,7 +24,7 @@ public class AdminLeadController(ILeadService leadService) : BaseAdminApiControl
     [HttpPost]
     [Permission(MenuPermissionConstant.AdminLeadsView)]
     public async Task<IActionResult> GetLeadsAsync(
-        [FromQuery] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
+        [FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         return HandleResult(await leadService.GetLeadsForAdminAsync(requestModel, cancellationToken));
     }

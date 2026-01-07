@@ -186,7 +186,7 @@ public class FodoService(
             if (country == null)
                 return Result<FodoResponseDto>.Failed("Invalid country ID.");
 
-            var username = $"{country.CountryDialingCode}{dto.MobileNumber}";
+            var username = dto.MobileNumber;
 
             // Check if username already exists
             // Note: IsDeleted filter is now applied globally
@@ -367,7 +367,7 @@ public class FodoService(
                 .Include(a => a.Designation)
                 .Include(a => a.Branch)
                 .Where(a => a.Id == id);
-        // Note: IsDeleted and TenantId filters are now applied globally via query filters
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -511,7 +511,7 @@ public class FodoService(
             var query = db.Fodos
                 .Include(a => a.User)
                 .Where(a => a.Id == id);
-        // Note: IsDeleted and TenantId filters are now applied globally via query filters
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -557,7 +557,7 @@ public class FodoService(
             var query = db.Fodos
                 .Include(a => a.User)
                 .Where(a => a.Id == id);
-        // Note: IsDeleted and TenantId filters are now applied globally via query filters
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -599,7 +599,7 @@ public class FodoService(
             var query = db.Fodos
                 .Include(a => a.User)
                 .Where(a => a.Id == id);
-        // Note: IsDeleted and TenantId filters are now applied globally via query filters
+            // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -640,7 +640,7 @@ public class FodoService(
 
             var query = db.Fodos
                 .Where(a => a.Id == id);
-        // Note: IsDeleted filter is now applied globally
+            // Note: IsDeleted filter is now applied globally
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -701,7 +701,7 @@ public class FodoService(
             var query = db.Fodos
                 .Include(a => a.User)
                 .Where(a => a.Id == id);
-        // Note: IsDeleted filter is now applied globally
+            // Note: IsDeleted filter is now applied globally
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();
@@ -753,7 +753,7 @@ public class FodoService(
             var query = db.Fodos
                 .Include(a => a.User)
                 .Where(a => a.Id == id);
-        // Note: IsDeleted filter is now applied globally
+            // Note: IsDeleted filter is now applied globally
 
             if (isSuperAdmin)
                 query = query.IgnoreQueryFilters();

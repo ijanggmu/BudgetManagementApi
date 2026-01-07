@@ -56,7 +56,7 @@ public class EntitySettingsService(
             ? string.Empty
             : await fileService.GetFilePresignedUrlAsync(tenant.LogoUrl);
 
-        tenant.UnderwriterDigitalSignatureUrl = underwriterDigitalSignatureSignedUrl;
+        tenant.UnderwriterDigitalSignatureSignedUrl = underwriterDigitalSignatureSignedUrl;
         tenant.LogoUrl = logoSignedUrl;
 
         return Result<EntitySettingsResponseDto>.Success(tenant);
