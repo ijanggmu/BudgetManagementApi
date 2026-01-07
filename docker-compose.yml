@@ -33,7 +33,6 @@ services:
       DNS_PROVIDER: godaddy
       GODADDY_API_KEY: eoMQprDsfduA_8UsqFZLB8xexwcubk1fjSS
       GODADDY_API_SECRET: 2UkLk1G5amaj6MrXEDdLbM
-      ACME_DNS: "true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/nginx/certs
@@ -128,7 +127,7 @@ services:
     environment:
       # For nginx-proxy SSL routing
       VIRTUAL_HOST: beemaedge.com,*.beemaedge.com
-      LETSENCRYPT_HOST: beemaedge.com,*.beemaedge.com
+      LETSENCRYPT_HOST: "*.beemaedge.com"
       LETSENCRYPT_EMAIL: sthaejan00@gmail.com
       VIRTUAL_PORT: 3000                # Next.js runs on 3000 by default
 
