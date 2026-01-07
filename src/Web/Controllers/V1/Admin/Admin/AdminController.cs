@@ -19,7 +19,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// </summary>
     /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
     /// <returns>List of admins</returns>
-    [HttpGet]
+    [HttpPost]
     [Permission(MenuPermissionConstant.AdminManagementView)]
     public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel, [FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
         => HandleResult(await adminService.GetAdminsForAdminAsync(requestModel, tenantId, cancellationToken));
