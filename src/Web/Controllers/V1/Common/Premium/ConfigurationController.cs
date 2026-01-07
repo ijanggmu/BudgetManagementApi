@@ -10,6 +10,10 @@ using Data.Entities.Calculation;
 using Models.Common.Policy.Policy.Fire;
 using System.Collections.Generic;
 using System.IO;
+using Models.Common.Policy.Enum;
+using System;
+using System.Linq;
+using Models.Common.Policy.Configuration;
 
 namespace BeemaEdgeApi.Controllers.V1.Common.Premium;
 
@@ -21,6 +25,19 @@ public class ConfigurationController(IPropertyRiskConfigurationService propertyR
             var pptyConfigs = await propertyRiskConfiguration.GetAllPropertyRiskConfig();
             return Ok(pptyConfigs);
     }
+    [HttpGet(nameof(GetCommercialVehicleClasses))]
+    public IActionResult GetCommercialVehicleClasses()
+    {
+        var enums = Enum.GetValues(typeof(CommercialVehicleClassEnum))
+            .Cast<CommercialVehicleClassEnum>()
+            .Select(e => new EnumViewModel
+            {
+                Value = (int)e,
+                Name = e.ToString()
+            })
+            .ToList();
 
+        return Ok(enums);
+    }
 }
 
