@@ -630,8 +630,6 @@ namespace Models.Common.Policy.Policy
         public string MaximumIndemnityPeriod { get; set; }
     }
 
-    // Keep these for backward compatibility (deprecated - use FireInsuranceRequestModel instead)
-    [Obsolete("Use FireInsuranceRequestModel with FireInsuranceType.Household instead")]
     public class HomeInsuranceRequestModel
     {
         public decimal SumInsuredAmount { get; set; }
@@ -650,7 +648,6 @@ namespace Models.Common.Policy.Policy
         public decimal Art { get; set; } = 0;
     }
 
-    [Obsolete("Use FireInsuranceRequestModel with FireInsuranceType.Property instead")]
     public class PropertyInsuranceRequestModel
     {
         public decimal SumInsuredAmount { get; set; }

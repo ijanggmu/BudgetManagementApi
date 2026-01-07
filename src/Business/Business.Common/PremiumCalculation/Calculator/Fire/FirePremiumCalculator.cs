@@ -891,35 +891,16 @@ public class FirePremiumCalculator : IPolicyPremiumCalculator
             return premiumCalculationResultModel;
         });
     }
-  #endregion
+    #endregion
 
     private List<FireRiskConfiguration> ReadConfiguration(string portFolio)
     {
-        //var filename = portFolio == "Property" ? Path.Join(_fileDirectory, _propertyConfigurationFileName) :
-        //    Path.Join(_fileDirectory, _householdConfigurationFileName);
-        //if (!File.Exists(filename))
-        //{
-        //    throw new Exception($"Can not find {portFolio} Configurations JSON file.");
-        //}
+        var configurationList = FireRiskConfigurationStatic.GetAll();
 
-        var configurationList = new List<FireRiskConfiguration>();
-        //using (StreamReader file = File.OpenText(filename))
-        //{
-        //    try
-        //    {
-        //        configurationList = new JsonSerializer().Deserialize(file, typeof(List<FireRiskConfiguration>))
-        //            as List<FireRiskConfiguration>;
-        //    }
-        //    catch
-        //    {
-        //        throw new Exception($"Invalid {portFolio} Configurations JSON file.");
-        //    }
-        //}
-
-        //if (configurationList.Count == 0)
-        //{
-        //    throw new Exception($"{portFolio} Configurations JSON file has no configuration.");
-        //}
+        if (configurationList == null || configurationList.Count == 0)
+        {
+            throw new Exception($"{portFolio} Configurations have no configuration.");
+        }
 
         return configurationList;
     }
