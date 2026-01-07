@@ -18,7 +18,7 @@ services:
       com.github.nginx-proxy.nginx: "true"
 
   # ----------------- LETSENCRYPT COMPANION -----------------
-   letsencrypt:
+  letsencrypt:
     image: nginxproxy/acme-companion
     container_name: letsencrypt-companion
     restart: always
