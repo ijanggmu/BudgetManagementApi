@@ -39,7 +39,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// </summary>
     /// <param name="dto">Admin creation data</param>
     /// <returns>Created admin details</returns>
-    [HttpPost]
+    [HttpPost("create")]
     [Permission(MenuPermissionConstant.AdminManagementCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateAdminDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await adminService.CreateAsync(dto, cancellationToken));
