@@ -33,7 +33,7 @@ services:
       DNS_PROVIDER: godaddy
       GODADDY_API_KEY: eoMQprDsfduA_8UsqFZLB8xexwcubk1fjSS
       GODADDY_API_SECRET: 2UkLk1G5amaj6MrXEDdLbM
-
+      ACME_DNS: "true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/nginx/certs
