@@ -127,8 +127,8 @@ services:
       - /home/ubuntu/app/.secrets/.env.frontend.dev 
     environment:
       # For nginx-proxy SSL routing
-      VIRTUAL_HOST: "cms.beemaedge.com,hei.beemaedge.com"
-      LETSENCRYPT_HOST: "cms.beemaedge.com,hei.beemaedge.com"
+      VIRTUAL_HOST: beemaedge.com,*.beemaedge.com
+      LETSENCRYPT_HOST: beemaedge.com,*.beemaedge.com
       LETSENCRYPT_EMAIL: sthaejan00@gmail.com
       VIRTUAL_PORT: 3000                # Next.js runs on 3000 by default
 
