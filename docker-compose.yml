@@ -18,23 +18,31 @@ services:
       com.github.nginx-proxy.nginx: "true"
 
   # ----------------- LETSENCRYPT COMPANION -----------------
-  letsencrypt:
+   letsencrypt:
     image: nginxproxy/acme-companion
     container_name: letsencrypt-companion
     restart: always
     environment:
       DEFAULT_EMAIL: "sthaejan00@gmail.com"
-      NGINX_PROXY_CONTAINER: "nginx-proxy"
-      ACME_CA_URI: "https://acme-v02.api.letsencrypt.org/directory"
+
+      # 🔑 REQUIRED for DNS-01
+      ACME_CA_URI: https://acme-v02.api.letsencrypt.org/directory
+      NGINX_PROXY_CONTAINER: nginx-proxy
+
+      # 🔑 Enable DNS challenge
+      DNS_PROVIDER: godaddy
+      GODADDY_API_KEY: eoMQprDsfduA_8UsqFZLB8xexwcubk1fjSS
+      GODADDY_API_SECRET: 2UkLk1G5amaj6MrXEDdLbM
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/nginx/certs
       - ./vhost.d:/etc/nginx/vhost.d
       - ./html:/usr/share/nginx/html
-    networks:
-      - proxy
     depends_on:
       - nginx-proxy
+    networks:
+      - proxy
 
   # ----------------- POSTGRES -----------------
   postgres:
