@@ -1195,10 +1195,10 @@ public class PolicyPremiumCalculatorService(
     {
         return engineCapacity switch
         {
-            VechileEngineCapacityCategory.Under1000 => 800,
+            VechileEngineCapacityCategory.Under1000 => 999,
             VechileEngineCapacityCategory.From1000To1500 => 1250,
-            VechileEngineCapacityCategory.Above1500 => 2000,
-            _ => 800
+            VechileEngineCapacityCategory.Above1500 => 1501,
+            _ => throw new ArgumentOutOfRangeException(nameof(engineCapacity))
         };
     }
 
