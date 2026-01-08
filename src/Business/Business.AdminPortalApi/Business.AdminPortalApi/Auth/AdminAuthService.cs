@@ -17,6 +17,7 @@ using SharedKernel.Helper;
 using SharedKernel.Operation;
 using Microsoft.AspNetCore.Http;
 using Data.Entities.Tenant;
+using Business.Common.File;
 
 namespace Business.AdminPortalApi.Auth;
 
@@ -26,7 +27,8 @@ SignInManager<ApplicationUser> signInManager,
 ITokenService tokenService,
 IUserProfileService ipersonAccessor,
 ITotpService totpService,
-StringCipherService stringCipherService) : IAdminAuthService
+StringCipherService stringCipherService,
+IFileService fileService) : IAdminAuthService
 {
     public async Task<Result<LoginAdminResponseModel>> LoginAsync(AdminLoginRequestModel requestModel, CancellationToken ct)
     {
@@ -117,13 +119,12 @@ StringCipherService stringCipherService) : IAdminAuthService
                     .Include(t => t.Branding)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(t => t.Id == user.TenantId, cancellationToken: ct);
-
                 if (tenant?.Branding != null)
                 {
                     responseModel.Branding = new BrandingResponseModel
                     {
                         TenantId = tenant.Branding.TenantId,
-                        LogoUrl = tenant.Branding.LogoUrl,
+                        LogoSignedUrl = !string.IsNullOrEmpty(tenant.Branding.LogoUrl)?await fileService.GetFilePresignedUrlAsync(tenant.Branding.LogoUrl) :tenant.Branding.LogoUrl,
                         PaletteJson = tenant.Branding.PaletteJson,
                         TypographyJson = tenant.Branding.TypographyJson,
                         Version = tenant.Branding.Version

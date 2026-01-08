@@ -118,7 +118,7 @@ public class FodoAuthService(
                     responseModel.Branding = new BrandingResponseModel
                     {
                         TenantId = tenant.Branding.TenantId,
-                        LogoUrl = tenant.Branding.LogoUrl,
+                        LogoSignedUrl = tenant.Branding.LogoUrl,
                         PaletteJson = tenant.Branding.PaletteJson,
                         TypographyJson = tenant.Branding.TypographyJson,
                         Version = tenant.Branding.Version

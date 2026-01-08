@@ -78,7 +78,7 @@ public class LoginAdminResponseModel
 public class BrandingResponseModel
 {
     public string TenantId { get; set; }
-    public string LogoUrl { get; set; }
+    public string LogoSignedUrl { get; set; }
     public string PaletteJson { get; set; }
     public string TypographyJson { get; set; }
     public int Version { get; set; }
