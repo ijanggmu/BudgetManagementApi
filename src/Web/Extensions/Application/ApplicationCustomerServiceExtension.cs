@@ -98,6 +98,7 @@ public static class ApplicationCustomerServiceExtension
         services.AddScoped<IAdminAuthService, AdminAuthService>();
         services.AddScoped<IAdminProfileService, AdminProfileService>();
         services.AddScoped<IAdminPasswordService, AdminPasswordService>();
+        services.AddScoped<Business.AdminPortalApi.Gateway.IGatewayConfigurationService, Business.AdminPortalApi.Gateway.GatewayConfigurationService>();
 
         return services;
     }
