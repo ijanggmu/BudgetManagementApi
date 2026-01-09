@@ -99,6 +99,7 @@ public static class ApplicationCustomerServiceExtension
         services.AddScoped<IAdminProfileService, AdminProfileService>();
         services.AddScoped<IAdminPasswordService, AdminPasswordService>();
         services.AddScoped<Business.AdminPortalApi.Gateway.IGatewayConfigurationService, Business.AdminPortalApi.Gateway.GatewayConfigurationService>();
+        services.AddScoped<Business.AdminPortalApi.Dashboard.IDashboardService, Business.AdminPortalApi.Dashboard.DashboardService>();
 
         return services;
     }
