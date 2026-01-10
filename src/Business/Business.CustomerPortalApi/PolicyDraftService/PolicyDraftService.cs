@@ -287,7 +287,7 @@ public class PolicyDraftService(ApplicationDataContext context, IUserProfileServ
         }
 
         // Determine policy codes based on vehicle type
-        var isFuel = motorEntity.VehicleType == (int)VechileType.Fuel;
+        var isFuel = motorEntity.VehicleType == (int)VehicleType.Fuel;
         var policyCode = isFuel ? "MCY" : "EMCY";
 
         policyDraft = CreatePolicyDraft(
@@ -310,7 +310,7 @@ public class PolicyDraftService(ApplicationDataContext context, IUserProfileServ
                 VechileType = model.Motor.VechileType,
                 ManufactureCompany = model.Motor.ManufactureCompany,
                 EngineCapacity = isFuel ? model.Motor.CubicCapacity : null,
-                KilloWattRange = model.Motor.VechileType == VechileType.Electric
+                KilloWattRange = model.Motor.VechileType == VehicleType.Electric
                     ? model.Motor.KiloWatt
                     : null
             }
@@ -417,8 +417,8 @@ public class PolicyDraftService(ApplicationDataContext context, IUserProfileServ
 
     private Motor CreateMotor(Motor motor, MotorRequestModel model)
     {
-        var isElectric = model.VechileType == VechileType.Electric;
-        var isFuel = model.VechileType == VechileType.Fuel;
+        var isElectric = model.VechileType == VehicleType.Electric;
+        var isFuel = model.VechileType == VehicleType.Fuel;
 
 
         motor.IsThirdParty = model?.IsThirdParty ?? false;
@@ -715,7 +715,7 @@ public class PolicyDraftService(ApplicationDataContext context, IUserProfileServ
                 IsComprehensive = model.Motor.IsComprehensive,
                 RiotStrike = model.Motor.RiotStrike,
                 Type = model.Motor.Type,
-                VechileType = (VechileType)model.Motor.VehicleType,
+                VechileType = (VehicleType)model.Motor.VehicleType,
                 AgeOfVehicle = model.Motor.AgeOfVehicle,
                 ManufactureYear = model.Motor.ManufactureYear,
                 ManufactureCompany = model.Motor.ManufactureCompany,

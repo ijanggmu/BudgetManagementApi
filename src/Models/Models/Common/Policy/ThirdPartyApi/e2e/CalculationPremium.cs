@@ -6,6 +6,7 @@ namespace Models.Common.Policy.ThirdPartyApi.e2e
 {
     public class CalculationPremium:ICalculationPremiumJson
     {
+        public string PortfolioAlias { get; set; }
         public decimal SumInsured { get; set; }
         public decimal BasicPremium { get; set; }
         public decimal ThirdPartyPremium { get; set; }

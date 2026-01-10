@@ -15,7 +15,7 @@ public class ThirdPartyMotorPolicyRequestModel
 
     [Required(ErrorMessage = "ExpiryDate is required")]
     public DateTime ExpiryDate { get; set; }
-    public VechileType VechileType { get; set; }
+    public VehicleType VechileType { get; set; }
     public string ManufactureYear { get; set; }
     public string ManufactureCompany { get; set; }
     public string Model { get; set; }

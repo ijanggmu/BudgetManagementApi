@@ -11,6 +11,9 @@ public class Lead : TenantEntity
     public LeadStatus Status { get; set; } = LeadStatus.New;
     public string Source { get; set; } = "Web";
     public string OwnerUserId { get; set; }
+    public DateTime DeadLineDate { get; set; }
+    public decimal EstimatedPremium { get; set; }
+
 }
 
 public class LeadActivity : TenantEntity

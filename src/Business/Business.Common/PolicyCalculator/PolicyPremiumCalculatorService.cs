@@ -67,6 +67,7 @@ public class PolicyPremiumCalculatorService(
         result.Region = region;
         result.Plan = planType;
         var response = PremiumCalculationJsonService.GetCalculationJson(request.PortfolioAlias, result);
+        response.PortfolioAlias = request.PortfolioAlias;
         return Result<ICalculationPremiumJson>.Success(response);
     }
 
@@ -79,7 +80,7 @@ public class PolicyPremiumCalculatorService(
 
     private CreatePolicyViewModel CreateThirdPartyBikeRequest(PremiumCalculateRequestModel requestModel)
     {
-        var isElectric = requestModel.ThirdPartyBikeInsurance.VechileType == VechileType.Electric;
+        var isElectric = requestModel.ThirdPartyBikeInsurance.VechileType == VehicleType.Electric;
 
         return new CreatePolicyViewModel
         {
@@ -138,7 +139,7 @@ public class PolicyPremiumCalculatorService(
 
     private CreatePolicyViewModel CreateFullBikeRequest(PremiumCalculateRequestModel requestModel)
     {
-        var isElectric = requestModel.FullBikeInsurance.VechileType == VechileType.Electric;
+        var isElectric = requestModel.FullBikeInsurance.VechileType == VehicleType.Electric;
 
         return new CreatePolicyViewModel
         {
@@ -257,11 +258,11 @@ public class PolicyPremiumCalculatorService(
         decimal engineCapacity;
         if (privateCarInsurance != null)
         {
-            engineCapacity = GetCubicCapacityFromEngineCapacity(privateCarInsurance.EngineCapacity);
+            engineCapacity = ConfigDetailService.GetCubicCapacityFromEngineCapacity(privateCarInsurance.EngineCapacity);
         }
         else if (thirdPartyCarInsurance != null)
         {
-            engineCapacity = GetCubicCapacityFromEngineCapacity(thirdPartyCarInsurance.EngineCapacity);
+            engineCapacity = ConfigDetailService.GetCubicCapacityFromEngineCapacity(thirdPartyCarInsurance.EngineCapacity);
         }
         else
         {
@@ -525,7 +526,7 @@ public class PolicyPremiumCalculatorService(
                 DateOfPurchase = SafeCreateDateTimeFromYear(commercialVehicle.YearOfRegistration),
                 ChasisNumber = DefaultChasisNumber,
                 EngineNumber = DefaultEngineNumber,
-                KiloWatt = GetKiloWattFromEngineCapacity(commercialVehicle.EngineCapacity),
+                KiloWatt = ConfigDetailService.GetKiloWattFromEngineCapacity(commercialVehicle.EngineCapacity),
                 VoluntaryExcess = isComprehensive ? excessAmount : 0,
                 YearsFromRegistrationDateYearsBS = SafeCalculateYearDifference(commercialVehicle.YearOfRegistration),
                 YearsFromRegistrationDateYears = SafeCreateDateTimeFromYear(commercialVehicle.YearOfRegistration),
@@ -622,7 +623,7 @@ public class PolicyPremiumCalculatorService(
                             DateOfPurchase = SafeCreateDateTimeFromYear(commercialVehicle.YearOfRegistration),
                             ChasisNumber = DefaultChasisNumber,
                             EngineNumber = DefaultEngineNumber,
-                            KiloWatt = GetKiloWattFromEngineCapacity(commercialVehicle.EngineCapacity),
+                            KiloWatt = ConfigDetailService.GetKiloWattFromEngineCapacity(commercialVehicle.EngineCapacity),
                             YearsFromRegistrationDateYearsBS = SafeCalculateYearDifference(commercialVehicle.YearOfRegistration),
                             YearsFromRegistrationDateYears = SafeCreateDateTimeFromYear(commercialVehicle.YearOfRegistration),
                 CurrentMarketPrice = commercialVehicle.MarketValue.ToString("N0"),
@@ -1179,29 +1180,6 @@ public class PolicyPremiumCalculatorService(
     #endregion
 
     #region Helper Methods
-
-    private decimal GetKiloWattFromEngineCapacity(VechileEngineCapacityCategory engineCapacity)
-    {
-        return engineCapacity switch
-        {
-            VechileEngineCapacityCategory.Under1000 => 1000,
-            VechileEngineCapacityCategory.From1000To1500 => 1500,
-            VechileEngineCapacityCategory.Above1500 => 1501,
-            _ => 1000
-        };
-    }
-
-    private decimal GetCubicCapacityFromEngineCapacity(VechileEngineCapacityCategory engineCapacity)
-    {
-        return engineCapacity switch
-        {
-            VechileEngineCapacityCategory.Under1000 => 999,
-            VechileEngineCapacityCategory.From1000To1500 => 1250,
-            VechileEngineCapacityCategory.Above1500 => 1501,
-            _ => throw new ArgumentOutOfRangeException(nameof(engineCapacity))
-        };
-    }
-
     private DateTime SafeCreateDateTimeFromYear(int year)
     {
         // DateTime constructor requires year between 1 and 9999
@@ -1283,7 +1261,7 @@ public class PolicyPremiumCalculatorService(
             AccessoriesDetail = "",
             ChasisNumber = DefaultChasisNumber,
             EngineNumber = DefaultEngineNumber,
-            CubicCapacity = GetCubicCapacityFromEngineCapacity(commercialVehicle.EngineCapacity)
+            CubicCapacity = ConfigDetailService.GetCubicCapacityFromEngineCapacity(commercialVehicle.EngineCapacity)
         };
     }
 

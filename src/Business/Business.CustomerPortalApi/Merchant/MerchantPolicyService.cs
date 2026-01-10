@@ -121,7 +121,7 @@ public class MerchantPolicyService(ICoreApiService coreApiService, ApplicationDa
         }
 
         // Determine policy codes based on vehicle type
-        var isFuel = motorEntity.VehicleType == (int)VechileType.Fuel;
+        var isFuel = motorEntity.VehicleType == (int)VehicleType.Fuel;
         var policyCode = isFuel ? "MCY" : "EMCY";
 
         policyDraft = CreatePolicyDraft(
@@ -144,7 +144,7 @@ public class MerchantPolicyService(ICoreApiService coreApiService, ApplicationDa
                 VechileType = model.Motor.VechileType,
                 ManufactureCompany = model.Motor.ManufactureCompany,
                 EngineCapacity = isFuel ? model.Motor.CubicCapacity : null,
-                KilloWattRange = model.Motor.VechileType == VechileType.Electric
+                KilloWattRange = model.Motor.VechileType == VehicleType.Electric
                     ? model.Motor.KiloWatt
                     : null
             }
@@ -191,8 +191,8 @@ public class MerchantPolicyService(ICoreApiService coreApiService, ApplicationDa
     }
     private Motor CreateMotor(Motor motor, MotorRequestModel model)
     {
-        var isElectric = model.VechileType == VechileType.Electric;
-        var isFuel = model.VechileType == VechileType.Fuel;
+        var isElectric = model.VechileType == VehicleType.Electric;
+        var isFuel = model.VechileType == VehicleType.Fuel;
 
 
         motor.IsThirdParty = model?.IsThirdParty ?? false;

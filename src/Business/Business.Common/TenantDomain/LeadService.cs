@@ -87,7 +87,7 @@ public class LeadService : ILeadService
             {
                 FullName = dto.FullName,
                 Email = dto.Email,
-                Phone = dto.Phone ?? string.Empty
+                Phone = dto.Phone ?? string.Empty,
             };
 
             await _db.Contacts.AddAsync(contact, cancellationToken);
@@ -100,12 +100,15 @@ public class LeadService : ILeadService
 
             await _db.Prospects.AddAsync(prospect, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken); // Save to get prospect ID
-
             var lead = new Lead
             {
                 ProspectId = prospect.Id,
                 Status = LeadStatus.New,
-                Source = "Web"
+                Source = "Web",
+                TenantId = _db.CurrentTenantId,
+                EstimatedPremium = dto.EstimatedPremium,
+                DeadLineDate = dto.DeadLineDate,
+                OwnerUserId = _userProfileService.GetUserId()
             };
 
             await _db.Leads.AddAsync(lead, cancellationToken);

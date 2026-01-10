@@ -13,14 +13,14 @@ namespace BeemaEdgeApi.Controllers.V1.FoDo.Lead;
 
 public class LeadController(ILeadService leads) : BaseMarketingExecutiveApiController
 {
-    [HttpPost]
+    [HttpPost(nameof(CreateAsync))]
     [Permission(MenuPermissionConstant.MarketingExecutiveLeadsCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateLeadPublicDto dto, CancellationToken cancellationToken = default)
     {
         return HandleResult(await leads.CreateLeadAsync(dto, cancellationToken));
     }
 
-    [HttpGet]
+    [HttpPost(nameof(ListAsync))]
     [Permission(MenuPermissionConstant.MarketingExecutiveLeadsView)]
     public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel, [FromQuery] string? status, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken cancellationToken = default)
     {
