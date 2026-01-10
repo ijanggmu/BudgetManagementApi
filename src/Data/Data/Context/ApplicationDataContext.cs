@@ -89,6 +89,10 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
         public DbSet<PropertySubsidySILimit> PropertySubsidySILimits { get; set; }
         public DbSet<PropertyRiskConfiguration> PropertyRiskConfigurations { get; set; }
 
+        // Gateway Configurations
+        public DbSet<EmailGatewayConfiguration> EmailGatewayConfigurations { get; set; }
+        public DbSet<SmsGatewayConfiguration> SmsGatewayConfigurations { get; set; }
+
     #endregion  DbSets
 
 

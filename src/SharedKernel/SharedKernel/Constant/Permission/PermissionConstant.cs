@@ -161,6 +161,8 @@ public static class MenuPermissionConstant
 
     public const string CommonUtilitiesName = "Common Utilities";
     public const string FileUploadName = "File Upload";
+    public const string EmailGatewayName = "Email Gateway";
+    public const string SmsGatewayName = "SMS Gateway";
 
     public const string BranchName = "Branch";
     public const string DesignationName = "Designation";
@@ -253,6 +255,21 @@ public static class MenuPermissionConstant
     public const string FileUploadViewName = "File Upload View";
     public const string FileUploadCreate = "22-2-2";
     public const string FileUploadCreateName = "File Upload Create";
+
+    // Gateway Configurations (Operations)
+    public const string EmailGatewayView = "20-23-1";
+    public const string EmailGatewayViewName = "Email Gateway View";
+    public const string EmailGatewayCreate = "20-23-2";
+    public const string EmailGatewayUpdate = "20-23-3";
+    public const string EmailGatewayDelete = "20-23-4";
+    public const string EmailGatewayExport = "20-23-5";
+
+    public const string SmsGatewayView = "20-24-1";
+    public const string SmsGatewayViewName = "SMS Gateway View";
+    public const string SmsGatewayCreate = "20-24-2";
+    public const string SmsGatewayUpdate = "20-24-3";
+    public const string SmsGatewayDelete = "20-24-4";
+    public const string SmsGatewayExport = "20-24-5";
 }
 public static class CmsMenuConstant
 {

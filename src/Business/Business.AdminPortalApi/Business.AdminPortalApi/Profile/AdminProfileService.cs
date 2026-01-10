@@ -24,22 +24,41 @@ public class AdminProfileService(
         if (string.IsNullOrEmpty(userId))
             return Result<AdminUserProfileResponseModel>.Failed(ResponseMessage.UserNotFound);
 
-        // Old-style LINQ query syntax with joins + projection
+        //// Old-style LINQ query syntax with joins + projection
+        //var profile = await
+        //    (from admin in dbContext.Admins.AsNoTracking()
+        //     join user in dbContext.Users.AsNoTracking()
+        //         on admin.UserId equals user.Id
+        //     join userRole in dbContext.UserRoles.AsNoTracking()
+        //         on user.Id equals userRole.UserId into urGroup
+        //     from ur in urGroup.DefaultIfEmpty()
+        //     join role in dbContext.Roles.AsNoTracking()
+        //         on ur.RoleId equals role.Id into rGroup
+        //     from r in rGroup.DefaultIfEmpty()
+        //     where admin.UserId == userId && !user.IsDeleted
+        //     group r by new { admin.FullName, user.Email, user.PhoneNumber } into grp
+        //     select new AdminUserProfileResponseModel
+        //     {
+        //         FullName = grp.Key.FullName,
+        //         Email = grp.Key.Email,
+        //         PhoneNumber = grp.Key.PhoneNumber,
+        //         Roles = grp.Where(x => x != null).Select(x => x.Name).ToList()
+        //     })
+        //    .FirstOrDefaultAsync(ct);
+
         var profile = await
-            (from admin in dbContext.Admins.AsNoTracking()
-             join user in dbContext.Users.AsNoTracking()
-                 on admin.UserId equals user.Id
+             (from user in dbContext.Users.AsNoTracking()
              join userRole in dbContext.UserRoles.AsNoTracking()
                  on user.Id equals userRole.UserId into urGroup
              from ur in urGroup.DefaultIfEmpty()
              join role in dbContext.Roles.AsNoTracking()
                  on ur.RoleId equals role.Id into rGroup
              from r in rGroup.DefaultIfEmpty()
-             where admin.UserId == userId && !user.IsDeleted
-             group r by new { admin.FullName, user.Email, user.PhoneNumber } into grp
+             where user.Id == userId && !user.IsDeleted
+             group r by new { user.UserName, user.Email, user.PhoneNumber } into grp
              select new AdminUserProfileResponseModel
              {
-                 FullName = grp.Key.FullName,
+                 FullName = grp.Key.UserName,
                  Email = grp.Key.Email,
                  PhoneNumber = grp.Key.PhoneNumber,
                  Roles = grp.Where(x => x != null).Select(x => x.Name).ToList()

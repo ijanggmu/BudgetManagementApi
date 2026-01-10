@@ -89,6 +89,10 @@ public static class MenuPermissionDefinitions
     // Operations - Notice Board (moved from System)
     public static readonly MenuPermissionSet NoticeBoard = PermissionHelper.GeneratePermissions("20-22", "Notice Board", includeExport: false);
 
+    // Operations - Gateway Configurations
+    public static readonly MenuPermissionSet EmailGateway = PermissionHelper.GeneratePermissions("20-23", "Email Gateway");
+    public static readonly MenuPermissionSet SmsGateway = PermissionHelper.GeneratePermissions("20-24", "SMS Gateway");
+
     // Common Utilities (for lookup endpoints)
     public static readonly MenuPermissionSet CommonUtilities = PermissionHelper.GeneratePermissions(
         "22-1", "Common Utilities", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
@@ -134,6 +138,8 @@ public static class MenuPermissionDefinitions
             nameof(MarketingExecutiveQuotations) => MarketingExecutiveQuotations,
             nameof(CommonAttendance) => CommonAttendance,
             nameof(NoticeBoard) => NoticeBoard,
+            nameof(EmailGateway) => EmailGateway,
+            nameof(SmsGateway) => SmsGateway,
             nameof(CommonUtilities) => CommonUtilities,
             nameof(FileUpload) => FileUpload,
             _ => null

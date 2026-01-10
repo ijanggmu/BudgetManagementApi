@@ -19,7 +19,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// </summary>
     /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
     /// <returns>List of admins</returns>
-    [HttpGet]
+    [HttpPost]
     [Permission(MenuPermissionConstant.AdminManagementView)]
     public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel, [FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
         => HandleResult(await adminService.GetAdminsForAdminAsync(requestModel, tenantId, cancellationToken));
@@ -39,7 +39,7 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// </summary>
     /// <param name="dto">Admin creation data</param>
     /// <returns>Created admin details</returns>
-    [HttpPost]
+    [HttpPost("create")]
     [Permission(MenuPermissionConstant.AdminManagementCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateAdminDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await adminService.CreateAsync(dto, cancellationToken));

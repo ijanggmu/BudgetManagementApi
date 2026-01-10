@@ -457,6 +457,40 @@ public static partial class MenuPermissionsList
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.NoticeBoard, false),
                         Children = null
                     },
+                    ////// 20-23. Operations > Email Gateway
+                    //new MenuItem
+                    //{
+                    //    MenuId = 23,
+                    //    MenuName = MenuPermissionConstant.EmailGatewayName,
+                    //    MenuSlug = "/email-gateway",
+                    //    Icon = "MailOutlined",
+                    //    Rank = 7,
+                    //    Level = 2,
+                    //    IsDisabled = false,
+                    //    IsMenu = true,
+                    //    ToHide = false,
+                    //    HideChildren = false,
+                    //    AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Email Gateway for SuperAdmin and TenantAdmin
+                    //    Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.EmailGateway, false),
+                    //    Children = null
+                    //},
+                    //// 20-24. Operations > SMS Gateway
+                    //new MenuItem
+                    //{
+                    //    MenuId = 24,
+                    //    MenuName = MenuPermissionConstant.SmsGatewayName,
+                    //    MenuSlug = "/sms-gateway",
+                    //    Icon = "MessageOutlined",
+                    //    Rank = 8,
+                    //    Level = 2,
+                    //    IsDisabled = false,
+                    //    IsMenu = true,
+                    //    ToHide = false,
+                    //    HideChildren = false,
+                    //    AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // SMS Gateway for SuperAdmin and TenantAdmin
+                    //    Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.SmsGateway, false),
+                    //    Children = null
+                    //},
                 }
             },
 
