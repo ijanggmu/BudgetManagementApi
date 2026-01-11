@@ -293,6 +293,17 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
                 .HasDatabaseName("IX_PremiumCalculationRateTable_ConfigId_TableName");
         });
 
+        // Notification indexes for performance
+        builder.Entity<Notification>(entity =>
+        {
+            entity.HasIndex(n => new { n.UserId, n.ReadAt })
+                .HasDatabaseName("IX_Notifications_UserId_ReadAt");
+            entity.HasIndex(n => n.SentAt)
+                .HasDatabaseName("IX_Notifications_SentAt");
+            entity.HasIndex(n => n.TenantId)
+                .HasDatabaseName("IX_Notifications_TenantId");
+        });
+
         // Apply global query filters for IsDeleted and TenantId
         // This is done in a single pass for better performance
         var entityTypes = builder.Model.GetEntityTypes().Select(et => et.ClrType).ToList();
