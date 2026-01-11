@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Models.BeemaEdgeApi.Identity;
+
 public class IndividualLoginRequestModel
 {
     [Required(ErrorMessage = "Phonenumber is required.")]
@@ -72,6 +73,8 @@ public class LoginAdminResponseModel
     public string Token { get; set; }
     public bool IsTwoFactorEnabled { get; set; }
     public bool IsPhoneNumberConfirmed { get; set; }
+    public bool HaveCheckedIn { get; set; }
+    public string RoleType { get; set; }
     public BrandingResponseModel Branding { get; set; }
 }
 
