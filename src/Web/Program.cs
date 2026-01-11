@@ -14,6 +14,7 @@ using BeemaEdgeApi.Extensions.RateLimit;
 using BeemaEdgeApi.Extensions.Refit;
 using BeemaEdgeApi.Extensions.SecurityHeaders;
 using BeemaEdgeApi.Filters.ActionFilters;
+using BeemaEdgeApi.Hubs;
 using BeemaEdgeApi.Middleware;
 using Data.Context;
 using Data.Entities.Identity;
@@ -60,6 +61,7 @@ try
 
     builder.Services.AddApplicationDatabase(builder.Configuration)
         .AddAuthenticationServices(builder.Configuration)
+        .AddSignalRExtension()
         .AddApplicationExtension()
         .AddApplicationIndividualServiceExtension()
         .AddApplicationCommonServiceExtension()
@@ -109,6 +111,7 @@ try
     app.UseAuthorization();
     app.UseRequestLogging();
 
+    app.MapHub<NotificationHub>("/hubs/notifications");
     app.MapControllers();
     app.MapHealthCheckEndPoint();
     await app.RunAsync();

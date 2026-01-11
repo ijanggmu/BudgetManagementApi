@@ -100,6 +100,8 @@ public static class ApplicationCustomerServiceExtension
         services.AddScoped<IAdminPasswordService, AdminPasswordService>();
         services.AddScoped<Business.AdminPortalApi.Gateway.IGatewayConfigurationService, Business.AdminPortalApi.Gateway.GatewayConfigurationService>();
         services.AddScoped<Business.AdminPortalApi.Dashboard.IDashboardService, Business.AdminPortalApi.Dashboard.DashboardService>();
+        services.AddScoped<Business.AdminPortalApi.Notification.INotificationService, Business.AdminPortalApi.Notification.NotificationService>();
+        services.AddScoped<Business.AdminPortalApi.Notification.INotificationSender, BeemaEdgeApi.Services.NotificationSenderService>();
 
         return services;
     }
