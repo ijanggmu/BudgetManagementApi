@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Data.Migrations.Core
 {
     [DbContext(typeof(ApplicationDataContext))]
-    partial class ApplicationDataContextModelSnapshot : ModelSnapshot
+    [Migration("20260108140708_LeadFieldAddition")]
+    partial class LeadFieldAddition
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2839,13 +2842,7 @@ namespace Data.Migrations.Core
                     b.Property<decimal?>("DiscountPercent")
                         .HasColumnType("numeric");
 
-                    b.Property<int>("InsuranceType")
-                        .HasColumnType("integer");
-
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool?>("IsDirectBusiness")
                         .HasColumnType("boolean");
 
                     b.Property<string>("LastModifiedBy")
@@ -2858,12 +2855,6 @@ namespace Data.Migrations.Core
                         .HasColumnType("text");
 
                     b.Property<string>("PdfUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PortfolioAlias")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PremiumCalculationJson")
                         .HasColumnType("text");
 
                     b.Property<string>("ProductId")

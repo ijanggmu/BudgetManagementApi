@@ -13,14 +13,14 @@ namespace BeemaEdgeApi.Controllers.V1.FoDo.Quotation;
 
 public class QuotationController(IQuotationService quotes) : BaseMarketingExecutiveApiController
 {
-    [HttpPost]
+    [HttpPost(nameof(CreateAsync))]
     [Permission(MenuPermissionConstant.MarketingExecutiveQuotationsCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateQuotationDto dto, CancellationToken cancellationToken = default)
     {
         return HandleResult(await quotes.CreateAsync(dto, cancellationToken));
     }
 
-    [HttpGet]
+    [HttpPost(nameof(ListAsync))]
     [Permission(MenuPermissionConstant.MarketingExecutiveQuotationsView)]
     public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel? requestModel = null, CancellationToken cancellationToken = default)
     {

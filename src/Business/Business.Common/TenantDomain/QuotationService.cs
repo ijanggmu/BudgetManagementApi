@@ -1,6 +1,7 @@
-using System.Threading;
+using System.Text.Json;
 using Business.AdminPortalApi.ExcelExport;
 using Business.AdminPortalApi.PdfGeneration;
+using Business.Common.PolicyCalculator;
 using Data.Context;
 using Data.Entities.Identity;
 using Data.Entities.Tenant;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Models.Common;
+using Models.Common.Policy.ThirdPartyApi.e2e;
 using Models.WebApi.TenantDTOs;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Models.Tenancy;
@@ -28,6 +30,7 @@ public class QuotationService : IQuotationService
     private readonly IExcelExportService _excelExportService;
     private readonly IQuotationPdfService _pdfService;
     private readonly ITenantContext _tenantContext;
+    private readonly IPolicyPremiumCalculatorService _calculatePremium;
 
     public QuotationService(
         ApplicationDataContext db,
@@ -38,7 +41,8 @@ public class QuotationService : IQuotationService
         ILogger<QuotationService> logger,
         IExcelExportService excelExportService,
         IQuotationPdfService pdfService,
-        ITenantContext tenantContext)
+        ITenantContext tenantContext,
+        IPolicyPremiumCalculatorService calculatePremium)
     {
         _db = db;
         _numbers = numbers;
@@ -49,10 +53,23 @@ public class QuotationService : IQuotationService
         _excelExportService = excelExportService;
         _pdfService = pdfService;
         _tenantContext = tenantContext;
+        _calculatePremium = calculatePremium;
     }
 
     private static QuotationResponseDto MapToDto(Quotation quotation)
     {
+        var premiumCalculation = new CalculationPremium();
+        if (!string.IsNullOrEmpty(quotation.PremiumCalculationJson))
+        {
+            try
+            {
+                premiumCalculation = JsonSerializer.Deserialize<CalculationPremium>(quotation.PremiumCalculationJson);
+            }
+            catch
+            {
+                premiumCalculation = null;
+            }
+        }
         return new QuotationResponseDto(
             quotation.Id,
             quotation.Number,
@@ -70,12 +87,18 @@ public class QuotationService : IQuotationService
                 item.CoverageId,
                 item.SumInsured,
                 item.Premium
-            )).ToList() ?? new List<QuotationItemResponseDto>()
+            )).ToList() ?? new List<QuotationItemResponseDto>(),
+            premiumCalculation
         );
     }
 
     public async Task<Result<QuotationResponseDto>> CreateAsync(CreateQuotationDto dto, CancellationToken cancellationToken = default)
     {
+        var premiumCalculation = await _calculatePremium.CalculatePolicyPremiumAsync(dto.PremiumRequestModel);
+        if(!premiumCalculation.IsSuccess){
+            return Result<QuotationResponseDto>.Failed($"An error occurred while calculating Premium");
+        }
+        var premiumCalculationJson = JsonSerializer.Serialize(premiumCalculation.Data);
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
@@ -84,16 +107,24 @@ public class QuotationService : IQuotationService
                 Number = await _numbers.NextAsync(),
                 ProductId = dto.ProductId.ToString(),
                 ProspectId = dto.ProspectId.ToString(),
+                InsuranceType = dto.PremiumRequestModel.InsuranceType,
+                PortfolioAlias = premiumCalculation.Data.PortfolioAlias,
+                TotalPremium = premiumCalculation.Data.NetPremium,
+                ValidUntil = dto.ValidUntil,
+                PremiumCalculationJson = premiumCalculationJson,
+                IsDirectBusiness = dto.IsDirectBusiness?? false,
             };
-
-            foreach (var item in dto.Items)
+            if (dto.Items != null && dto.Items.Any())
             {
-                quote.Items.Add(new QuotationItem
+                foreach (var item in dto.Items)
                 {
-                    CoverageId = item.CoverageId.ToString(),
-                    SumInsured = item.SumInsured,
-                    Premium = 0m
-                });
+                    quote.Items.Add(new QuotationItem
+                    {
+                        CoverageId = item.CoverageId.ToString(),
+                        SumInsured = item.SumInsured,
+                        Premium = 0m
+                    });
+                }
             }
 
             _db.Add(quote);
@@ -102,7 +133,6 @@ public class QuotationService : IQuotationService
 
             // Reload with items
             await _db.Entry(quote).Collection(q => q.Items).LoadAsync();
-
             return Result<QuotationResponseDto>.Success(MapToDto(quote));
         }
         catch (Exception ex)

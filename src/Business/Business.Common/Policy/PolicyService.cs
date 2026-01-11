@@ -178,7 +178,7 @@ public class PolicyService(ApplicationDataContext context,
             BancassuanceBankBranch = "Dummy Bank Branch",
         };
 
-        if (requestModel.MotorPartial.VechileType == (int)VechileType.Fuel)
+        if (requestModel.MotorPartial.VechileType == (int)VehicleType.Fuel)
         {
             createPolicyViewModel.PortfolioAlias = "MCY";
             createPolicyViewModel.PortfolioId = "MCY";
@@ -209,7 +209,7 @@ public class PolicyService(ApplicationDataContext context,
             };
             createPolicyViewModel.MotorPartial = motorPartial;
         }
-        if (requestModel.MotorPartial.VechileType == (int)VechileType.Electric)
+        if (requestModel.MotorPartial.VechileType == (int)VehicleType.Electric)
         {
             var electricMotorPartial = new ElectricMotorcyclePartialViewModel
             {
@@ -421,7 +421,7 @@ public class PolicyService(ApplicationDataContext context,
                     IsComprehensive = model.Motor.IsComprehensive,
                     RiotStrike = model.Motor.RiotStrike,
                     Type = model.Motor.Type,
-                    VechileType = (VechileType)model.Motor.VehicleType,
+                    VechileType = (VehicleType)model.Motor.VehicleType,
                     AgeOfVehicle = model.Motor.AgeOfVehicle,
                     ManufactureYear = model.Motor.ManufactureYear,
                     ManufactureCompany = model.Motor.ManufactureCompany,
