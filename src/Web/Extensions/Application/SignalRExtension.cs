@@ -20,35 +20,35 @@ public static class SignalRExtension
 
         // Configure JWT authentication for SignalR connections
         // SignalR can receive tokens via query string or header
-        services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
-        {
-            options.Events = new JwtBearerEvents
-            {
-                OnMessageReceived = context =>
-                {
-                    // Support token in query string for SignalR WebSocket connections
-                    var accessToken = context.Request.Query["access_token"];
-                    var path = context.HttpContext.Request.Path;
+        //services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+        //{
+        //    options.Events = new JwtBearerEvents
+        //    {
+        //        OnMessageReceived = context =>
+        //        {
+        //            // Support token in query string for SignalR WebSocket connections
+        //            var accessToken = context.Request.Query["access_token"];
+        //            var path = context.HttpContext.Request.Path;
 
-                    // Only apply to SignalR hub endpoints
-                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
-                    {
-                        context.Token = accessToken;
-                    }
-                    // Also check Authorization header (standard JWT flow)
-                    else if (string.IsNullOrEmpty(context.Token))
-                    {
-                        var authHeader = context.Request.Headers["Authorization"].ToString();
-                        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
-                        {
-                            context.Token = authHeader.Substring("Bearer ".Length).Trim();
-                        }
-                    }
+        //            // Only apply to SignalR hub endpoints
+        //            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+        //            {
+        //                context.Token = accessToken;
+        //            }
+        //            // Also check Authorization header (standard JWT flow)
+        //            else if (string.IsNullOrEmpty(context.Token))
+        //            {
+        //                var authHeader = context.Request.Headers["Authorization"].ToString();
+        //                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+        //                {
+        //                    context.Token = authHeader.Substring("Bearer ".Length).Trim();
+        //                }
+        //            }
 
-                    return Task.CompletedTask;
-                }
-            };
-        });
+        //            return Task.CompletedTask;
+        //        }
+        //    };
+        //});
 
         return services;
     }
