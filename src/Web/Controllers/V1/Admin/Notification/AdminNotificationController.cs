@@ -10,7 +10,6 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Notification;
 
-[Route("api/v1/admin/notifications")]
 public class AdminNotificationController(INotificationService notificationService) : BaseAdminApiController
 {
     /// <summary>

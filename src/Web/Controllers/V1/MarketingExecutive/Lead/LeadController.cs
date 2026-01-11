@@ -9,20 +9,20 @@ using Models.Common;
 using Models.WebApi.TenantDTOs;
 using SharedKernel.Constant.Permission;
 
-namespace BeemaEdgeApi.Controllers.V1.FoDo.Lead;
+namespace BeemaEdgeApi.Controllers.V1.MarketingExecutive.Lead;
 
 public class LeadController(ILeadService leads) : BaseMarketingExecutiveApiController
 {
-    [HttpPost(nameof(CreateAsync))]
+    [HttpPost("create")]
     [Permission(MenuPermissionConstant.MarketingExecutiveLeadsCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateLeadPublicDto dto, CancellationToken cancellationToken = default)
     {
         return HandleResult(await leads.CreateLeadAsync(dto, cancellationToken));
     }
 
-    [HttpPost(nameof(ListAsync))]
+    [HttpPost]
     [Permission(MenuPermissionConstant.MarketingExecutiveLeadsView)]
-    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel requestModel, [FromQuery] string? status, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         return HandleResult(await leads.ListAsync(requestModel, cancellationToken));
     }
