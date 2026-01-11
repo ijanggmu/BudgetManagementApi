@@ -121,9 +121,9 @@ IFileService fileService) : IAdminAuthService
             if (!string.IsNullOrEmpty(user.TenantId))
             {
                 var tenant = await dbContext.Tenants
-                    .Include(t => t.Branding)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.Id == user.TenantId, cancellationToken: ct);
+                                            .Include(t => t.Branding)
+                                            .AsNoTracking()
+                                            .FirstOrDefaultAsync(t => t.Id == user.TenantId, cancellationToken: ct);
 
                 if (tenant?.Branding != null)
                 {
@@ -136,6 +136,7 @@ IFileService fileService) : IAdminAuthService
                         Version = tenant.Branding.Version
                     };
                 }
+
                 return Result<LoginAdminResponseModel>.Success(responseModel, statusCode: HttpStatusCode.OK);
 
             }
