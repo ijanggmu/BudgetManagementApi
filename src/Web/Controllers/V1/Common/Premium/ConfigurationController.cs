@@ -1,15 +1,8 @@
 using System.Threading.Tasks;
-using Business.Common.PolicyCalculator;
 using BeemaEdgeApi.Controllers.V1.BaseController;
-using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Microsoft.AspNetCore.Mvc;
 using Models.Common.Policy.Policy;
-using SharedKernel.Constant.Permission;
 using Business.Common.PremiumCalculation.Service;
-using Data.Entities.Calculation;
-using Models.Common.Policy.Policy.Fire;
-using System.Collections.Generic;
-using System.IO;
 using Models.Common.Policy.Enum;
 using System;
 using System.Linq;
@@ -30,6 +23,62 @@ public class ConfigurationController(IPropertyRiskConfigurationService propertyR
     {
         var enums = Enum.GetValues(typeof(CommercialVehicleClassEnum))
             .Cast<CommercialVehicleClassEnum>()
+            .Select(e => new EnumViewModel
+            {
+                Value = (int)e,
+                Name = e.ToString()
+            })
+            .ToList();
+
+        return Ok(enums);
+    }
+    [HttpGet(nameof(GetVehicleTypes))]
+    public IActionResult GetVehicleTypes()
+    {
+        var enums = Enum.GetValues(typeof(VehicleType))
+            .Cast<VehicleType>()
+            .Select(e => new EnumViewModel
+            {
+                Value = (int)e,
+                Name = e.ToString()
+            })
+            .ToList();
+
+        return Ok(enums);
+    }
+    [HttpGet(nameof(GetVechileEngineCapacityCategory))]
+    public IActionResult GetVechileEngineCapacityCategory()
+    {
+        var enums = Enum.GetValues(typeof(VechileEngineCapacityCategory))
+            .Cast<VechileEngineCapacityCategory>()
+            .Select(e => new EnumViewModel
+            {
+                Value = (int)e,
+                Name = e.ToString()
+            })
+            .ToList();
+
+        return Ok(enums);
+    }
+    [HttpGet(nameof(GetMarineType))]
+    public IActionResult GetMarineType()
+    {
+        var enums = Enum.GetValues(typeof(MarineType))
+            .Cast<MarineType>()
+            .Select(e => new EnumViewModel
+            {
+                Value = (int)e,
+                Name = e.ToString()
+            })
+            .ToList();
+
+        return Ok(enums);
+    }
+    [HttpGet(nameof(GetCurrency))]
+    public IActionResult GetCurrency()
+    {
+        var enums = Enum.GetValues(typeof(Currency))
+            .Cast<Currency>()
             .Select(e => new EnumViewModel
             {
                 Value = (int)e,
