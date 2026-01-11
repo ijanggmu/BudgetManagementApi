@@ -1,11 +1,15 @@
+using Models.Common.Policy.Policy;
+using Models.Common.Policy.ThirdPartyApi.e2e;
+
 namespace Models.WebApi.TenantDTOs;
 
-public record CreateLeadPublicDto(string FullName, string Email, string? Phone, string ProductCode);
+public record CreateLeadPublicDto(string FullName, string Email, string? Phone, string ProductCode, decimal EstimatedPremium, DateTime DeadLineDate);
 public record LeadActivityDto(string Kind, string Notes);
 public record RatingPreviewDto(string ProductCode, DateOnly AsOf, IDictionary<string, object> Inputs);
 public record RatingPreviewResultDto(decimal Total, object Breakdown, int RateTable, int Formula);
 
-public record CreateQuotationDto(Guid ProductId, Guid ProspectId, IEnumerable<QuotationItemDto> Items);
+//public record CreateQuotationDto(Guid ProductId, Guid ProspectId, InsuranceType InsuranceType, IEnumerable<QuotationItemDto> Items);
+public record CreateQuotationDto(Guid ProductId, Guid ProspectId,DateOnly? ValidUntil, bool? IsDirectBusiness, PremiumCalculateRequestModel PremiumRequestModel, IEnumerable<QuotationItemDto> Items);
 public record UpdateQuotationDto(string? Status, decimal? TotalPremium, decimal? DiscountPercent, DateOnly? ValidUntil, IEnumerable<QuotationItemDto>? Items);
 public record QuotationItemDto(Guid CoverageId, decimal SumInsured);
 public record ComputeQuotationDto(DateOnly AsOf, IDictionary<string, object> Inputs);
@@ -104,7 +108,8 @@ public record QuotationResponseDto(
     DateOnly? ValidUntil,
     string? PdfUrl,
     DateTime CreatedOn,
-    List<QuotationItemResponseDto> Items
+    List<QuotationItemResponseDto> Items,
+    CalculationPremium? ResponsePremiumCalculation
 );
 
 public record QuotationItemResponseDto(

@@ -11,7 +11,7 @@ public class ComprehensiveMotorPolicyRequestModel
 {
     public bool RiotStrike { get; set; }
     public string Type { get; set; }
-    public VechileType VechileType { get; set; }
+    public VehicleType VechileType { get; set; }
     public int? AgeOfVehicle { get; set; }
     public string ManufactureYear { get; set; }
     public string ManufactureCompany { get; set; }

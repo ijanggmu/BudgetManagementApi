@@ -260,7 +260,7 @@ namespace Models.Common.Policy.Policy
 
     public class PrivateCarInsuranceModel
     {
-        public VechileType VechileType { get; set; }
+        public VehicleType VechileType { get; set; }
         public VechileEngineCapacityCategory EngineCapacity { get; set; }
         public KilowattRange KilloWattRange { get; set; }
         public decimal MarketValue { get; set; }
@@ -279,7 +279,7 @@ namespace Models.Common.Policy.Policy
 
     public class ThirdPartyPrivateCarInsuranceModel
     {
-        public VechileType VechileType { get; set; }
+        public VehicleType VechileType { get; set; }
         public VechileEngineCapacityCategory EngineCapacity { get; set; }
         public KilowattRange KilloWattRange { get; set; }
         public int NumberOfDrivers { get; set; }
@@ -292,12 +292,12 @@ namespace Models.Common.Policy.Policy
     public class BikeFullInsuranceModel
     {
         [Required(ErrorMessage = "Vehicle type is required.")]
-        public VechileType VechileType { get; set; }
+        public VehicleType VechileType { get; set; }
 
-        [RequiredIf(nameof(VechileType), (int)VechileType.Fuel, ErrorMessage = "EngineCapacity is required.")]
+        [RequiredIf(nameof(VechileType), (int)VehicleType.Fuel, ErrorMessage = "EngineCapacity is required.")]
         public int EngineCapacity { get; set; }
 
-        [RequiredIf(nameof(VechileType), (int)VechileType.Electric, ErrorMessage = "KilloWattRange is required.")]
+        [RequiredIf(nameof(VechileType), (int)VehicleType.Electric, ErrorMessage = "KilloWattRange is required.")]
         public int KilloWattRange { get; set; }
 
         [Required(ErrorMessage = "Market Value is required.")]
@@ -322,11 +322,11 @@ namespace Models.Common.Policy.Policy
     }
     public class ThirdPartyBikeInsuranceModel
     {
-        public VechileType VechileType { get; set; }
-        [RequiredIf(nameof(VechileType), (int)VechileType.Fuel, ErrorMessage = "EngineCapacity is required.")]
+        public VehicleType VechileType { get; set; }
+        [RequiredIf(nameof(VechileType), (int)VehicleType.Fuel, ErrorMessage = "EngineCapacity is required.")]
         public decimal? EngineCapacity { get; set; }
 
-        [RequiredIf(nameof(VechileType), (int)VechileType.Electric, ErrorMessage = "KilloWattRange is required.")]
+        [RequiredIf(nameof(VechileType), (int)VehicleType.Electric, ErrorMessage = "KilloWattRange is required.")]
         public decimal? KilloWattRange { get; set; }
         public string ManufactureCompany { get; set; } = "Manufacture Company";
         public string Model { get; set; } = "Manufacture Model";
@@ -340,7 +340,7 @@ namespace Models.Common.Policy.Policy
 
     public class CommercialVehicleInsuranceModel
     {
-        public VechileType VechileType { get; set; }
+        public VehicleType VechileType { get; set; }
         public CommercialVehicleClassEnum CommercialVehicleClassType { get; set; }
         public KilowattRange KilloWattRange { get; set; }
         public decimal MarketValue { get; set; }
@@ -449,7 +449,7 @@ namespace Models.Common.Policy.Policy
         SimpleRisk,
         ComplexRisk
     }
-    public enum VechileType
+    public enum VehicleType
     {
         Fuel,
         Electric

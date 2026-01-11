@@ -1,24 +1,19 @@
 using System.Net;
-using System.Threading;
 using Business.Common.Otp;
 using Business.Common.Sms;
 using Business.Common.Token;
 using Business.Common.Totp;
 using Data.Context;
-using Data.Entities.FodoEntity;
 using Data.Entities.Identity;
 using Data.Entities.Log;
-using Data.Entities.Tenant;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Models.BeemaEdgeApi.Fodo;
 using Models.BeemaEdgeApi.Identity;
 using Models.Common;
 using Models.Common.Token;
 using SharedKernel.Constant.ResponseConstant;
-using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 using SharedKernel.SystemEnum.Otp;
 
