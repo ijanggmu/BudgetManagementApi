@@ -1,23 +1,21 @@
 using System.Net;
-using Business.Common.Otp;
+using Business.Common.File;
 using Business.Common.StringCipher;
 using Business.Common.Token;
 using Business.Common.Totp;
 using Data.Context;
 using Data.Entities.Identity;
 using Infrastructure.Common.UserProfile;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Models.BeemaEdgeApi.Identity;
 using Models.Common;
 using Models.Common.Token;
-using Models.BeemaEdgeApi.Identity;
 using SharedKernel.Constant.ResponseConstant;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Helper;
 using SharedKernel.Operation;
-using Microsoft.AspNetCore.Http;
-using Data.Entities.Tenant;
-using Business.Common.File;
 
 namespace Business.AdminPortalApi.Auth;
 
@@ -98,6 +96,13 @@ IFileService fileService) : IAdminAuthService
         {
             var roleIds = await userManager.GetRolesAsync(user);
 
+            var roleType = await dbContext.Roles
+                .Where(x => roleIds.Contains(x.Name))
+                .Select(x => x.RoleType)
+                .FirstOrDefaultAsync(cancellationToken: ct);
+
+            responseModel.RoleType = roleType;
+
             var tokenModel = tokenService.CreateToken(user, roleIds.ToList());
 
             var refresh = await tokenService.CreateRefreshToken(user);
@@ -116,20 +121,22 @@ IFileService fileService) : IAdminAuthService
             if (!string.IsNullOrEmpty(user.TenantId))
             {
                 var tenant = await dbContext.Tenants
-                    .Include(t => t.Branding)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.Id == user.TenantId, cancellationToken: ct);
+                                            .Include(t => t.Branding)
+                                            .AsNoTracking()
+                                            .FirstOrDefaultAsync(t => t.Id == user.TenantId, cancellationToken: ct);
+
                 if (tenant?.Branding != null)
                 {
                     responseModel.Branding = new BrandingResponseModel
                     {
                         TenantId = tenant.Branding.TenantId,
-                        LogoSignedUrl = !string.IsNullOrEmpty(tenant.Branding.LogoUrl)?await fileService.GetFilePresignedUrlAsync(tenant.Branding.LogoUrl) :tenant.Branding.LogoUrl,
+                        LogoSignedUrl = !string.IsNullOrEmpty(tenant.Branding.LogoUrl) ? await fileService.GetFilePresignedUrlAsync(tenant.Branding.LogoUrl) : tenant.Branding.LogoUrl,
                         PaletteJson = tenant.Branding.PaletteJson,
                         TypographyJson = tenant.Branding.TypographyJson,
                         Version = tenant.Branding.Version
                     };
                 }
+
                 return Result<LoginAdminResponseModel>.Success(responseModel, statusCode: HttpStatusCode.OK);
 
             }
