@@ -2,6 +2,7 @@ using Business.AdminPortalApi.ExcelExport;
 using Business.AdminPortalApi.PdfGeneration;
 using Business.Common.TenantDomain;
 using Microsoft.Extensions.DependencyInjection;
+using PdfSharp.Fonts;
 
 namespace BeemaEdgeApi.Extensions.Application;
 
@@ -10,6 +11,8 @@ public static class TenantDomainServicesExtension
     public static IServiceCollection AddTenantDomainServices(this IServiceCollection services)
     {
         services.AddHttpClient();
+        GlobalFontSettings.UseWindowsFontsUnderWindows = true;
+
         services.AddScoped<IExcelExportService, ExcelExportService>();
         services.AddScoped<IQuotationPdfService, QuotationPdfService>();
         services.AddScoped<IBrandingService, BrandingService>();

@@ -8,6 +8,14 @@ public class ApplicationRoleConfiguration : IEntityTypeConfiguration<Application
 {
     public void Configure(EntityTypeBuilder<ApplicationRole> builder)
     {
+
+        // 🔥 REMOVE Identity's default unique index on NormalizedName
+        builder.HasIndex(r => r.NormalizedName)
+               .IsUnique(false);
+
+        // ✅ Correct uniqueness: TenantId + NormalizedName
+        builder.HasIndex(r => new { r.TenantId, r.NormalizedName })
+               .IsUnique();
     }
 }
 
