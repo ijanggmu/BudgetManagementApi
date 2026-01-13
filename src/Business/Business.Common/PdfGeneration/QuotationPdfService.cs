@@ -120,7 +120,6 @@ public class QuotationPdfService : IQuotationPdfService
     {
         // Normal style
         var style = document.Styles["Normal"];
-        style.Font.Name = "Segoe UI";
         style.Font.Size = 10;
         style.Font.Color = Colors.Black;
 
