@@ -8,6 +8,8 @@ public class Quotation : TenantEntity
     public string Number { get; set; } = default!;    // seq per tenant
     public string Status { get; set; } = "Draft";     // Draft|Submitted|Approved|Declined|Accepted
     public string ProductId { get; set; }
+    public string LeadId { get; set; }
+    public Lead Lead { get; set; }
     public InsuranceType InsuranceType { get; set; }
     public string PortfolioAlias { get; set; }
     public string ProspectId { get; set; }

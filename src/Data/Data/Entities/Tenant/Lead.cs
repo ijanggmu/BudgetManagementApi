@@ -13,6 +13,7 @@ public class Lead : TenantEntity
     public string OwnerUserId { get; set; }
     public DateTime DeadLineDate { get; set; }
     public decimal EstimatedPremium { get; set; }
+    public ICollection<Quotation> Quotations { get; set; } = new List<Quotation>();
 
 }
 

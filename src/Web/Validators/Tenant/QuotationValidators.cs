@@ -8,6 +8,7 @@ public class CreateQuotationDtoValidator : AbstractValidator<CreateQuotationDto>
 {
     public CreateQuotationDtoValidator()
     {
+        RuleFor(x => x.LeadId).NotEmpty();
         RuleFor(x => x.ProductId).NotEmpty();
         RuleFor(x => x.ProspectId).NotEmpty();
         RuleFor(x => x.Items).NotEmpty();

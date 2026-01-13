@@ -76,6 +76,7 @@ public class QuotationService : IQuotationService
             quotation.Status,
             quotation.ProductId,
             quotation.ProspectId,
+            quotation.LeadId,
             quotation.TotalPremium,
             quotation.DiscountPercent,
             quotation.ValidUntil,
@@ -106,6 +107,7 @@ public class QuotationService : IQuotationService
             {
                 Number = await _numbers.NextAsync(),
                 ProductId = dto.ProductId.ToString(),
+                LeadId = dto.LeadId,
                 ProspectId = dto.ProspectId.ToString(),
                 InsuranceType = dto.PremiumRequestModel.InsuranceType,
                 PortfolioAlias = premiumCalculation.Data.PortfolioAlias,
