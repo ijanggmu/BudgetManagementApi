@@ -1,13 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Data.Context;
 using Data.Entities.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Models.Common.Policy.Configuration.CalculationConfiguration;
 using Models.Common.Policy.Policy.Miscellaneous;
 
 namespace Business.Common.PremiumCalculation.Calculator.Travel;

@@ -76,6 +76,7 @@ public class QuotationService : IQuotationService
             quotation.Status,
             quotation.ProductId,
             quotation.ProspectId,
+            quotation.LeadId,
             quotation.TotalPremium,
             quotation.DiscountPercent,
             quotation.ValidUntil,
@@ -106,6 +107,7 @@ public class QuotationService : IQuotationService
             {
                 Number = await _numbers.NextAsync(),
                 ProductId = dto.ProductId.ToString(),
+                LeadId = dto.LeadId,
                 ProspectId = dto.ProspectId.ToString(),
                 InsuranceType = dto.PremiumRequestModel.InsuranceType,
                 PortfolioAlias = premiumCalculation.Data.PortfolioAlias,
@@ -113,19 +115,20 @@ public class QuotationService : IQuotationService
                 ValidUntil = dto.ValidUntil,
                 PremiumCalculationJson = premiumCalculationJson,
                 IsDirectBusiness = dto.IsDirectBusiness?? false,
+                SumInsured = dto.SumInsured
             };
-            if (dto.Items != null && dto.Items.Any())
-            {
-                foreach (var item in dto.Items)
-                {
-                    quote.Items.Add(new QuotationItem
-                    {
-                        CoverageId = item.CoverageId.ToString(),
-                        SumInsured = item.SumInsured,
-                        Premium = 0m
-                    });
-                }
-            }
+            //if (dto.Items != null && dto.Items.Any())
+            //{
+            //    foreach (var item in dto.Items)
+            //    {
+            //        quote.Items.Add(new QuotationItem
+            //        {
+            //            CoverageId = item.CoverageId.ToString(),
+            //            SumInsured = item.SumInsured,
+            //            Premium = 0m
+            //        });
+            //    }
+            //}
 
             _db.Add(quote);
             await _db.SaveChangesAsync();

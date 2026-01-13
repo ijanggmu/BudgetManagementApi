@@ -9,7 +9,7 @@ public record RatingPreviewDto(string ProductCode, DateOnly AsOf, IDictionary<st
 public record RatingPreviewResultDto(decimal Total, object Breakdown, int RateTable, int Formula);
 
 //public record CreateQuotationDto(Guid ProductId, Guid ProspectId, InsuranceType InsuranceType, IEnumerable<QuotationItemDto> Items);
-public record CreateQuotationDto(Guid ProductId, Guid ProspectId,DateOnly? ValidUntil, bool? IsDirectBusiness, PremiumCalculateRequestModel PremiumRequestModel, IEnumerable<QuotationItemDto> Items);
+public record CreateQuotationDto(string LeadId, Guid ProductId, Guid ProspectId,DateOnly? ValidUntil, bool? IsDirectBusiness, PremiumCalculateRequestModel PremiumRequestModel, decimal SumInsured, IEnumerable<QuotationItemDto> Items);
 public record UpdateQuotationDto(string? Status, decimal? TotalPremium, decimal? DiscountPercent, DateOnly? ValidUntil, IEnumerable<QuotationItemDto>? Items);
 public record QuotationItemDto(Guid CoverageId, decimal SumInsured);
 public record ComputeQuotationDto(DateOnly AsOf, IDictionary<string, object> Inputs);
@@ -103,6 +103,7 @@ public record QuotationResponseDto(
     string Status,
     string ProductId,
     string ProspectId,
+    string LeadId,
     decimal? TotalPremium,
     decimal? DiscountPercent,
     DateOnly? ValidUntil,
