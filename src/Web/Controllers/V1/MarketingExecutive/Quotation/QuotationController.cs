@@ -13,16 +13,16 @@ namespace BeemaEdgeApi.Controllers.V1.FoDo.Quotation;
 
 public class QuotationController(IQuotationService quotes) : BaseMarketingExecutiveApiController
 {
-    [HttpPost(nameof(CreateAsync))]
+    [HttpPost("create")]
     [Permission(MenuPermissionConstant.MarketingExecutiveQuotationsCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateQuotationDto dto, CancellationToken cancellationToken = default)
     {
         return HandleResult(await quotes.CreateAsync(dto, cancellationToken));
     }
 
-    [HttpPost(nameof(ListAsync))]
+    [HttpPost]
     [Permission(MenuPermissionConstant.MarketingExecutiveQuotationsView)]
-    public async Task<IActionResult> ListAsync([FromQuery] CommonPaginationRequestModel? requestModel = null, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel? requestModel = null, CancellationToken cancellationToken = default)
     {
         return HandleResult(await quotes.ListAsync(requestModel, cancellationToken));
     }
@@ -62,8 +62,8 @@ public class QuotationController(IQuotationService quotes) : BaseMarketingExecut
             return HandleResult(result);
 
         var quotation = await quotes.GetByIdAsync(id, cancellationToken);
-        var quotationNumber = quotation.IsSuccess && quotation.Data != null 
-            ? quotation.Data.Number 
+        var quotationNumber = quotation.IsSuccess && quotation.Data != null
+            ? quotation.Data.Number
             : id;
 
         var fileName = $"Quotation_{quotationNumber}_{DateTime.UtcNow:yyyyMMdd}.pdf";
