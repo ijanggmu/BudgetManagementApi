@@ -9,34 +9,27 @@ using Models.BeemaEdgeApi.Roles;
 using Models.Common;
 using Models.Common.Menu;
 using SharedKernel.Constant.Permission;
+using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static SharedKernel.Constant.Permission.MenuPermissionsList;
 
 namespace Business.BeemaEdgeApi.Permission;
 
-public class MenuPermissionService : IMenuPermissionService
+public class MenuPermissionService(ApplicationDataContext context,
+    IUserProfileService personAccessor) : IMenuPermissionService
 {
-    private readonly ApplicationDataContext _context;
-    private readonly IUserProfileService _personAccessor;
-
-    public MenuPermissionService(ApplicationDataContext context,
-        IUserProfileService personAccessor)
-    {
-        _context = context;
-        _personAccessor = personAccessor;
-    }
-
     public Result<MenuModel> GetMenu()
     {
-        var roleId = _personAccessor.GetRoleId();
+        var roleId = personAccessor.GetRoleId();
 
         if (string.IsNullOrEmpty(roleId))
             return Result<MenuModel>.Success(new MenuModel());
 
         var roleNameList = roleId.Split(",");
 
-        var permissionList = (from role in _context.Roles
-                              join roleClaim in _context.RoleClaims
+        var permissionList = (from role in context.Roles
+                              join roleClaim in context.RoleClaims
                               on role.Id equals roleClaim.RoleId
                               where roleNameList.Contains(role.Name) && !role.IsDeleted
                               select roleClaim.Permissions)
@@ -55,42 +48,71 @@ public class MenuPermissionService : IMenuPermissionService
 
     public Result<RolePermissionViewModel> GetAllMenuByRoleId(string roleId)
     {
-        var existingRole = _context.Roles.Where(x => x.Id == roleId).Select(y => new
+        if (string.IsNullOrWhiteSpace(roleId))
+            return Result<RolePermissionViewModel>.Failed("RoleId is required.");
+
+        // Get current user's role to check for SuperAdmin
+        var currentRole = personAccessor.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrWhiteSpace(currentRole) &&
+                           currentRole.Contains(SystemRoles.SuperAdmin);
+
+        // Build role query considering SuperAdmin
+        IQueryable<ApplicationRole> roleQuery = context.Roles;
+        if (isSuperAdmin)
         {
-            y.Id,
-            y.RoleType,
-            y.Name
-        }).FirstOrDefault();
+            roleQuery = roleQuery.IgnoreQueryFilters();
+        }
+
+        var existingRole = roleQuery
+            .Where(x => x.Id == roleId)
+            .Select(y => new
+            {
+                y.Id,
+                y.RoleType,
+                y.Name
+            })
+            .FirstOrDefault();
 
         if (existingRole == null)
             return Result<RolePermissionViewModel>.Failed("Role not found.");
 
-        RolePermissionViewModel rolePermissionViewModel = new RolePermissionViewModel
+        var rolePermissionViewModel = new RolePermissionViewModel
         {
             RoleId = existingRole.Id,
             RoleName = existingRole.Name,
             RolePermissionGroup = new List<RolePermissionGroup>(),
         };
 
-        var existingPermissions = _context.RoleClaims
-                                                 .Where(q => q.RoleId == roleId)
-                                                 .Select(x => x.Permissions)
-                                                 .FirstOrDefault();
+        // RoleClaims query with SuperAdmin consideration
+        IQueryable<ApplicationRoleClaim> roleClaimQuery = context.RoleClaims;
+        if (isSuperAdmin)
+        {
+            roleClaimQuery = roleClaimQuery.IgnoreQueryFilters();
+        }
 
-        var groupedPermissions = MenuPermissionsList._list.Where(menu => menu.AllowedRoles == null ||
-                          !menu.AllowedRoles.Any() ||
-                          menu.AllowedRoles.Contains("All", StringComparer.OrdinalIgnoreCase) ||
-                          menu.AllowedRoles.Any(allowedRole =>
-                              string.Equals(allowedRole, existingRole.RoleType, StringComparison.OrdinalIgnoreCase) ||
-                              (string.Equals(allowedRole, "SuperAdmin", StringComparison.OrdinalIgnoreCase) && existingRole.RoleType == "SuperAdmin") ||
-                              (string.Equals(allowedRole, "Admin", StringComparison.OrdinalIgnoreCase) && (existingRole.RoleType == "Admin" || existingRole.RoleType == "TenantAdmin")) ||
-                              (string.Equals(allowedRole, "FoDo", StringComparison.OrdinalIgnoreCase) && (existingRole.RoleType == "FoDo" || existingRole.RoleType == "MarketingExecutive"))
-                          ))
+        var existingPermissions = roleClaimQuery
+            .Where(q => q.RoleId == roleId)
+            .Select(x => x.Permissions)
+            .FirstOrDefault();
+
+        // Filter menu permissions based on role type
+        var groupedPermissions = MenuPermissionsList._list
+            .Where(menu => menu.AllowedRoles == null ||
+                           !menu.AllowedRoles.Any() ||
+                           menu.AllowedRoles.Contains("All", StringComparer.OrdinalIgnoreCase) ||
+                           menu.AllowedRoles.Any(allowedRole =>
+                               string.Equals(allowedRole, existingRole.RoleType, StringComparison.OrdinalIgnoreCase) ||
+                               (string.Equals(allowedRole, "SuperAdmin", StringComparison.OrdinalIgnoreCase) && existingRole.RoleType == "SuperAdmin") ||
+                               (string.Equals(allowedRole, "Admin", StringComparison.OrdinalIgnoreCase) &&
+                                (existingRole.RoleType == "Admin" || existingRole.RoleType == "TenantAdmin")) ||
+                               (string.Equals(allowedRole, "FoDo", StringComparison.OrdinalIgnoreCase) &&
+                                (existingRole.RoleType == "FoDo" || existingRole.RoleType == "MarketingExecutive"))
+                           ))
             .ToList();
 
         foreach (var menuItem in groupedPermissions)
         {
-            RolePermissionGroup rolePermissionGroup = rolePermissionViewModel.RolePermissionGroup
+            var rolePermissionGroup = rolePermissionViewModel.RolePermissionGroup
                 .FirstOrDefault(group => group.Module == menuItem.MenuName);
 
             if (rolePermissionGroup == null)
@@ -108,9 +130,8 @@ public class MenuPermissionService : IMenuPermissionService
         }
 
         return Result<RolePermissionViewModel>.Success(rolePermissionViewModel);
-
-
     }
+
 
     private void AddPermissionsWithChildren(MenuItem menuItem, List<string> permissions, RolePermissionGroup rolePermissionGroup, string roleType)
     {
@@ -142,19 +163,44 @@ public class MenuPermissionService : IMenuPermissionService
         }
     }
 
-    public async Task<Result<MessageResponseModel>> AssignRolePermissionAsync(PermissionManagementViewModel requestModel, CancellationToken cancellationToken = default)
+    public async Task<Result<MessageResponseModel>> AssignRolePermissionAsync(
+    PermissionManagementViewModel requestModel,
+    CancellationToken cancellationToken = default)
     {
+        var roleName = personAccessor.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrWhiteSpace(roleName) &&
+                           roleName.Contains(SystemRoles.SuperAdmin);
+
         var roleId = requestModel.RoleId;
 
-        var hasRole = await _context.Roles.AnyAsync(x => x.Id == roleId, cancellationToken);
-        if (!hasRole)
-            return Result<MessageResponseModel>.Failed("Role not found.");
-
-        var roleClaim = await _context.RoleClaims.Where(x => x.RoleId == roleId).FirstOrDefaultAsync(cancellationToken);
-
-        if (roleClaim == null)
+        // Build role query based on SuperAdmin
+        IQueryable<ApplicationRole> roleQuery = context.Roles;
+        if (isSuperAdmin)
         {
-            _context.RoleClaims.Add(new ApplicationRoleClaim
+            roleQuery = roleQuery.IgnoreQueryFilters();
+        }
+
+        var hasRole = await roleQuery
+            .AnyAsync(x => x.Id == roleId, cancellationToken);
+
+        if (!hasRole)
+        {
+            return Result<MessageResponseModel>.Failed("Role not found.");
+        }
+
+        // Build role-claim query based on SuperAdmin
+        IQueryable<ApplicationRoleClaim> roleClaimQuery = context.RoleClaims;
+        if (isSuperAdmin)
+        {
+            roleClaimQuery = roleClaimQuery.IgnoreQueryFilters();
+        }
+
+        var roleClaim = await roleClaimQuery
+            .FirstOrDefaultAsync(x => x.RoleId == roleId, cancellationToken);
+
+        if (roleClaim is null)
+        {
+            context.RoleClaims.Add(new ApplicationRoleClaim
             {
                 RoleId = roleId,
                 Permissions = requestModel.ClaimList
@@ -163,11 +209,13 @@ public class MenuPermissionService : IMenuPermissionService
         else
         {
             roleClaim.Permissions = requestModel.ClaimList;
-            _context.RoleClaims.Update(roleClaim);
+            // No need to call Update — EF tracks changes automatically
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
-        return Result<MessageResponseModel>.Success(new MessageResponseModel("Permissions of role added successfully!"));
+        return Result<MessageResponseModel>.Success(
+            new MessageResponseModel("Permissions of role added successfully!")
+        );
     }
 }
