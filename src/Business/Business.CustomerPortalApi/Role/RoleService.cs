@@ -16,7 +16,8 @@ namespace Business.BeemaEdgeApi.Role;
 public class RoleService(
        RoleManager<ApplicationRole> roleManager,
        ApplicationDataContext dataContext,
-       ISieveExtension sieveExtenstion
+       ISieveExtension sieveExtenstion,
+       IUserProfileService userProfileService
            ) : IRoleService
 {
     public Result<List<string>> GetAllSystemRoles()
@@ -32,12 +33,18 @@ public class RoleService(
                                                                     .ToListAsync(cancellationToken));
     public async Task<Result<List<RoleResponseModel>>> GetAllRolesAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+
         Expression<Func<ApplicationRole, bool>> predicate = c => !c.IsDeleted;
 
         var query = dataContext.Roles
                                  .Where(predicate)
                                  .AsNoTracking();
-
+        if (isSuperAdmin)
+        {
+            query = query.IgnoreQueryFilters();
+        }
         var (result, totalCount, totalPage) = await sieveExtenstion.ApplySieve(query, requestModel);
 
         var roles = await result.Select(x => new RoleResponseModel
