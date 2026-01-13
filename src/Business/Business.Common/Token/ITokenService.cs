@@ -4,7 +4,7 @@ namespace Business.Common.Token;
 
 public interface ITokenService
 {
-    Tuple<string, int> CreateToken(ApplicationUser user, List<string> roleIds);
+    Tuple<string, int> CreateToken(ApplicationUser user, List<string> roleIds, string roleType = "");
     Task<Tuple<string, int>> CreateRefreshToken(ApplicationUser user);
     Tuple<string, string> GetUserAndRoleFromAccessToken(string token);
 }

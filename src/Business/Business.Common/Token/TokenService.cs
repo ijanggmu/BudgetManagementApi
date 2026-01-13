@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using SharedKernel.Constant;
 
 namespace Business.Common.Token;
+
 public class TokenService : ITokenService
 {
     private readonly IConfiguration _config;
@@ -22,7 +23,7 @@ public class TokenService : ITokenService
         _key = _config["Jwt:Key"];
     }
 
-    public Tuple<string, int> CreateToken(ApplicationUser user, List<string> roleIds)
+    public Tuple<string, int> CreateToken(ApplicationUser user, List<string> roleIds, string roleType = "")
     {
         var claims = new List<Claim>
             {
@@ -30,6 +31,7 @@ public class TokenService : ITokenService
                 new Claim(TokenKey.UserId, user.Id),
                 new Claim(TokenKey.Username, user.UserName),
                 new Claim(TokenKey.RoleId, string.Join(',',roleIds)),
+                new Claim(TokenKey.RoleType,roleType ),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
@@ -39,7 +41,7 @@ public class TokenService : ITokenService
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
         var issuer = _config["Jwt:Issuer"];
         var audience = _config["Jwt:Audience"];
-        
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
@@ -87,7 +89,7 @@ public class TokenService : ITokenService
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key)),
-                ValidateIssuer = false, 
+                ValidateIssuer = false,
                 ValidateAudience = false,
                 ValidateLifetime = false // Disable lifetime validation
             }, out SecurityToken validatedToken);

@@ -226,6 +226,17 @@ public class UserProfileService : IUserProfileService
         }
         return string.Empty;
     }
+    public string GetRoleType()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext != null)
+        {
+            var claimsIdentity = httpContext.User?.Identity as ClaimsIdentity;
+            var roleIdClaim = claimsIdentity?.FindFirst(TokenKey.RoleType);
+            return roleIdClaim?.Value ?? string.Empty;
+        }
+        return string.Empty;
+    }
     public void RemoveAuthCookies(HttpResponse response)
     {
         var cookieOptions = new CookieOptions

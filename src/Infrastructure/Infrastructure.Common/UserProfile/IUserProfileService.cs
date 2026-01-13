@@ -17,6 +17,7 @@ namespace Infrastructure.Common.UserProfile
         string GetRefreshToken();
         void SetAuthCookiesInClient(TokenModel tokenModel, string username);
         string GetRoleId();
+        string GetRoleType();
         void RemoveAuthCookies(HttpResponse response);
         void SetUser(string userId, string username);
     }

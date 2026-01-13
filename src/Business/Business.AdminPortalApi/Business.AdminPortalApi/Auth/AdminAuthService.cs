@@ -103,7 +103,7 @@ IFileService fileService) : IAdminAuthService
 
             responseModel.RoleType = roleType;
 
-            var tokenModel = tokenService.CreateToken(user, roleIds.ToList());
+            var tokenModel = tokenService.CreateToken(user, roleIds.ToList(), roleType);
 
             var refresh = await tokenService.CreateRefreshToken(user);
 

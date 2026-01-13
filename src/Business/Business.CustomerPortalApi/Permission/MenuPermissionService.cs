@@ -22,6 +22,7 @@ public class MenuPermissionService(ApplicationDataContext context,
     public Result<MenuModel> GetMenu()
     {
         var roleId = personAccessor.GetRoleId();
+        var roleType = personAccessor.GetRoleType();
 
         if (string.IsNullOrEmpty(roleId))
             return Result<MenuModel>.Success(new MenuModel());
@@ -40,7 +41,7 @@ public class MenuPermissionService(ApplicationDataContext context,
         if (!permissions.Any())
             return Result<MenuModel>.Success(new MenuModel());
 
-        var menus = MenuManager.GetMenusForPermissions(permissions, [.. roleNameList]);
+        var menus = MenuManager.GetMenusForPermissions(permissions, [roleType]);
 
         return Result<MenuModel>.Success(new MenuModel { MenuList = menus });
 
