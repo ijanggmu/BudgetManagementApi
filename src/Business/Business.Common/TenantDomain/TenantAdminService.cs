@@ -182,9 +182,9 @@ public class TenantAdminService : ITenantAdminService
                     $"Failed to create admin user: {string.Join(", ", createUserResult.Errors.Select(e => e.Description))}");
             }
 
-            var rolesName = await SeedTenantRolesAsync(tenant.Id, tenant.Name);
-            await SeedTenantAdminPermissions(rolesName.AdminRoleName);
-            await SeedFoDoPermissions(rolesName.FodoRoleName);
+            var rolesName = await SeedTenantRolesAsync(tenant.Id, tenant.Slug);
+            await SeedTenantAdminPermissions(rolesName.AdminRoleName, tenant.Id);
+            await SeedFoDoPermissions(rolesName.FodoRoleName, tenant.Id);
             // Add Admin role
             var addRoleResult = await _userManager.AddToRoleAsync(adminUser, SystemRoles.Admin);
             if (!addRoleResult.Succeeded)

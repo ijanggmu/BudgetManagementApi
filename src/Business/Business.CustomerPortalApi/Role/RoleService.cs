@@ -34,7 +34,7 @@ public class RoleService(
     {
         Expression<Func<ApplicationRole, bool>> predicate = c => !c.IsDeleted;
 
-        var query = roleManager.Roles
+        var query = dataContext.Roles
                                  .Where(predicate)
                                  .AsNoTracking();
 
