@@ -15,6 +15,7 @@ public class Quotation : TenantEntity
     public string ProspectId { get; set; }
     public decimal? TotalPremium { get; set; }
     public decimal? DiscountPercent { get; set; }
+    public decimal? SumInsured { get; set; }
     public DateOnly? ValidUntil { get; set; }
     public bool? IsDirectBusiness { get; set; } // Broker/Agent: Yes/No
     public string SnapshotJson { get; set; } = "{}";  // inputs+artifacts versions

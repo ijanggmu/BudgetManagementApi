@@ -115,19 +115,20 @@ public class QuotationService : IQuotationService
                 ValidUntil = dto.ValidUntil,
                 PremiumCalculationJson = premiumCalculationJson,
                 IsDirectBusiness = dto.IsDirectBusiness?? false,
+                SumInsured = dto.SumInsured
             };
-            if (dto.Items != null && dto.Items.Any())
-            {
-                foreach (var item in dto.Items)
-                {
-                    quote.Items.Add(new QuotationItem
-                    {
-                        CoverageId = item.CoverageId.ToString(),
-                        SumInsured = item.SumInsured,
-                        Premium = 0m
-                    });
-                }
-            }
+            //if (dto.Items != null && dto.Items.Any())
+            //{
+            //    foreach (var item in dto.Items)
+            //    {
+            //        quote.Items.Add(new QuotationItem
+            //        {
+            //            CoverageId = item.CoverageId.ToString(),
+            //            SumInsured = item.SumInsured,
+            //            Premium = 0m
+            //        });
+            //    }
+            //}
 
             _db.Add(quote);
             await _db.SaveChangesAsync();
