@@ -103,12 +103,12 @@ public class DashboardService : IDashboardService
     public async Task<Result<TenantAdminDashboardDto>> GetTenantAdminDashboardAsync(CancellationToken cancellationToken = default)
     {
         var userId = _userProfileService.GetUserId();
+        var roleType = _userProfileService.GetRoleType();
         if (string.IsNullOrWhiteSpace(userId))
             return Result<TenantAdminDashboardDto>.Failed("User not authenticated.");
 
-        var userRoles = await _tenantResolutionService.GetUserRolesAsync(userId);
-        var isSuperAdmin = userRoles.Contains(SystemRoles.SuperAdmin);
-        var isAdmin = userRoles.Contains(SystemRoles.Admin) || userRoles.Contains("TenantAdmin");
+        var isSuperAdmin = roleType.Contains(SystemRoles.SuperAdmin);
+        var isAdmin = roleType.Contains(SystemRoles.Admin) || roleType.Contains("TenantAdmin");
 
         if (!isSuperAdmin && !isAdmin)
             return Result<TenantAdminDashboardDto>.Failed("Access denied. Admin role required.");
