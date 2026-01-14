@@ -244,6 +244,16 @@ public static class MenuPermissionConstant
     public const string CommonAttendanceCreate = "19-16-2";
     public const string CommonAttendanceCreateName = "Common Attendance Create";
 
+    // Notice Board (Operations)
+    public const string NoticeBoardView = "20-22-1";
+    public const string NoticeBoardViewName = "Notice Board View";
+    public const string NoticeBoardCreate = "20-22-2";
+    public const string NoticeBoardCreateName = "Notice Board Create";
+    public const string NoticeBoardUpdate = "20-22-3";
+    public const string NoticeBoardUpdateName = "Notice Board Update";
+    public const string NoticeBoardDelete = "20-22-4";
+    public const string NoticeBoardDeleteName = "Notice Board Delete";
+
     // Reporting (Operations)
     public const string ReportingView = "20-20-1";
     public const string ReportingViewName = "Reporting View";

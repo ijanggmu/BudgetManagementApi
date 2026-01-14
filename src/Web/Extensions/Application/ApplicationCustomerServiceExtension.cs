@@ -102,6 +102,7 @@ public static class ApplicationCustomerServiceExtension
         services.AddScoped<Business.AdminPortalApi.Dashboard.IDashboardService, Business.AdminPortalApi.Dashboard.DashboardService>();
         services.AddScoped<Business.AdminPortalApi.Notification.INotificationService, Business.AdminPortalApi.Notification.NotificationService>();
         services.AddScoped<Business.AdminPortalApi.Notification.INotificationSender, BeemaEdgeApi.Services.NotificationSenderService>();
+        services.AddScoped<Business.AdminPortalApi.Noticeboard.INoticeboardService, Business.AdminPortalApi.Noticeboard.NoticeboardService>();
 
         return services;
     }

@@ -63,6 +63,7 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
     public DbSet<RenewalReminder> RenewalReminders { get; set; }
     public DbSet<NotificationHistory> NotificationHistories { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<Noticeboard> Noticeboards { get; set; }
     public DbSet<Lead> Leads { get; set; }
     public DbSet<LeadActivity> LeadActivities { get; set; }
     public DbSet<Quotation> Quotations { get; set; }
@@ -302,6 +303,17 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
                 .HasDatabaseName("IX_Notifications_SentAt");
             entity.HasIndex(n => n.TenantId)
                 .HasDatabaseName("IX_Notifications_TenantId");
+        });
+
+        // Noticeboard indexes for performance
+        builder.Entity<Noticeboard>(entity =>
+        {
+            entity.HasIndex(n => n.TenantId)
+                .HasDatabaseName("IX_Noticeboards_TenantId");
+            entity.HasIndex(n => new { n.IsActive, n.IsPinned, n.Priority })
+                .HasDatabaseName("IX_Noticeboards_Active_Pinned_Priority");
+            entity.HasIndex(n => n.CreatedOn)
+                .HasDatabaseName("IX_Noticeboards_CreatedOn");
         });
 
         // Apply global query filters for IsDeleted and TenantId
