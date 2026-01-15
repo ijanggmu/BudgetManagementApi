@@ -310,7 +310,7 @@ public static partial class MenuPermissionsList
                 IsMenu = true,
                 ToHide = false,
                 HideChildren = false,
-                AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Operations for SuperAdmin and TenantAdmin
+                AllowedRoles = new List<string> { "SuperAdmin", "Admin","FoDo" }, // Operations for SuperAdmin and TenantAdmin
                 Permissions = new List<Permission>
                 {
                     new Permission(MenuPermissionConstant.OperationsViewName, MenuPermissionConstant.OperationsView, false)
@@ -330,6 +330,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "FoDo" },
                         Permissions = new List<Permission>
                         {
                             new Permission(MenuPermissionConstant.PremiumCalculationViewName, MenuPermissionConstant.PremiumCalculationView, false)
@@ -341,7 +342,7 @@ public static partial class MenuPermissionsList
                             {
                                 MenuId = 10,
                                 MenuName = MenuPermissionConstant.PremiumOverviewName,
-                                MenuSlug = "/premiums",
+                                MenuSlug = "/premium-calculator",
                                 Icon = "Calculator",
                                 Rank = 1,
                                 Level = 3,
@@ -349,6 +350,7 @@ public static partial class MenuPermissionsList
                                 IsMenu = true,
                                 ToHide = false,
                                 HideChildren = false,
+                                AllowedRoles = new List<string> { "SuperAdmin", "Admin", "FoDo" },
                                 Permissions = new List<Permission>
                                 {
                                     new Permission(MenuPermissionConstant.PremiumOverviewViewName, MenuPermissionConstant.PremiumOverviewView, false)
