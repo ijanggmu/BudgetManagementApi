@@ -1,5 +1,4 @@
 using Data.Context;
-using Data.Entities.FodoEntity;
 using Data.Infrastructure;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;

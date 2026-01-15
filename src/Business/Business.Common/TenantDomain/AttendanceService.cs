@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Business.AdminPortalApi.ExcelExport;
 using Data.Context;
-using Data.Entities.FodoEntity;
 using Data.Entities.Identity;
 using Data.Entities.Tenant;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
@@ -154,9 +147,7 @@ public class AttendanceService(
 
             // Get FoDo information
             // Note: IsDeleted filter is now applied globally
-            var fodos = await db.Fodos
-                .Where(f => userIds.Contains(f.UserId))
-                .ToDictionaryAsync(f => f.UserId, f => f, cancellationToken);
+
 
             // Get tenant names
             var tenantIds = attendanceEntries.Where(a => !string.IsNullOrEmpty(a.TenantId))
@@ -171,7 +162,6 @@ public class AttendanceService(
             var dtos = attendanceEntries.Select(entry =>
             {
                 var userInfo = users.ContainsKey(entry.UserId) ? users[entry.UserId] : null;
-                var fodo = fodos.ContainsKey(entry.UserId) ? fodos[entry.UserId] : null;
                 var tenantName = !string.IsNullOrEmpty(entry.TenantId) && tenants.ContainsKey(entry.TenantId)
                     ? tenants[entry.TenantId]
                     : null;
@@ -180,7 +170,7 @@ public class AttendanceService(
                     entry.Id,
                     entry.UserId,
                     userInfo?.UserName,
-                    fodo?.FullName ?? userInfo?.UserName,
+                     userInfo?.UserName,
                     entry.Type,
                     entry.Latitude,
                     entry.Longitude,
@@ -267,12 +257,12 @@ public class AttendanceService(
 
             // Get user and FoDo information
             var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
-            var fodo = await db.Fodos.FirstOrDefaultAsync(f => f.UserId == userId && !f.IsDeleted, cancellationToken);
+            //var fodo = await db.Fodos.FirstOrDefaultAsync(f => f.UserId == userId && !f.IsDeleted, cancellationToken);
 
             var syncDto = new TenantAttendanceSyncDto(
                 entry.UserId,
                 user?.UserName,
-                fodo?.FullName ?? user?.UserName,
+                 user?.UserName,
                 entry.Type,
                 entry.Latitude,
                 entry.Longitude,

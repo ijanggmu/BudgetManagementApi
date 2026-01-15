@@ -18,7 +18,7 @@ public class AdminBrandingController(IBrandingService brandingService) : BaseAdm
     /// <returns>Branding information</returns>
     [HttpGet]
     [Permission(MenuPermissionConstant.BrandingView)]
-    public async Task<IActionResult> GetAsync([FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetAsync([FromQuery] string tenantId = null, CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrEmpty(tenantId))
             return HandleResult(await brandingService.GetByTenantIdAsync(tenantId, cancellationToken));

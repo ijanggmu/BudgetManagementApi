@@ -26,13 +26,10 @@ public class CustomerDashboardService(ApplicationDataContext dataContext, IUserP
                     KycRejectReason = c.KycRejectedReason
 
                 },
-                TotalPolicies = dataContext.PolicyDrafts
-                    .Count(p => p.Status == PurchaseStatus.Acknowledged && p.Customer.UserId == userId && !p.Customer.User.IsDeleted),
+                TotalPolicies = 0,
                 TotalClaimed = 0,              // TODO: Replace if needed
                 PendingClaims = 0,            // TODO: Replace if needed
-                TotalExpiringPolicies = dataContext.PolicyDrafts
-                                .Where(x => x.Customer.UserId == userId && (x.Status == PurchaseStatus.Paid || x.Status == PurchaseStatus.Acknowledged) && x.ExpiryDate <= today)
-                                .Count(),    // TODO: Replace if needed
+                TotalExpiringPolicies = 0,    // TODO: Replace if needed
                 TotalClaimPaid = 0            // TODO: Replace if needed
             })
             .FirstOrDefaultAsync();

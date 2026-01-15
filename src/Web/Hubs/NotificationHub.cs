@@ -66,7 +66,7 @@ public class NotificationHub : Hub
     /// <summary>
     /// Gets the user ID from the authenticated user's claims
     /// </summary>
-    private string? GetUserId()
+    private string GetUserId()
     {
         return Context.User?.FindFirst(TokenKey.UserId)?.Value;
     }

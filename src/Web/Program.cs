@@ -70,7 +70,6 @@ try
         .AddApplicationCoreApiRefitServices(builder.Configuration)
         .AddTenancy()
         .AddTenantDomainServices()
-        .AddPremiumCalculationServices()
         .AddCorsPolicy(builder.Configuration)
         .AddSecurityHeaders(builder.Configuration, builder.Environment)
         .ConfigureOpenApi()

@@ -1,13 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Models.Common.Location;
 using Models.Common.Province;
 using SharedKernel.Operation;
 
 namespace Business.BeemaEdgeApi.Province;
+
 public class LocationService : ILocationService
 {
     public LocationService()

@@ -1,19 +1,10 @@
 using Data.Entities.AdminEntity;
 using Data.Entities.BaseEntity;
-using Data.Entities.Calculation;
 using Data.Entities.Common;
-using Data.Entities.CorporateEntity;
 using Data.Entities.CustomerEntity;
 using Data.Entities.EmailLogEntity;
-using Data.Entities.FodoEntity;
 using Data.Entities.Identity;
-using Data.Entities.ITIEntity;
 using Data.Entities.Log;
-using Data.Entities.Marine;
-using Data.Entities.MotorEntity;
-using Data.Entities.Payment;
-using Data.Entities.PolicyE2e;
-using Data.Entities.PrivateVehicleEntity;
 using Data.Entities.Tenant;
 using Data.Extensions;
 using Data.Infrastructure;
@@ -42,57 +33,35 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
     #region DbSets
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Country> Countries { get; set; }
-    public DbSet<Corporate> Corporates { get; set; }
     public DbSet<Admin> Admins { get; set; }
-    public DbSet<Fodo> Fodos { get; set; }
     public DbSet<UserOtp> UserOtps { get; set; }
-    public DbSet<PolicyDraft> PolicyDrafts { get; set; }
-    public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
-    public DbSet<Motor> Motors { get; set; }
-    public DbSet<PrivateVehicle> PrivateVehicles { get; set; }
-    public DbSet<InternationalTravelInsurance> ITI { get; set; }
     public DbSet<CustomerAddress> Addresses { get; set; }
     public DbSet<EmailLog> EmailLogs { get; set; }
     public DbSet<SmsLog> SmsLogs { get; set; }
-    public DbSet<ITIFamilyMember> ITIFamilyMembers { get; set; }
 
     // Multitenant
     public DbSet<Tenant> Tenants { get; set; }
     public DbSet<CompanyBranding> CompanyBrandings { get; set; }
     public DbSet<AttendanceEntry> AttendanceEntries { get; set; }
-    public DbSet<RenewalReminder> RenewalReminders { get; set; }
     public DbSet<NotificationHistory> NotificationHistories { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Noticeboard> Noticeboards { get; set; }
-    public DbSet<Lead> Leads { get; set; }
-    public DbSet<LeadActivity> LeadActivities { get; set; }
-    public DbSet<Quotation> Quotations { get; set; }
-    public DbSet<QuotationItem> QuotationItems { get; set; }
     public DbSet<Contact> Contacts { get; set; }
     public DbSet<Prospect> Prospects { get; set; }
 
 
-        // Premium Calculation
-        public DbSet<PremiumCalculationConfiguration> PremiumCalculationConfigurations { get; set; }
-        public DbSet<PremiumCalculationParameter> PremiumCalculationParameters { get; set; }
-        public DbSet<PremiumCalculationRule> PremiumCalculationRules { get; set; }
-        public DbSet<PremiumCalculationRateTable> PremiumCalculationRateTables { get; set; }
-        public DbSet<CalculationConfiguration> CalculationConfigurations { get; set; }
-        public DbSet<GlobalConfiguration> GlobalConfigurations { get; set; }
-        public DbSet<CurrencyExchangeRateConfiguration> CurrencyExchangeRateConfigurations { get; set; }
-        public DbSet<TravelUSDRate> TravelUSDRates { get; set; }
-        public DbSet<HEOMITravelRate> HEOMITravelRates { get; set; }
+    // Premium Calculation
+    public DbSet<CurrencyExchangeRateConfiguration> CurrencyExchangeRateConfigurations { get; set; }
+    public DbSet<TravelUSDRate> TravelUSDRates { get; set; }
+    public DbSet<HEOMITravelRate> HEOMITravelRates { get; set; }
 
-        // Branch and Designation
-        public DbSet<Branch> Branches { get; set; }
-        public DbSet<Designation> Designations { get; set; }
-        public DbSet<MarineTariffSchedule> MarineTariffSchedules { get; set; }
-        public DbSet<PropertySubsidySILimit> PropertySubsidySILimits { get; set; }
-        public DbSet<PropertyRiskConfiguration> PropertyRiskConfigurations { get; set; }
+    // Branch and Designation
+    public DbSet<Branch> Branches { get; set; }
+    public DbSet<Designation> Designations { get; set; }
 
-        // Gateway Configurations
-        public DbSet<EmailGatewayConfiguration> EmailGatewayConfigurations { get; set; }
-        public DbSet<SmsGatewayConfiguration> SmsGatewayConfigurations { get; set; }
+    // Gateway Configurations
+    public DbSet<EmailGatewayConfiguration> EmailGatewayConfigurations { get; set; }
+    public DbSet<SmsGatewayConfiguration> SmsGatewayConfigurations { get; set; }
 
     #endregion  DbSets
 
@@ -215,19 +184,19 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
         base.OnModelCreating(builder);
 
         builder.Entity<ApplicationUser>(entity => { entity.ToTable(name: "Users"); });
-        
+
         // Configure ApplicationRole: Remove unique constraint on NormalizedName and add composite unique index
-        builder.Entity<ApplicationRole>(entity => 
-        { 
+        builder.Entity<ApplicationRole>(entity =>
+        {
             entity.ToTable(name: "Roles");
-            
+
             // Remove the default unique index on NormalizedName (from Identity framework)
             // The base OnModelCreating creates a unique index on NormalizedName with name "RoleNameIndex"
             // We need to remove it and create a composite unique index instead
             entity.HasIndex(r => r.NormalizedName)
                 .HasDatabaseName("RoleNameIndex")
                 .IsUnique(false); // Remove unique constraint
-            
+
             // Add composite unique index on NormalizedName and TenantId
             // This allows the same role name to exist for different tenants
             // Note: TenantId can be null for global roles (SuperAdmin), so null values are treated as distinct
@@ -236,7 +205,7 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
                 .HasFilter("\"IsDeleted\" = false") // Only enforce uniqueness on non-deleted roles
                 .HasDatabaseName("IX_Roles_NormalizedName_TenantId");
         });
-        
+
         builder.Entity<ApplicationUserRoles>(entity => { entity.ToTable("UserRoles"); });
         builder.Entity<ApplicationRoleClaim>(b => { b.ToTable("RoleClaims"); });
 
@@ -259,40 +228,6 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
         builder.Entity<CompanyBranding>()
             .HasKey(x => x.TenantId);
 
-        // Configure ITIFamilyMember relationship
-        builder.Entity<ITIFamilyMember>()
-            .HasOne(x => x.InternationalTravelInsurance)
-            .WithMany(x => x.FamilyMembers)
-            .HasForeignKey(x => x.InternationalTravelInsuranceId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // Premium Calculation Configuration relationships and indexes
-        builder.Entity<PremiumCalculationConfiguration>(entity =>
-        {
-            entity.HasIndex(e => new { e.PortfolioAlias, e.FiscalYear, e.IsActive })
-                .HasDatabaseName("IX_PremiumCalculationConfig_Portfolio_FiscalYear_Active");
-            entity.HasIndex(e => new { e.PortfolioAlias, e.FiscalYear, e.EffectiveFrom, e.EffectiveTo })
-                .HasDatabaseName("IX_PremiumCalculationConfig_Portfolio_FiscalYear_Dates");
-        });
-
-        builder.Entity<PremiumCalculationParameter>(entity =>
-        {
-            entity.HasIndex(e => new { e.ConfigurationId, e.ParameterKey })
-                .IsUnique()
-                .HasDatabaseName("IX_PremiumCalculationParameter_ConfigId_Key");
-        });
-
-        builder.Entity<PremiumCalculationRule>(entity =>
-        {
-            entity.HasIndex(e => new { e.ConfigurationId, e.Priority })
-                .HasDatabaseName("IX_PremiumCalculationRule_ConfigId_Priority");
-        });
-
-        builder.Entity<PremiumCalculationRateTable>(entity =>
-        {
-            entity.HasIndex(e => new { e.ConfigurationId, e.TableName })
-                .HasDatabaseName("IX_PremiumCalculationRateTable_ConfigId_TableName");
-        });
 
         // Notification indexes for performance
         builder.Entity<Notification>(entity =>

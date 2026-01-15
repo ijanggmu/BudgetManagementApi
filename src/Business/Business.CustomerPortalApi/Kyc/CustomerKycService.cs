@@ -1,15 +1,11 @@
 using Business.Common.File;
-using Business.Common.JobHelper;
-using Business.BeemaEdgeApi.HangFireJob.CustomerProfileJob;
 using Data.Context;
 using Data.Entities.CustomerEntity;
 using Infrastructure.Common.UserProfile;
 using Microsoft.EntityFrameworkCore;
-using Models.Common;
 using Models.BeemaEdgeApi.Customer.CustomerIdentity;
+using Models.Common;
 using Models.WebApi.Address;
-using Models.WebApi.Customer.Policy;
-using Models.WebApi.Individual;
 using SharedKernel.Constant.ResponseConstant;
 using SharedKernel.Operation;
 using SharedKernel.SystemEnum;
@@ -124,7 +120,7 @@ public class CustomerKycService(
             UpdateOrAddAddress(customer, AddressTypeEnums.Temporary.ToString(), requestModel.Addresses);
         }
 
-       
+
 
         // Save all changes atomically
         dbContext.Customers.Update(customer);

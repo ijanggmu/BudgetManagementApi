@@ -1,11 +1,10 @@
 using Data.Entities.BaseEntity;
 using Data.Entities.Identity;
-using Data.Entities.Payment;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
-using Data.Entities.AdminEntity;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Data.Entities.CustomerEntity;
+
 public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
 {
     public void Configure(EntityTypeBuilder<Customer> builder)
@@ -33,7 +32,7 @@ public class Customer : ApplicationBaseEntity, ITenantEntity
     public string FullName { get; set; }
     public string UserId { get; set; }
     public virtual ApplicationUser User { get; set; }
-    
+
     /// <summary>
     /// Tenant ID for multi-tenancy support. Automatically set when saving.
     /// </summary>

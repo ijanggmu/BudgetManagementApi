@@ -39,7 +39,7 @@ public class TenantResolutionMiddleware
         var incoming = context.Request.Headers["X-Tenant"].FirstOrDefault();
         
         // Extract subdomain from Origin header by parsing the URL and extracting hostname
-        string? subdomain = null;
+        string subdomain = null;
         var originHeader = context.Request.Headers.Origin.FirstOrDefault();
         if (!string.IsNullOrWhiteSpace(originHeader))
         {
@@ -65,7 +65,7 @@ public class TenantResolutionMiddleware
 
         var slug = incoming ?? subdomain;
         
-        Data.Entities.Tenant.Tenant? tenant = null;
+        Data.Entities.Tenant.Tenant tenant = null;
 
         // First try: resolve by slug (header or subdomain) - CACHED
         if (!string.IsNullOrWhiteSpace(slug))

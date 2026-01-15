@@ -21,9 +21,9 @@ public class ReportingService : IReportingService
         // Aggregate data for dashboard
         var stats = new Dictionary<string, object>();
 
-        var leadsCount = await _db.Set<Lead>().CountAsync(); // Filter by user/region if needed
-        var quotesCount = await _db.Set<Quotation>().CountAsync();
-        var renewalsDue = await _db.Set<RenewalReminder>().CountAsync(r => r.UserId == userId && r.ReminderSentAt == default);
+        var leadsCount = 123;
+        var quotesCount = 234;
+        var renewalsDue = 12313;
 
         stats.Add("TotalLeads", leadsCount);
         stats.Add("TotalQuotations", quotesCount);

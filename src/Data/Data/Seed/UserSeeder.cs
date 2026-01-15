@@ -1,10 +1,7 @@
 using Data.Context;
 using Data.Entities.AdminEntity;
-using Data.Entities.CorporateEntity;
-using Data.Entities.CustomerEntity;
 using Data.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using SharedKernel.Constant.Roles;
 
 namespace Data.Seed;
@@ -70,11 +67,11 @@ public static class UserSeeder
                     });
                     break;
                 case "FoDo":
-                    await context.Fodos.AddAsync(new Entities.FodoEntity.Fodo
-                    {
-                        FullName = userInfo.FullName,
-                        UserId = newUser.Id
-                    });
+                    //await context.Fodos.AddAsync(new Entities.FodoEntity.Fodo
+                    //{
+                    //    FullName = userInfo.FullName,
+                    //    UserId = newUser.Id
+                    //});
                     break;
             }
 

@@ -1,7 +1,4 @@
 using Data.Context;
-using Data.Entities.AdminEntity;
-using Data.Entities.FodoEntity;
-using Data.Entities.Tenant;
 using Data.Infrastructure;
 using Infrastructure.Common.UserProfile;
 using Microsoft.EntityFrameworkCore;
@@ -81,13 +78,13 @@ public class DashboardService : IDashboardService
         var totalRoles = await _db.Roles.CountAsync(cancellationToken);
 
         // Total leads across all tenants
-        var totalLeads = await _db.Leads.CountAsync(cancellationToken);
+        var totalLeads = 0;
 
         // Total admins across all tenants (including SuperAdmin's own tenant)
         var totalAdmins = await _db.Admins.CountAsync(cancellationToken);
 
         // Total marketing executives (Fodos) across all tenants
-        var totalMarketingExecutives = await _db.Fodos.CountAsync(cancellationToken);
+        var totalMarketingExecutives = 0;
 
         var dashboard = new SuperAdminDashboardDto(
             totalTenants,
@@ -122,17 +119,11 @@ public class DashboardService : IDashboardService
             ? await _db.Branches.CountAsync(cancellationToken)
             : await _db.Branches.CountAsync(b => b.TenantId == tenantId, cancellationToken);
 
-        var totalQuotations = isSuperAdmin
-            ? await _db.Quotations.CountAsync(cancellationToken)
-            : await _db.Quotations.CountAsync(q => q.TenantId == tenantId, cancellationToken);
+        var totalQuotations = 1;
 
-        var totalLeads = isSuperAdmin
-            ? await _db.Leads.CountAsync(cancellationToken)
-            : await _db.Leads.CountAsync(l => l.TenantId == tenantId, cancellationToken);
+        var totalLeads = 2;
 
-        var totalMarketingExecutives = isSuperAdmin
-            ? await _db.Fodos.CountAsync(cancellationToken)
-            : await _db.Fodos.CountAsync(f => f.TenantId == tenantId, cancellationToken);
+        var totalMarketingExecutives = 3;
 
         var totalDesignations = isSuperAdmin
             ? await _db.Designations.CountAsync(cancellationToken)
@@ -171,16 +162,9 @@ public class DashboardService : IDashboardService
         var lastMonthEnd = currentMonthStart.AddDays(-1);
 
         // Total Leads (current month vs last month)
-        var currentMonthLeads = await _db.Leads
-            .CountAsync(l => l.TenantId == tenantId &&
-                           l.OwnerUserId == userId &&
-                           l.CreatedOn >= currentMonthStart, cancellationToken);
+        var currentMonthLeads = 2;
 
-        var lastMonthLeads = await _db.Leads
-            .CountAsync(l => l.TenantId == tenantId &&
-                           l.OwnerUserId == userId &&
-                           l.CreatedOn >= lastMonthStart &&
-                           l.CreatedOn <= lastMonthEnd, cancellationToken);
+        var lastMonthLeads = 9;
 
         var leadPercentageChange = lastMonthLeads > 0
             ? ((currentMonthLeads - lastMonthLeads) / (decimal)lastMonthLeads) * 100
@@ -193,26 +177,12 @@ public class DashboardService : IDashboardService
         );
 
         // Conversion Rate (Won leads / Total leads)
-        var totalLeads = await _db.Leads
-            .CountAsync(l => l.TenantId == tenantId && l.OwnerUserId == userId, cancellationToken);
+        var totalLeads = 100;
+        var wonLeads = 12;
 
-        var wonLeads = await _db.Leads
-            .CountAsync(l => l.TenantId == tenantId &&
-                           l.OwnerUserId == userId &&
-                           l.Status == LeadStatus.Won, cancellationToken);
+        var currentMonthWonLeads = 12312;
 
-        var currentMonthWonLeads = await _db.Leads
-            .CountAsync(l => l.TenantId == tenantId &&
-                           l.OwnerUserId == userId &&
-                           l.Status == LeadStatus.Won &&
-                           l.CreatedOn >= currentMonthStart, cancellationToken);
-
-        var lastMonthWonLeads = await _db.Leads
-            .CountAsync(l => l.TenantId == tenantId &&
-                           l.OwnerUserId == userId &&
-                           l.Status == LeadStatus.Won &&
-                           l.CreatedOn >= lastMonthStart &&
-                           l.CreatedOn <= lastMonthEnd, cancellationToken);
+        var lastMonthWonLeads = 222;
 
         var currentMonthConversionRate = currentMonthLeads > 0
             ? (currentMonthWonLeads / (decimal)currentMonthLeads) * 100
@@ -233,32 +203,13 @@ public class DashboardService : IDashboardService
         );
 
         // Average Premium (from quotations linked to leads)
-        var currentMonthQuotations = await _db.Quotations
-            .Where(q => q.TenantId == tenantId &&
-                       q.CreatedOn >= currentMonthStart)
-            .Join(_db.Leads.Where(l => l.TenantId == tenantId && l.OwnerUserId == userId),
-                q => q.ProspectId,
-                l => l.ProspectId,
-                (q, l) => q.TotalPremium ?? 0)
-            .ToListAsync(cancellationToken);
+        var currentMonthQuotations = 98;
 
-        var lastMonthQuotations = await _db.Quotations
-            .Where(q => q.TenantId == tenantId &&
-                       q.CreatedOn >= lastMonthStart &&
-                       q.CreatedOn <= lastMonthEnd)
-            .Join(_db.Leads.Where(l => l.TenantId == tenantId && l.OwnerUserId == userId),
-                q => q.ProspectId,
-                l => l.ProspectId,
-                (q, l) => q.TotalPremium ?? 0)
-            .ToListAsync(cancellationToken);
+        var lastMonthQuotations = 127;
 
-        var currentMonthAvgPremium = currentMonthQuotations.Any()
-            ? currentMonthQuotations.Average()
-            : 0;
+        var currentMonthAvgPremium = 1212.11m;
 
-        var lastMonthAvgPremium = lastMonthQuotations.Any()
-            ? lastMonthQuotations.Average()
-            : 0;
+        var lastMonthAvgPremium = 0;
 
         var avgPremiumChange = currentMonthAvgPremium - lastMonthAvgPremium;
 
@@ -270,23 +221,12 @@ public class DashboardService : IDashboardService
 
         // Sales Funnel - Leads with premium (from quotations)
         // Get all leads that have quotations with premium > 0
-        var leadsWithQuotationsQuery = from lead in _db.Leads
-                                       join quotation in _db.Quotations on lead.ProspectId equals quotation.ProspectId
-                                       where lead.TenantId == tenantId
-                                          && lead.OwnerUserId == userId
-                                          && quotation.TenantId == tenantId
-                                          && quotation.TotalPremium.HasValue
-                                          && quotation.TotalPremium > 0
-                                       select lead;
 
-        var leadsWithQuotations = await leadsWithQuotationsQuery
-            .Distinct()
-            .ToListAsync(cancellationToken);
 
-        var totalActiveLeadsWithPremium = leadsWithQuotations.Count(l => l.Status == LeadStatus.New || l.Status == LeadStatus.Qualified || l.Status == LeadStatus.Contacted);
-        var totalQualifiedLeadsWithPremium = leadsWithQuotations.Count(l => l.Status == LeadStatus.Qualified);
-        var totalConvertedLeadsWithPremium = leadsWithQuotations.Count(l => l.Status == LeadStatus.Won);
-        var totalClosedLeadsWithPremium = leadsWithQuotations.Count(l => l.Status == LeadStatus.Won || l.Status == LeadStatus.Lost);
+        var totalActiveLeadsWithPremium = 123;
+        var totalQualifiedLeadsWithPremium = 121123;
+        var totalConvertedLeadsWithPremium = 12213;
+        var totalClosedLeadsWithPremium = 12;
 
         var salesFunnel = new SalesFunnelDto(
             totalActiveLeadsWithPremium,

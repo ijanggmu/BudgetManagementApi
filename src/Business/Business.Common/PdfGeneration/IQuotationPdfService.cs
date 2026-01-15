@@ -1,6 +1,6 @@
 using Models.WebApi.TenantDTOs;
 
-namespace Business.AdminPortalApi.PdfGeneration;
+namespace Business.Common.PdfGeneration;
 
 public interface IQuotationPdfService
 {

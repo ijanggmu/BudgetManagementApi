@@ -30,7 +30,7 @@ public class AdminNotificationController(INotificationService notificationServic
     [HttpPost("list")]
     [Permission(MenuPermissionConstant.DashboardView)]
     public async Task<IActionResult> GetUserNotificationsAsync(
-        [FromBody] CommonPaginationRequestModel? requestModel = null,
+        [FromBody] CommonPaginationRequestModel requestModel = null,
         CancellationToken cancellationToken = default)
     {
         return HandleResult(await notificationService.GetUserNotificationsAsync(requestModel, cancellationToken));

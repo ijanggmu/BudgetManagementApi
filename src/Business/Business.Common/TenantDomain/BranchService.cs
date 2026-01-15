@@ -242,11 +242,11 @@ public class BranchService(
             return Result<bool>.Failed("Branch not found.");
 
         // Check if branch is used by any marketing executives
-        var isUsed = await db.Fodos
-            .AnyAsync(f => f.BranchId == id && !f.IsDeleted, cancellationToken);
+        ////var isUsed = await db.Fodos
+        ////    .AnyAsync(f => f.BranchId == id && !f.IsDeleted, cancellationToken);
 
-        if (isUsed)
-            return Result<bool>.Failed("Cannot delete branch. It is assigned to one or more marketing executives.");
+        //if (isUsed)
+        //    return Result<bool>.Failed("Cannot delete branch. It is assigned to one or more marketing executives.");
 
         branch.IsDeleted = true;
         db.Branches.Update(branch);

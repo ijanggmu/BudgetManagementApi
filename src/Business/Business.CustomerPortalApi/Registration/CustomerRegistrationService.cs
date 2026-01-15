@@ -2,7 +2,6 @@ using Business.Common.JobHelper;
 using Business.Common.Otp;
 using Business.Common.Sms;
 using Business.Common.Token;
-using Business.BeemaEdgeApi.HangFireJob.CustomerProfileJob;
 using Data.Context;
 using Data.Entities.CustomerEntity;
 using Data.Entities.Identity;
@@ -10,16 +9,17 @@ using Data.Entities.Log;
 using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Models.BeemaEdgeApi.Identity;
 using Models.Common;
 using Models.Common.Policy.Policy;
 using Models.Common.Token;
-using Models.BeemaEdgeApi.Identity;
 using SharedKernel.Constant.ResponseConstant;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 using SharedKernel.SystemEnum.Otp;
 
 namespace Business.BeemaEdgeApi.Registration;
+
 public class CustomerRegistrationService(
     ApplicationDataContext dbContext,
     UserManager<ApplicationUser> userManager,
@@ -138,11 +138,6 @@ public class CustomerRegistrationService(
             await transaction.CommitAsync();
 
             var individualCoreApiRequest = new IndividualCustomerCheckRequestModel(firstName, middleName, lastName, user.PhoneNumber);
-
-            hangfireJobHelper.EnqueueWithLogging<ICustomerProfileJobService>(
-                             job => job.FetchIndividualAndUpdateCustomerAsync(user.Id, individualCoreApiRequest),
-                             $"FetchIndividualAndUpdateCustomer job for {individualCoreApiRequest.FirstName}{individualCoreApiRequest.MiddleName}{individualCoreApiRequest.LastName} {individualCoreApiRequest.PhoneNumber}"
-                         );
 
             return Result<MessageResponseModel>.Success(new MessageResponseModel("Otp sent successfully."));
         }

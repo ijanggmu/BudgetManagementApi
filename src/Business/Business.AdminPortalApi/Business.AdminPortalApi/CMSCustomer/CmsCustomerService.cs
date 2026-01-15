@@ -2,7 +2,6 @@ using Business.AdminPortalApi.Claim;
 using Business.Common.File;
 using Business.Common.JobHelper;
 using Business.Common.Sms;
-using Business.BeemaEdgeApi.HangFireJob.CustomerProfileJob;
 using Data.Context;
 using Data.Entities.CustomerEntity;
 using Data.Entities.Log;
@@ -11,21 +10,20 @@ using Infrastructure.Common.UserProfile;
 using Infrastructure.CoreApi.CoreApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Models.Common;
 using Models.BeemaEdgeApi.Customer.CustomerIdentity;
+using Models.Common;
 using Models.WebApi.Address;
 using Models.WebApi.Individual;
 using SharedKernel.Operation;
 using SharedKernel.SystemEnum;
 
 namespace Business.AdminPortalApi.CMSCustomer;
+
 public class CmsCustomerService(ApplicationDataContext context, ILogger<CmsCustomerService> logger,
     IUserProfileService userProfileService,
     ISieveExtension sieveExtension,
-    HangfireJobHelper hangfireJobHelper,
     ISmsService smsService,
-    IFileService fileService,
-    ICoreApiService coreApiService) : ICmsCustomerService
+    IFileService fileService) : ICmsCustomerService
 {
 
     public async Task<Result<List<CustomerResponseModel>>> GetAllCustomersAsync(CommonPaginationRequestModel requestModel, CancellationToken ct)
@@ -65,7 +63,7 @@ public class CmsCustomerService(ApplicationDataContext context, ILogger<CmsCusto
     {
         var customer = await context.Customers
                             .Include(x => x.User)
-                            .Include(x=> x.Addresses)
+                            .Include(x => x.Addresses)
                             .Where(x => !x.IsDeleted && x.Id == id)
                             .AsNoTracking()
                             .FirstOrDefaultAsync(ct);
@@ -247,19 +245,19 @@ public class CmsCustomerService(ApplicationDataContext context, ILogger<CmsCusto
         if (string.IsNullOrEmpty(customer.DIANumber))
         {
             //Enqueue background job in a named queue "coreapi"
-            hangfireJobHelper.EnqueueWithLogging<ICustomerProfileJobService>(
-                 job => job.CreateIndividualAsync(individualRequest, customer.UserId),
-                 $"CreateIndividual job for {individualRequest.FullName}"
-             );
+            //hangfireJobHelper.EnqueueWithLogging<ICustomerProfileJobService>(
+            //     job => job.CreateIndividualAsync(individualRequest, customer.UserId),
+            //     $"CreateIndividual job for {individualRequest.FullName}"
+            // );
 
         }
         else
         {
             //Enqueue background job in a named queue "coreapi"
-            hangfireJobHelper.EnqueueWithLogging<ICustomerProfileJobService>(
-                 job => job.UpdateIndividualAsync(individualRequest, customer.UserId),
-                 $"CreateIndividual job for {individualRequest.FullName}"
-             );
+            //hangfireJobHelper.EnqueueWithLogging<ICustomerProfileJobService>(
+            //     job => job.UpdateIndividualAsync(individualRequest, customer.UserId),
+            //     $"CreateIndividual job for {individualRequest.FullName}"
+            // );
         }
         var smsReqeuest = new SmsRequest
         {

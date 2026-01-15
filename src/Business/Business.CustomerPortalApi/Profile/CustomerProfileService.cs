@@ -1,16 +1,11 @@
-using System.Xml.Linq;
 using Business.Common.File;
-using Business.Common.JobHelper;
-using Business.BeemaEdgeApi.HangFireJob.CustomerProfileJob;
 using Data.Context;
 using Data.Entities.CustomerEntity;
 using Infrastructure.Common.UserProfile;
 using Microsoft.EntityFrameworkCore;
-using Models.Common;
 using Models.BeemaEdgeApi.Customer.CustomerIdentity;
+using Models.Common;
 using Models.WebApi.Address;
-using Models.WebApi.Customer.Policy;
-using Models.WebApi.Individual;
 using SharedKernel.Constant.ResponseConstant;
 using SharedKernel.Operation;
 using SharedKernel.SystemEnum;
@@ -140,7 +135,7 @@ public class CustomerProfileService(
         customer.FirstName = firstName;
         customer.FullNameNepali = requestModel.FullNameNepali;
         customer.Gender = requestModel.Gender ?? customer.Gender;
-        customer.PanNo = string.IsNullOrWhiteSpace(requestModel.PanNo)? null: requestModel.PanNo;
+        customer.PanNo = string.IsNullOrWhiteSpace(requestModel.PanNo) ? null : requestModel.PanNo;
         customer.User.Email = requestModel.Email ?? customer.User.Email;
         customer.MaritalStatus = requestModel.MaritialStatus ?? customer.MaritalStatus;
         customer.DobAD = requestModel.DobAD;
@@ -180,7 +175,7 @@ public class CustomerProfileService(
             UpdateOrAddAddress(customer, AddressTypeEnums.Temporary.ToString(), requestModel.Addresses);
         }
 
-      
+
         dbContext.Customers.Update(customer);
         dbContext.Users.Update(customer.User);
         await dbContext.SaveChangesAsync();

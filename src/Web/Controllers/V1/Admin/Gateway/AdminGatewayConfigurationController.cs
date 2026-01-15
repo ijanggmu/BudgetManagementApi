@@ -97,7 +97,7 @@ public class AdminGatewayConfigurationController(IGatewayConfigurationService se
     [HttpPost("sms/list")]
     [Permission(MenuPermissionConstant.SmsGatewayView)]
     public async Task<IActionResult> GetAllSmsGatewaysAsync(
-        [FromBody] CommonPaginationRequestModel? requestModel = null,
+        [FromBody] CommonPaginationRequestModel requestModel = null,
         CancellationToken cancellationToken = default)
     {
         return HandleResult(await service.GetAllSmsGatewaysAsync(requestModel, cancellationToken));

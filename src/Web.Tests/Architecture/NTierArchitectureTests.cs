@@ -1,5 +1,4 @@
 using System.Reflection;
-using Business.BeemaEdgeApi;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using Data.Context;
 
@@ -10,7 +9,6 @@ public class NTierArchitectureTests
     private readonly Assembly _presentationLayer;  // Web API
     private readonly Assembly _businessLayer;      // Business
     private readonly Assembly _dataLayer;          // Data
-    private readonly Assembly _modelLayer;         // Models
 
     public NTierArchitectureTests()
     {

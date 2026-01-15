@@ -1,19 +1,16 @@
-using Business.Common.DraftNumber;
+using BeemaEdgeApi.Extensions.PaginationAndFilters;
 using Business.Common.Email;
-using Business.Common.Hmac;
 using Business.Common.Otp;
 using Business.Common.Sms;
-using Business.BeemaEdgeApi.Claim;
 using Common.Mail;
-using BeemaEdgeApi.Extensions.PaginationAndFilters;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Config;
 using SharedKernel.Config.Mail;
 using Sieve.Services;
-using FluentValidation.AspNetCore;
-using FluentValidation;
 
 namespace BeemaEdgeApi.Extensions.Application;
 
@@ -30,8 +27,6 @@ public static class ApplicationExtension
         services.AddScoped<ISieveExtension, SieveExtension>();
         services.AddScoped<OtpGeneratorService>();
         services.AddScoped<IOtpService, OptService>();
-        services.AddScoped<ICustomerClaimService, CustomerClaimService>();
-        services.AddScoped<IDraftNumberService, DraftNumberService>();
 
 
         return services;

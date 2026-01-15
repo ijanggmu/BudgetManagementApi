@@ -1,7 +1,4 @@
-using System;
 using Business.Common.JobHelper;
-using Business.Common.JobHelper.CustomerPolicyJob;
-using Business.BeemaEdgeApi.HangFireJob.CustomerProfileJob;
 using Hangfire;
 using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Builder;
@@ -21,8 +18,6 @@ public static class Extensions
         });
 
         services.AddScoped<HangfireJobHelper>();
-        services.AddScoped<ICustomerProfileJobService, CustomerProfileJobService>();
-        services.AddScoped<ICustomerPolicyCreateJobService, CustomerPolicyCreateJobService>();
         services.AddTransient<JobFailureHandlerFilter>();
 
         // Helper for enqueueing jobs

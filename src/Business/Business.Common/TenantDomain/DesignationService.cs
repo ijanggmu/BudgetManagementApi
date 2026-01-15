@@ -203,11 +203,11 @@ public class DesignationService(
             return Result<bool>.Failed("Designation not found.");
 
         // Check if designation is used by any marketing executives
-        var isUsed = await db.Fodos
-            .AnyAsync(f => f.DesignationId == id && !f.IsDeleted, cancellationToken);
+        //var isUsed = await db.Fodos
+        //    .AnyAsync(f => f.DesignationId == id && !f.IsDeleted, cancellationToken);
 
-        if (isUsed)
-            return Result<bool>.Failed("Cannot delete designation. It is assigned to one or more marketing executives.");
+        //if (isUsed)
+        //    return Result<bool>.Failed("Cannot delete designation. It is assigned to one or more marketing executives.");
 
         designation.IsDeleted = true;
         db.Designations.Update(designation);
