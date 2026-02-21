@@ -6,7 +6,6 @@ using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
 using Microsoft.AspNetCore.Mvc;
 using Models.Common;
-using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Attendance;
 
@@ -24,7 +23,6 @@ public class AdminAttendanceController(IAttendanceService attendanceService) : B
     /// <param name="tenantId">Optional: Filter by tenant ID (SuperAdmin only)</param>
     /// <returns>Paginated list of attendance records</returns>
     [HttpPost]
-    [Permission(MenuPermissionConstant.AttendanceView)]
     public async Task<IActionResult> GetAttendanceAsync(
         [FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
@@ -39,7 +37,6 @@ public class AdminAttendanceController(IAttendanceService attendanceService) : B
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Excel file</returns>
     [HttpPost("export")]
-    [Permission(MenuPermissionConstant.AttendanceExport)]
     public async Task<IActionResult> ExportToExcelAsync(
         [FromBody] CommonPaginationRequestModel requestModel,
         CancellationToken cancellationToken = default)

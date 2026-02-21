@@ -275,23 +275,6 @@ public static partial class MenuPermissionsList
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutiveQuotations, false),
                         Children = null
                     },
-                    // 19-16. Sales & Marketing > Marketing Executive Attendance (for Marketing Executive role)
-                    new MenuItem
-                    {
-                        MenuId = 16,
-                        MenuName = MenuPermissionConstant.CommonAttendanceName,
-                        MenuSlug = "/attendance",
-                        Icon = "CalendarOutlined",
-                        Rank = 6,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        AllowedRoles = new List<string> { "FoDo" }, // Marketing Executive Attendance for FoDo only
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.CommonAttendance, false),
-                        Children = null
-                    },
                 }
             },
 
@@ -408,22 +391,6 @@ public static partial class MenuPermissionsList
                         ToHide = false,
                         HideChildren = false,
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Entity, false),
-                        Children = null
-                    },
-                    // 20-19. Operations > Attendance (Admin view)
-                    new MenuItem
-                    {
-                        MenuId = 19,
-                        MenuName = MenuPermissionConstant.AttendanceName,
-                        MenuSlug = "/admin-attendance",
-                        Icon = "CalendarOutlined",
-                        Rank = 4,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Attendance, false),
                         Children = null
                     },
                     // 20-20. Operations > Reporting
@@ -575,6 +542,182 @@ public static partial class MenuPermissionsList
                         {
                             new Permission(MenuPermissionConstant.ConfigViewName, MenuPermissionConstant.ConfigView, false)
                         },
+                        Children = null
+                    },
+                }
+            },
+
+            // ============================================
+            // 23. BUDGET MANAGEMENT (Parent Group)
+            // ============================================
+            new MenuItem
+            {
+                MenuId = 23,
+                MenuName = "Budget Management",
+                MenuSlug = "BudgetManagement",
+                Icon = "AccountBookOutlined",
+                Rank = 4,
+                Level = 1,
+                IsDisabled = false,
+                IsMenu = true,
+                ToHide = false,
+                HideChildren = false,
+                AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                Permissions = new List<Permission>
+                {
+                    new Permission("Budget Management", "23-1", false)
+                },
+                Children = new List<MenuItem>
+                {
+                    new MenuItem
+                    {
+                        MenuId = 1,
+                        MenuName = "Budgets",
+                        MenuSlug = "/budgets",
+                        Icon = "DollarOutlined",
+                        Rank = 1,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Budget, false),
+                        Children = null
+                    },
+                    new MenuItem
+                    {
+                        MenuId = 2,
+                        MenuName = "Budget Requests",
+                        MenuSlug = "/budget-requests",
+                        Icon = "SendOutlined",
+                        Rank = 2,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                        Permissions = new List<Permission>
+                        {
+                            new Permission(MenuPermissionConstant.BudgetRequestViewName, MenuPermissionConstant.BudgetRequestView, false),
+                            new Permission("Budget Request Create", MenuPermissionConstant.BudgetRequestCreate, false),
+                            new Permission("Approve", MenuPermissionConstant.BudgetRequestApprove, false),
+                            new Permission("Reject", MenuPermissionConstant.BudgetRequestReject, false)
+                        },
+                        Children = null
+                    },
+                    new MenuItem
+                    {
+                        MenuId = 3,
+                        MenuName = "Memos",
+                        MenuSlug = "/memos",
+                        Icon = "FileTextOutlined",
+                        Rank = 3,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                        Permissions = new List<Permission>
+                        {
+                            new Permission(MenuPermissionConstant.MemoViewName, MenuPermissionConstant.MemoView, false),
+                            new Permission("Memo Create", MenuPermissionConstant.MemoCreate, false),
+                            new Permission("Memo Update", MenuPermissionConstant.MemoUpdate, false),
+                            new Permission("Memo Delete", MenuPermissionConstant.MemoDelete, false),
+                            new Permission("Memo Export", MenuPermissionConstant.MemoExport, false),
+                            new Permission("Generate PDF", MenuPermissionConstant.MemoGeneratePdf, false)
+                        },
+                        Children = null
+                    },
+                    new MenuItem
+                    {
+                        MenuId = 4,
+                        MenuName = "Departments",
+                        MenuSlug = "/departments",
+                        Icon = "ApartmentOutlined",
+                        Rank = 4,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Department, false),
+                        Children = null
+                    },
+                    new MenuItem
+                    {
+                        MenuId = 5,
+                        MenuName = "Approvals",
+                        MenuSlug = "/approvals",
+                        Icon = "CheckCircleOutlined",
+                        Rank = 5,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                        Permissions = new List<Permission>
+                        {
+                            new Permission(MenuPermissionConstant.BudgetRequestViewName, MenuPermissionConstant.BudgetRequestView, false),
+                            new Permission("Approve", MenuPermissionConstant.BudgetRequestApprove, false),
+                            new Permission("Reject", MenuPermissionConstant.BudgetRequestReject, false)
+                        },
+                        Children = null
+                    },
+                    new MenuItem
+                    {
+                        MenuId = 6,
+                        MenuName = "Approval Config",
+                        MenuSlug = "/approval-config",
+                        Icon = "SettingOutlined",
+                        Rank = 6,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.ApprovalConfig, false),
+                        Children = null
+                    },
+                    new MenuItem
+                    {
+                        MenuId = 7,
+                        MenuName = "Signatures",
+                        MenuSlug = "/signatures",
+                        Icon = "EditOutlined",
+                        Rank = 7,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                        Permissions = new List<Permission>
+                        {
+                            new Permission(MenuPermissionConstant.SignatureViewName, MenuPermissionConstant.SignatureView, false),
+                            new Permission("Signature Upload", MenuPermissionConstant.SignatureUpload, false)
+                        },
+                        Children = null
+                    },
+                    new MenuItem
+                    {
+                        MenuId = 8,
+                        MenuName = "Budget Reports",
+                        MenuSlug = "/budget-reports",
+                        Icon = "BarChartOutlined",
+                        Rank = 8,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.BudgetReport, false),
                         Children = null
                     },
                 }

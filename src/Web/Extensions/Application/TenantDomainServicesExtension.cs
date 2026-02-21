@@ -28,6 +28,13 @@ public static class TenantDomainServicesExtension
         services.AddScoped<IBranchService, BranchService>();
         services.AddScoped<IDesignationService, DesignationService>();
         services.AddScoped<IEntitySettingsService, EntitySettingsService>();
+        services.AddScoped<IDepartmentService, DepartmentService>();
+        services.AddScoped<IBudgetService, BudgetService>();
+        services.AddScoped<IBudgetRequestService, BudgetRequestService>();
+        services.AddScoped<IMemoService, MemoService>();
+        services.AddScoped<IApprovalConfigService, ApprovalConfigService>();
+        services.AddScoped<IUserSignatureService, UserSignatureService>();
+        services.AddScoped<IBudgetReportService, BudgetReportService>();
         return services;
     }
 }

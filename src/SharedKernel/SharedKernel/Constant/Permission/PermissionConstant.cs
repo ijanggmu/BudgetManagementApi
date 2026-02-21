@@ -171,11 +171,9 @@ public static class MenuPermissionConstant
     public const string ProfileName = "Profile";
     public const string PasswordName = "Password";
     public const string TwoFactorName = "Two Factor";
-    public const string AttendanceName = "Attendance";
     public const string ReportingName = "Reporting";
     public const string MarketingExecutiveLeadsName = "My Leads";
     public const string MarketingExecutiveQuotationsName = "My Quotations";
-    public const string CommonAttendanceName = "My Attendance";
 
     // Branch
     public const string BranchView = "18-14-1";
@@ -219,12 +217,6 @@ public static class MenuPermissionConstant
     public const string TwoFactorViewName = "Two Factor View";
     public const string TwoFactorUpdate = "18-19-3";
 
-    // Attendance (Operations)
-    public const string AttendanceView = "20-19-1";
-    public const string AttendanceViewName = "Attendance View";
-    public const string AttendanceCreate = "20-19-2";
-    public const string AttendanceExport = "20-19-5";
-
     // Marketing Executive Leads
     public const string MarketingExecutiveLeadsView = "19-14-1";
     public const string MarketingExecutiveLeadsViewName = "Marketing Executive Leads View";
@@ -237,12 +229,6 @@ public static class MenuPermissionConstant
     public const string MarketingExecutiveQuotationsCreate = "19-15-2";
     public const string MarketingExecutiveQuotationsUpdate = "19-15-3";
     public const string MarketingExecutiveQuotationsDelete = "19-15-4";
-
-    // Common Attendance (for Marketing Executives)
-    public const string CommonAttendanceView = "19-16-1";
-    public const string CommonAttendanceViewName = "Common Attendance View";
-    public const string CommonAttendanceCreate = "19-16-2";
-    public const string CommonAttendanceCreateName = "Common Attendance Create";
 
     // Notice Board (Operations)
     public const string NoticeBoardView = "20-22-1";
@@ -280,6 +266,42 @@ public static class MenuPermissionConstant
     public const string SmsGatewayUpdate = "20-24-3";
     public const string SmsGatewayDelete = "20-24-4";
     public const string SmsGatewayExport = "20-24-5";
+
+    // Budget Management (23-xx)
+    public const string BudgetView = "23-1-1";
+    public const string BudgetViewName = "Budget View";
+    public const string BudgetCreate = "23-1-2";
+    public const string BudgetUpdate = "23-1-3";
+    public const string BudgetDelete = "23-1-4";
+    public const string BudgetExport = "23-1-5";
+    public const string BudgetRequestView = "23-2-1";
+    public const string BudgetRequestViewName = "Budget Request View";
+    public const string BudgetRequestCreate = "23-2-2";
+    public const string BudgetRequestApprove = "23-2-3";
+    public const string BudgetRequestReject = "23-2-4";
+    public const string MemoView = "23-3-1";
+    public const string MemoViewName = "Memo View";
+    public const string MemoCreate = "23-3-2";
+    public const string MemoUpdate = "23-3-3";
+    public const string MemoDelete = "23-3-4";
+    public const string MemoExport = "23-3-5";
+    public const string MemoGeneratePdf = "23-3-6";
+    public const string DepartmentView = "23-4-1";
+    public const string DepartmentViewName = "Department View";
+    public const string DepartmentCreate = "23-4-2";
+    public const string DepartmentUpdate = "23-4-3";
+    public const string DepartmentDelete = "23-4-4";
+    public const string ApprovalConfigView = "23-5-1";
+    public const string ApprovalConfigViewName = "Approval Config View";
+    public const string ApprovalConfigCreate = "23-5-2";
+    public const string ApprovalConfigUpdate = "23-5-3";
+    public const string ApprovalConfigDelete = "23-5-4";
+    public const string SignatureView = "23-6-1";
+    public const string SignatureViewName = "Signature View";
+    public const string SignatureUpload = "23-6-2";
+    public const string BudgetReportView = "23-7-1";
+    public const string BudgetReportViewName = "Budget Report View";
+    public const string BudgetReportExport = "23-7-5";
 }
 public static class CmsMenuConstant
 {

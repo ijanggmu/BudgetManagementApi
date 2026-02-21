@@ -60,8 +60,6 @@ public static class MenuPermissionDefinitions
         "18-19", "Two Factor", includeCreate: false, includeUpdate: true, includeDelete: false, includeExport: false);
 
     // Operations - Additional
-    public static readonly MenuPermissionSet Attendance = PermissionHelper.GeneratePermissions(
-        "20-19", "Attendance", includeCreate: true, includeUpdate: false, includeDelete: false, includeExport: true);
     public static readonly MenuPermissionSet Reporting = PermissionHelper.GeneratePermissions(
         "20-20", "Reporting", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
 
@@ -70,8 +68,6 @@ public static class MenuPermissionDefinitions
         "19-14", "Marketing Executive Leads", includeCreate: true, includeUpdate: true, includeDelete: false, includeExport: false);
     public static readonly MenuPermissionSet MarketingExecutiveQuotations = PermissionHelper.GeneratePermissions(
         "19-15", "Marketing Executive Quotations", includeCreate: true, includeUpdate: true, includeDelete: true, includeExport: false);
-    public static readonly MenuPermissionSet CommonAttendance = PermissionHelper.GeneratePermissions(
-        "19-16", "Common Attendance", includeCreate: true, includeUpdate: false, includeDelete: false, includeExport: false);
 
     // System Section
     public static readonly MenuPermissionSet System = PermissionHelper.GeneratePermissions(
@@ -98,6 +94,13 @@ public static class MenuPermissionDefinitions
         "22-1", "Common Utilities", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
     public static readonly MenuPermissionSet FileUpload = PermissionHelper.GeneratePermissions(
         "22-2", "File Upload", includeCreate: true, includeUpdate: false, includeDelete: false, includeExport: false);
+
+    // Budget Management (23-xx)
+    public static readonly MenuPermissionSet Budget = PermissionHelper.GeneratePermissions("23-1", "Budget");
+    public static readonly MenuPermissionSet Department = PermissionHelper.GeneratePermissions("23-4", "Department");
+    public static readonly MenuPermissionSet ApprovalConfig = PermissionHelper.GeneratePermissions("23-5", "Approval Config");
+    public static readonly MenuPermissionSet BudgetReport = PermissionHelper.GeneratePermissions(
+        "23-7", "Budget Report", includeCreate: false, includeUpdate: false, includeDelete: false);
 
     /// <summary>
     /// Gets a permission set by name (for backward compatibility and easy access)
@@ -132,16 +135,18 @@ public static class MenuPermissionDefinitions
             nameof(Profile) => Profile,
             nameof(Password) => Password,
             nameof(TwoFactor) => TwoFactor,
-            nameof(Attendance) => Attendance,
             nameof(Reporting) => Reporting,
             nameof(MarketingExecutiveLeads) => MarketingExecutiveLeads,
             nameof(MarketingExecutiveQuotations) => MarketingExecutiveQuotations,
-            nameof(CommonAttendance) => CommonAttendance,
             nameof(NoticeBoard) => NoticeBoard,
             nameof(EmailGateway) => EmailGateway,
             nameof(SmsGateway) => SmsGateway,
             nameof(CommonUtilities) => CommonUtilities,
             nameof(FileUpload) => FileUpload,
+            nameof(Budget) => Budget,
+            nameof(Department) => Department,
+            nameof(ApprovalConfig) => ApprovalConfig,
+            nameof(BudgetReport) => BudgetReport,
             _ => null
         };
     }

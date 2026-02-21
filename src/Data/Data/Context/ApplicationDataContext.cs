@@ -63,6 +63,14 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
     public DbSet<EmailGatewayConfiguration> EmailGatewayConfigurations { get; set; }
     public DbSet<SmsGatewayConfiguration> SmsGatewayConfigurations { get; set; }
 
+    // Budget Management
+    public DbSet<Department> Departments { get; set; }
+    public DbSet<Budget> Budgets { get; set; }
+    public DbSet<BudgetRequest> BudgetRequests { get; set; }
+    public DbSet<ApprovalConfig> ApprovalConfigs { get; set; }
+    public DbSet<Memo> Memos { get; set; }
+    public DbSet<UserSignature> UserSignatures { get; set; }
+
     #endregion  DbSets
 
 

@@ -79,6 +79,24 @@ public static class MenuPermissionSeeder
         tenantAdminPermissions.Add(MenuPermissionConstant.ConfigView);
         tenantAdminPermissions.Add(MenuPermissionConstant.DashboardView);
 
+        // Budget Management (23-xx) - full access for TenantAdmin
+        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Budget.GetAllValues());
+        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Department.GetAllValues());
+        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.ApprovalConfig.GetAllValues());
+        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.BudgetReport.GetAllValues());
+        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestView);
+        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestCreate);
+        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestApprove);
+        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestReject);
+        tenantAdminPermissions.Add(MenuPermissionConstant.MemoView);
+        tenantAdminPermissions.Add(MenuPermissionConstant.MemoCreate);
+        tenantAdminPermissions.Add(MenuPermissionConstant.MemoUpdate);
+        tenantAdminPermissions.Add(MenuPermissionConstant.MemoDelete);
+        tenantAdminPermissions.Add(MenuPermissionConstant.MemoExport);
+        tenantAdminPermissions.Add(MenuPermissionConstant.MemoGeneratePdf);
+        tenantAdminPermissions.Add(MenuPermissionConstant.SignatureView);
+        tenantAdminPermissions.Add(MenuPermissionConstant.SignatureUpload);
+
         tenantAdminPermissions = tenantAdminPermissions.Distinct().ToList();
 
         if (roleClaim == null)
