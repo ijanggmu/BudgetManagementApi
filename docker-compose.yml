@@ -26,8 +26,6 @@ services:
       - "8081"
     volumes:
       - /root/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
-    depends_on:
-      - nginx-proxy
     networks:
       - proxy
       - internal
@@ -50,9 +48,6 @@ services:
 
     expose:
       - "3001"
-
-    depends_on:
-      - nginx-proxy
     networks:
       - proxy
 
