@@ -1,89 +1,9 @@
 services:
-  # ----------------- NGINX PROXY -----------------
-  nginx-proxy:
-    image: jwilder/nginx-proxy
-    container_name: nginx-proxy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./certs:/etc/nginx/certs
-      - ./vhost.d:/etc/nginx/vhost.d
-      - ./html:/usr/share/nginx/html
-    networks:
-      - proxy
-    labels:
-      com.github.nginx-proxy.nginx: "true"
 
-  # ----------------- LETSENCRYPT COMPANION -----------------
-  letsencrypt:
-    image: nginxproxy/acme-companion
-    container_name: letsencrypt-companion
-    restart: always
-    environment:
-      DEFAULT_EMAIL: "sthaejan00@gmail.com"
-
-      # 🔑 REQUIRED for DNS-01
-      ACME_CA_URI: https://acme-v02.api.letsencrypt.org/directory
-      NGINX_PROXY_CONTAINER: nginx-proxy
-
-      # 🔑 Enable DNS challenge
-      DNS_PROVIDER: godaddy
-      GODADDY_API_KEY: eoMQprDsfduA_8UsqFZLB8xexwcubk1fjSS
-      GODADDY_API_SECRET: 2UkLk1G5amaj6MrXEDdLbM
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/etc/nginx/certs
-      - ./vhost.d:/etc/nginx/vhost.d
-      - ./html:/usr/share/nginx/html
-    depends_on:
-      - nginx-proxy
-    networks:
-      - proxy
-
-  # ----------------- POSTGRES -----------------
-  postgres:
-    image: postgres:15
-    container_name: beemapg
-    restart: always
-    environment:
-      POSTGRES_USER: beemauser
-      POSTGRES_PASSWORD: beemapass
-      POSTGRES_DB: beemadb
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    networks:
-      - internal
-
-  # ----------------- MINIO (S3 STORAGE) -----------------
-  minio:
-    image: minio/minio:latest
-    container_name: minio
-    restart: always
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
-
-      # nginx-proxy + SSL
-      VIRTUAL_HOST: s3.beemaedge.com
-      LETSENCRYPT_HOST: s3.beemaedge.com
-      LETSENCRYPT_EMAIL: sthaejan00@gmail.com
-      VIRTUAL_PORT: 9000
-    expose:
-      - "9000"   # S3 API
-      - "9001"   # Admin Console
-    volumes:
-      - minio-data:/data
-    networks:
-      - internal
-      - proxy
 
   # ----------------- Beema Edge API -----------------
-  beemaedgeapi:
-    container_name: beemaedgeapi
+  bmseapi:
+    container_name: bmsapi
     restart: always
     build:
       context: .
@@ -95,19 +15,18 @@ services:
       Serilog__WriteTo__0__Args__serverUrl: "http://seq:80"
 
       # Required for nginx-proxy + SSL
-      VIRTUAL_HOST: api.beemaedge.com
-      LETSENCRYPT_HOST: api.beemaedge.com
+      VIRTUAL_HOST: api-bms.beemaedge.com
+      LETSENCRYPT_HOST: api-bms.beemaedge.com
       LETSENCRYPT_EMAIL: sthaejan00@gmail.com
-      VIRTUAL_PORT: 8080
+      VIRTUAL_PORT: 8081
 
       # PostgreSQL connection string
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=beemadb;Username=beemauser;Password=beemapass;Pooling=true;"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=bms;Username=beemauser;Password=beemapass;Pooling=true;"
     expose:
-      - "8080"
+      - "8081"
     volumes:
       - /root/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
     depends_on:
-      - postgres
       - seq
       - minio
       - nginx-proxy
@@ -116,55 +35,28 @@ services:
       - internal
 
   # ----------------- Beema Edge CMS (Next.js) -----------------
-  beemaedgecms:
-    container_name: beemaedgecms
+  bmscms:
+    container_name: bmscms
     restart: always
     build:
-      context: /home/ubuntu/app/BeemaEdge/Frontend/beemaadminpanelfrontend
+      context: /home/ubuntu/app/bms/Frontend/beemaadminpanelfrontend
       dockerfile: Dockerfile            # Use your CMS Dockerfile
     env_file:
       - /home/ubuntu/app/.secrets/.env.frontend.dev 
     environment:
       # For nginx-proxy SSL routing
-      VIRTUAL_HOST: "cms.beemaedge.com,hei.beemaedge.com,uail.beemaedge.com"
-      LETSENCRYPT_HOST: "cms.beemaedge.com,hei.beemaedge.com,uail.beemaedge.com"
+      VIRTUAL_HOST: "bms.beemaedge.com,hei-bms.beemaedge.com,uail-bms.beemaedge.com"
+      LETSENCRYPT_HOST: "bms.beemaedge.com,hei-bms.beemaedge.com,uail-bms.beemaedge.com"
       LETSENCRYPT_EMAIL: sthaejan00@gmail.com
-      VIRTUAL_PORT: 3000                # Next.js runs on 3000 by default
+      VIRTUAL_PORT: 3001             # Next.js runs on 3000 by default
 
     expose:
-      - "3000"
+      - "3001"
 
     depends_on:
       - nginx-proxy
     networks:
       - proxy
-
-
-  # ----------------- SEQ -----------------
-  seq:
-    container_name: seq
-    image: datalust/seq:latest
-    restart: always
-    environment:
-      ACCEPT_EULA: "Y"
-      SEQ_FIRSTRUN_ADMINPASSWORD: "S3cur3d@1990"
-      VIRTUAL_HOST: seq.beemaedge.com
-      LETSENCRYPT_HOST: seq.beemaedge.com
-      LETSENCRYPT_EMAIL: sthaejan00@gmail.com
-    ports:
-      - "5341:80"     # Web UI
-      - "5342:5341" 
-    volumes:
-      - seq-data:/data
-    networks:
-      - internal
-      - proxy 
-
-# ----------------- VOLUMES -----------------
-volumes:
-  seq-data:
-  pgdata:
-  minio-data:
 
 
 # ----------------- NETWORKS -----------------
