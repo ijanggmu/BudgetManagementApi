@@ -35,7 +35,7 @@ services:
     container_name: bmscms
     restart: always
     build:
-      context: /home/ubuntu/app/bms/Frontend/beemaadminpanelfrontend
+      context: /home/ubuntu/app/bms/budget360frontend
       dockerfile: Dockerfile            # Use your CMS Dockerfile
     env_file:
       - /home/ubuntu/app/.secrets/.env.frontend.dev 
