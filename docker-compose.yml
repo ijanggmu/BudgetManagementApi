@@ -27,8 +27,6 @@ services:
     volumes:
       - /root/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
     depends_on:
-      - seq
-      - minio
       - nginx-proxy
     networks:
       - proxy
