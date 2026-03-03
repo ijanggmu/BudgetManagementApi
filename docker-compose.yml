@@ -29,26 +29,26 @@ services:
     networks:
       - proxy
 
-    # ----------------- Beema Edge CMS (Next.js) -----------------
-    bmscms:
-      container_name: bmscms
-      restart: always
-      build:
-        context: /home/ubuntu/app/bms/budget360frontend
-        dockerfile: Dockerfile            # Use your CMS Dockerfile
-      env_file:
-        - /home/ubuntu/app/.secrets/.env.frontend.dev 
-      environment:
-        # For nginx-proxy SSL routing
-        VIRTUAL_HOST: "bms.beemaedge.com,hei-bms.beemaedge.com,uail-bms.beemaedge.com"
-        LETSENCRYPT_HOST: "bms.beemaedge.com,hei-bms.beemaedge.com,uail-bms.beemaedge.com"
-        LETSENCRYPT_EMAIL: sthaejan00@gmail.com
-        VIRTUAL_PORT: 3000             # Next.js runs on 3000 by default
+  # ----------------- Beema Edge CMS (Next.js) -----------------
+  bmscms:
+    container_name: bmscms
+    restart: always
+    build:
+      context: /home/ubuntu/app/bms/budget360frontend
+      dockerfile: Dockerfile            # Use your CMS Dockerfile
+    env_file:
+      - /home/ubuntu/app/.secrets/.env.frontend.dev 
+    environment:
+      # For nginx-proxy SSL routing
+      VIRTUAL_HOST: "bms.beemaedge.com,hei-bms.beemaedge.com,uail-bms.beemaedge.com"
+      LETSENCRYPT_HOST: "bms.beemaedge.com,hei-bms.beemaedge.com,uail-bms.beemaedge.com"
+      LETSENCRYPT_EMAIL: sthaejan00@gmail.com
+      VIRTUAL_PORT: 3000             # Next.js runs on 3000 by default
 
-      expose:
-        - "3000"
-      networks:
-        - proxy
+    expose:
+      - "3000"
+    networks:
+      - proxy
 
 
 # ----------------- NETWORKS -----------------
