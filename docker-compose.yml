@@ -28,7 +28,6 @@ services:
       - /root/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
     networks:
       - proxy
-      - internal
 
   # ----------------- Beema Edge CMS (Next.js) -----------------
   bmscms:
@@ -55,4 +54,5 @@ services:
 # ----------------- NETWORKS -----------------
 networks:
   proxy:
-  internal:
+    external: true
+    name: beemaedge_proxy
