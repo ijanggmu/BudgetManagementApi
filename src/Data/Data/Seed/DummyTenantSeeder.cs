@@ -24,99 +24,102 @@ public static class DummyTenantSeeder
         RoleManager<ApplicationRole> roleManager,
         UserManager<ApplicationUser> userManager)
     {
-        if (await context.Tenants.AnyAsync(t => t.Slug == DummyTenantSlug))
-            return;
-
-        await using var transaction = await context.Database.BeginTransactionAsync();
-        try
+        var tenant = await context.Tenants.FirstOrDefaultAsync(t => t.Slug == DummyTenantSlug && !t.IsDeleted);
+        if (tenant == null)
         {
-            var tenant = new Tenant
+            await using var transaction = await context.Database.BeginTransactionAsync();
+            try
             {
-                Name = DummyTenantName,
-                Slug = DummyTenantSlug,
-                IsActive = true
-            };
-            await context.Tenants.AddAsync(tenant);
-            await context.SaveChangesAsync();
-
-            var branding = new CompanyBranding
-            {
-                TenantId = tenant.Id,
-                LogoUrl = "",
-                PaletteJson = "{}",
-                TypographyJson = "{}",
-                Version = 1
-            };
-            await context.CompanyBrandings.AddAsync(branding);
-            await context.SaveChangesAsync();
-
-            var adminRoleName = $"{SystemRoles.Admin}-{DummyTenantSlug}";
-
-            await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, adminRoleName, SystemRoles.Admin, SystemRoles.AdminLevel, "Tenant Administrator");
-            await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.CEO, SystemRoles.CEO, SystemRoles.CEOCFOHODLevel, "Chief Executive Officer");
-            await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.CFO, SystemRoles.CFO, SystemRoles.CEOCFOHODLevel, "Chief Financial Officer");
-            await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.HOD, SystemRoles.HOD, SystemRoles.CEOCFOHODLevel, "Head of Department");
-            await context.SaveChangesAsync();
-
-            await SeedAdminRolePermissionsAsync(context, tenant.Id, adminRoleName);
-
-            var roleIdsByName = await context.Roles
-                .IgnoreQueryFilters()
-                .Where(r => r.TenantId == tenant.Id)
-                .ToDictionaryAsync(r => r.Name, r => r.Id);
-
-            var usersToSeed = new[]
-            {
-                (UserName: "tenantadmin", Email: "tenantadmin@dummy.com", FullName: "Tenant Admin", RoleName: adminRoleName, IsAdminEntity: true),
-                (UserName: "ceo", Email: "ceo@dummy.com", FullName: "CEO User", RoleName: SystemRoles.CEO, IsAdminEntity: false),
-                (UserName: "cfo", Email: "cfo@dummy.com", FullName: "CFO User", RoleName: SystemRoles.CFO, IsAdminEntity: false),
-                (UserName: "hod", Email: "hod@dummy.com", FullName: "HOD User", RoleName: SystemRoles.HOD, IsAdminEntity: false)
-            };
-
-            foreach (var u in usersToSeed)
-            {
-                if (await userManager.FindByNameAsync(u.UserName) != null)
-                    continue;
-
-                var user = new ApplicationUser
+                tenant = new Tenant
                 {
-                    Id = Guid.NewGuid().ToString(),
-                    UserName = u.UserName,
-                    Email = u.Email,
-                    EmailConfirmed = true,
-                    IsDisabled = false,
-                    TenantId = tenant.Id
+                    Name = DummyTenantName,
+                    Slug = DummyTenantSlug,
+                    IsActive = true
                 };
-                var createResult = await userManager.CreateAsync(user, DefaultPassword);
-                if (!createResult.Succeeded)
-                    throw new InvalidOperationException($"Failed to create user {u.UserName}: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
-
-                if (!roleIdsByName.TryGetValue(u.RoleName, out var roleId))
-                    throw new InvalidOperationException($"Role {u.RoleName} not found for tenant {tenant.Id}");
-                context.UserRoles.Add(new ApplicationUserRoles
-                {
-                    UserId = user.Id,
-                    RoleId = roleId,
-                    CreatedOn = DateTime.UtcNow
-                });
-
-                if (u.IsAdminEntity)
-                {
-                    await context.Admins.AddAsync(new Admin
-                    {
-                        FullName = u.FullName,
-                        UserId = user.Id
-                    });
-                }
+                await context.Tenants.AddAsync(tenant);
                 await context.SaveChangesAsync();
-            }
 
-            await transaction.CommitAsync();
+                var branding = new CompanyBranding
+                {
+                    TenantId = tenant.Id,
+                    LogoUrl = "",
+                    PaletteJson = "{}",
+                    TypographyJson = "{}",
+                    Version = 1
+                };
+                await context.CompanyBrandings.AddAsync(branding);
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-        catch
+
+        var adminRoleName = $"{SystemRoles.Admin}-{DummyTenantSlug}";
+
+        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, adminRoleName, SystemRoles.Admin, SystemRoles.AdminLevel, "Tenant Administrator");
+        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.CEO, SystemRoles.CEO, SystemRoles.CEOCFOHODLevel, "Chief Executive Officer");
+        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.CFO, SystemRoles.CFO, SystemRoles.CEOCFOHODLevel, "Chief Financial Officer");
+        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.HOD, SystemRoles.HOD, SystemRoles.CEOCFOHODLevel, "Head of Department");
+        await context.SaveChangesAsync();
+
+        await SeedAdminRolePermissionsAsync(context, tenant.Id, adminRoleName);
+
+        var roleIdsByName = await context.Roles
+            .IgnoreQueryFilters()
+            .Where(r => r.TenantId == tenant.Id)
+            .ToDictionaryAsync(r => r.Name, r => r.Id);
+
+        var usersToSeed = new[]
         {
-            await transaction.RollbackAsync();
-            throw;
+            (UserName: "tenantadmin", Email: "tenantadmin@dummy.com", FullName: "Tenant Admin", RoleName: adminRoleName, IsAdminEntity: true),
+            (UserName: "ceo", Email: "ceo@dummy.com", FullName: "CEO User", RoleName: SystemRoles.CEO, IsAdminEntity: false),
+            (UserName: "cfo", Email: "cfo@dummy.com", FullName: "CFO User", RoleName: SystemRoles.CFO, IsAdminEntity: false),
+            (UserName: "hod", Email: "hod@dummy.com", FullName: "HOD User", RoleName: SystemRoles.HOD, IsAdminEntity: false)
+        };
+
+        foreach (var u in usersToSeed)
+        {
+            var existingForTenant = await context.Users
+                .IgnoreQueryFilters()
+                .AnyAsync(usr => usr.TenantId == tenant.Id && usr.UserName == u.UserName);
+            if (existingForTenant)
+                continue;
+
+            var user = new ApplicationUser
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = u.UserName,
+                Email = u.Email,
+                EmailConfirmed = true,
+                IsDisabled = false,
+                TenantId = tenant.Id
+            };
+            var createResult = await userManager.CreateAsync(user, DefaultPassword);
+            if (!createResult.Succeeded)
+                throw new InvalidOperationException($"Failed to create user {u.UserName}: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+
+            if (!roleIdsByName.TryGetValue(u.RoleName, out var roleId))
+                throw new InvalidOperationException($"Role {u.RoleName} not found for tenant {tenant.Id}");
+            context.UserRoles.Add(new ApplicationUserRoles
+            {
+                UserId = user.Id,
+                RoleId = roleId,
+                CreatedOn = DateTime.UtcNow
+            });
+
+            if (u.IsAdminEntity)
+            {
+                await context.Admins.AddAsync(new Admin
+                {
+                    FullName = u.FullName,
+                    UserId = user.Id
+                });
+            }
+            await context.SaveChangesAsync();
         }
     }
 
@@ -130,7 +133,7 @@ public static class DummyTenantSeeder
         string roleDisplayName = null)
     {
         var normalizedName = roleManager.NormalizeKey(roleName);
-        if (await context.Roles.AnyAsync(r => r.TenantId == tenantId && r.NormalizedName == normalizedName))
+        if (await context.Roles.IgnoreQueryFilters().AnyAsync(r => r.TenantId == tenantId && r.NormalizedName == normalizedName))
             return;
 
         var role = new ApplicationRole
@@ -152,6 +155,7 @@ public static class DummyTenantSeeder
     private static async Task SeedAdminRolePermissionsAsync(ApplicationDataContext context, string tenantId, string adminRoleName)
     {
         var roleId = await context.Roles
+            .IgnoreQueryFilters()
             .Where(r => r.Name == adminRoleName && r.TenantId == tenantId)
             .Select(r => r.Id)
             .FirstOrDefaultAsync();

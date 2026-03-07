@@ -76,6 +76,7 @@ public static class RoleSeeder
             {
                 var normalizedName = roleManager.NormalizeKey(roleName);
                 var exists = await context.Roles
+                    .IgnoreQueryFilters()
                     .AnyAsync(r => r.TenantId == tenant.Id && r.NormalizedName == normalizedName);
 
                 if (exists)
