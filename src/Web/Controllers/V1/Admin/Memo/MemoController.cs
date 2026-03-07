@@ -10,7 +10,7 @@ using SharedKernel.Constant.Permission;
 namespace BeemaEdgeApi.Controllers.V1.Admin.Memo;
 
 [AdminOrSuperAdmin]
-public class MemoController(IMemoService service) : BaseAdminApiController
+public class MemoController(IMemoService service, IBudgetRequestService budgetRequestService) : BaseAdminApiController
 {
     [HttpPost]
     [Permission(MenuPermissionConstant.MemoView)]
@@ -32,6 +32,12 @@ public class MemoController(IMemoService service) : BaseAdminApiController
     public async Task<IActionResult> CreateAsync([FromBody] CreateMemoDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await service.CreateAsync(dto, cancellationToken));
 
+    /// <summary>Single flow: create a budget request and its memo in one call (HOD creates a memo requesting an item).</summary>
+    [HttpPost("create-request")]
+    [Permission(MenuPermissionConstant.MemoCreate)]
+    public async Task<IActionResult> CreateRequestAsync([FromBody] CreateRequestMemoDto dto, CancellationToken cancellationToken = default)
+        => HandleResult(await budgetRequestService.CreateRequestWithMemoAsync(dto ?? new CreateRequestMemoDto(), cancellationToken));
+
     [HttpPut("{id}")]
     [Permission(MenuPermissionConstant.MemoUpdate)]
     public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateMemoDto dto, CancellationToken cancellationToken = default)
@@ -50,6 +56,16 @@ public class MemoController(IMemoService service) : BaseAdminApiController
         if (!result.IsSuccess)
             return BadRequest(SharedKernel.Operation.ErrorApiResponse.WrapError(result.Error, result.ErrorCode));
         return File(result.Data, "application/pdf", $"memo-{id}.pdf");
+    }
+
+    [HttpGet("{id}/generate-docx")]
+    [Permission(MenuPermissionConstant.MemoGeneratePdf)]
+    public async Task<IActionResult> GenerateDocxAsync(string id, CancellationToken cancellationToken = default)
+    {
+        var result = await service.GenerateDocxAsync(id, cancellationToken);
+        if (!result.IsSuccess)
+            return BadRequest(SharedKernel.Operation.ErrorApiResponse.WrapError(result.Error, result.ErrorCode));
+        return File(result.Data, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"memo-{id}.docx");
     }
 
     [HttpPost("export")]

@@ -49,3 +49,10 @@ public class UpdateApprovalConfigDto
     public string? DepartmentId { get; set; }
     public List<ApprovalConfigStepInputDto>? Steps { get; set; }
 }
+
+public class ApprovalConfigImportResultDto
+{
+    public int CreatedCount { get; set; }
+    public int UpdatedCount { get; set; }
+    public List<string> Errors { get; set; } = new();
+}

@@ -38,6 +38,8 @@ public class BudgetRequest : TenantEntity
     public DateTime RequestedDate { get; set; }
     public DateTime? ApprovedDate { get; set; }
     public DateTime? RejectedDate { get; set; }
+    /// <summary>Reason provided when the request was rejected (from reject comments).</summary>
+    public string? RejectionReason { get; set; }
     public string? MemoFileUrl { get; set; }
     /// <summary>JSON array of { roleId, roleName, userId, userName, approvedAt, signatureUrl } for each approval step.</summary>
     public string ApprovalHistoryJson { get; set; } = "[]";

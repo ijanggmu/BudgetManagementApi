@@ -18,6 +18,8 @@ public class BudgetRequestResponseDto
     public DateTime RequestedDate { get; set; }
     public DateTime? ApprovedDate { get; set; }
     public DateTime? RejectedDate { get; set; }
+    /// <summary>Reason provided when the request was rejected.</summary>
+    public string? RejectionReason { get; set; }
     public string? MemoFileUrl { get; set; }
     public DateTime CreatedOn { get; set; }
 }

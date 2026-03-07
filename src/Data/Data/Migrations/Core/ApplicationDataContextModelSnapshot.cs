@@ -638,6 +638,9 @@ namespace Data.Migrations.Core
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("DepartmentId")
+                        .HasColumnType("text");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -1284,6 +1287,9 @@ namespace Data.Migrations.Core
 
                     b.Property<DateTime?>("RejectedDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("RequestedDate")
                         .HasColumnType("timestamp with time zone");

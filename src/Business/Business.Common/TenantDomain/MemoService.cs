@@ -11,14 +11,30 @@ using Models.BeemaEdgeApi.Memo;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 using PdfSharp.Pdf;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using A = DocumentFormat.OpenXml.Drawing;
+using DW = DocumentFormat.OpenXml.Drawing.Wordprocessing;
+using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
+using W = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Business.Common.TenantDomain;
+
+/// <summary>Approval row with optional signature image bytes for PDF/DOCX generation.</summary>
+internal sealed class ApprovalRowWithSignature(string roleName, string userName, DateTime? approvedAt, byte[]? signatureImage)
+{
+    public string RoleName { get; } = roleName;
+    public string UserName { get; } = userName;
+    public DateTime? ApprovedAt { get; } = approvedAt;
+    public byte[]? SignatureImage { get; } = signatureImage;
+}
 
 public class MemoService(
     ApplicationDataContext db,
     IUserProfileService userProfileService,
     ISieveExtension sieveExtension,
-    IBudgetMemoAuditService auditService)
+    IBudgetMemoAuditService auditService,
+    IHttpClientFactory httpClientFactory)
     : IMemoService
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -92,6 +108,36 @@ public class MemoService(
             return Result<MemoResponseDto>.Failed("Budget request must be approved before creating memo.");
         var existing = await db.Memos.AnyAsync(m => m.BudgetRequestId == dto.BudgetRequestId && m.TenantId == (request.TenantId ?? tenantId), cancellationToken);
         if (existing) return Result<MemoResponseDto>.Failed("Memo already exists for this budget request.");
+        return await CreateMemoEntityAsync(request, dto, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<MemoResponseDto>> CreateForRequestAsync(string budgetRequestId, CreateMemoDto dto, CancellationToken cancellationToken = default)
+    {
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var tenantId = db.CurrentTenantId;
+        var request = await db.BudgetRequests.FirstOrDefaultAsync(r => r.Id == budgetRequestId && r.TenantId == tenantId, cancellationToken);
+        if (request == null && isSuperAdmin)
+            request = await db.BudgetRequests.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Id == budgetRequestId, cancellationToken);
+        if (request == null) return Result<MemoResponseDto>.Failed("Budget request not found.");
+        var existing = await db.Memos.AnyAsync(m => m.BudgetRequestId == budgetRequestId && m.TenantId == (request.TenantId ?? tenantId), cancellationToken);
+        if (existing) return Result<MemoResponseDto>.Failed("Memo already exists for this budget request.");
+        var dtoWithRequestId = new CreateMemoDto
+        {
+            BudgetRequestId = budgetRequestId,
+            MemoTemplateId = dto.MemoTemplateId,
+            BudgetHeadingId = dto.BudgetHeadingId,
+            BudgetSubheadingId = dto.BudgetSubheadingId,
+            Purpose = dto.Purpose,
+            Notes = dto.Notes
+        };
+        return await CreateMemoEntityAsync(request, dtoWithRequestId, cancellationToken);
+    }
+
+    private async Task<Result<MemoResponseDto>> CreateMemoEntityAsync(BudgetRequest request, CreateMemoDto dto, CancellationToken cancellationToken)
+    {
+        var tenantId = db.CurrentTenantId;
         var dept = await db.Departments.FindAsync(request.DepartmentId);
         var requester = await db.Users.FindAsync(request.UserId);
         var entity = new Memo
@@ -166,7 +212,8 @@ public class MemoService(
         if (entity == null) return Result<byte[]>.Failed("Memo not found.");
         try
         {
-            var pdfBytes = BuildMemoPdf(entity);
+            var approvalRows = await GetApprovalRowsWithSignaturesAsync(entity, cancellationToken);
+            var pdfBytes = BuildMemoPdf(entity, approvalRows);
             return Result<byte[]>.Success(pdfBytes);
         }
         catch (Exception ex)
@@ -175,7 +222,60 @@ public class MemoService(
         }
     }
 
-    private static byte[] BuildMemoPdf(Memo entity)
+    /// <summary>Load approval data from linked BudgetRequest (so CFO/CEO signatures appear after approval) and fetch signature images.</summary>
+    private async Task<List<ApprovalRowWithSignature>> GetApprovalRowsWithSignaturesAsync(Memo entity, CancellationToken cancellationToken)
+    {
+        var approvalHistoryJson = entity.ApproversJson ?? "[]";
+        var request = await db.BudgetRequests.FirstOrDefaultAsync(r => r.Id == entity.BudgetRequestId, cancellationToken);
+        if (request != null && !string.IsNullOrEmpty(request.ApprovalHistoryJson))
+            approvalHistoryJson = request.ApprovalHistoryJson;
+
+        var rows = ParseApprovalHistoryFromJson(approvalHistoryJson);
+        var result = new List<ApprovalRowWithSignature>();
+        var http = httpClientFactory.CreateClient();
+        http.Timeout = TimeSpan.FromSeconds(10);
+        foreach (var (roleName, userName, approvedAt, signatureUrl) in rows)
+        {
+            byte[]? signatureImage = null;
+            if (!string.IsNullOrEmpty(signatureUrl))
+            {
+                try
+                {
+                    var bytes = await http.GetByteArrayAsync(signatureUrl, cancellationToken);
+                    if (bytes != null && bytes.Length > 0)
+                        signatureImage = bytes;
+                }
+                catch { /* leave null */ }
+            }
+            result.Add(new ApprovalRowWithSignature(roleName, userName ?? "-", approvedAt, signatureImage));
+        }
+        return result;
+    }
+
+    private static List<(string RoleName, string? UserName, DateTime? ApprovedAt, string? SignatureUrl)> ParseApprovalHistoryFromJson(string json)
+    {
+        var list = new List<(string, string?, DateTime?, string?)>();
+        if (string.IsNullOrWhiteSpace(json)) return list;
+        try
+        {
+            var raw = JsonSerializer.Deserialize<List<JsonElement>>(json);
+            if (raw == null) return list;
+            foreach (var el in raw)
+            {
+                var roleName = el.TryGetProperty("roleName", out var rn) ? rn.GetString() ?? "" : "";
+                var userName = el.TryGetProperty("userName", out var un) ? un.GetString() : null;
+                DateTime? approvedAt = null;
+                if (el.TryGetProperty("approvedAt", out var dt) && dt.TryGetDateTime(out var d))
+                    approvedAt = d;
+                var signatureUrl = el.TryGetProperty("signatureUrl", out var sig) ? sig.GetString() : null;
+                list.Add((roleName, userName, approvedAt, signatureUrl));
+            }
+        }
+        catch { }
+        return list;
+    }
+
+    private static byte[] BuildMemoPdf(Memo entity, List<ApprovalRowWithSignature> approvalRows)
     {
         var document = new Document();
         document.Info.Title = "Budget Memo";
@@ -249,6 +349,7 @@ public class MemoService(
         table.AddColumn(Unit.FromCentimeter(3));  // Role
         table.AddColumn(Unit.FromCentimeter(3));  // User
         table.AddColumn(Unit.FromCentimeter(2.5)); // Date
+        table.AddColumn(Unit.FromCentimeter(3));  // Signature
         var headerRow = table.AddRow();
         headerRow.HeadingFormat = true;
         headerRow.Shading.Color = Colors.LightGray;
@@ -256,14 +357,32 @@ public class MemoService(
         headerRow.Cells[1].AddParagraph("Role");
         headerRow.Cells[2].AddParagraph("Approver");
         headerRow.Cells[3].AddParagraph("Date");
-        var approvers = ParseApproversFromJson(entity.ApproversJson);
-        for (var i = 0; i < approvers.Count; i++)
+        headerRow.Cells[4].AddParagraph("Signature");
+        for (var i = 0; i < approvalRows.Count; i++)
         {
             var row = table.AddRow();
+            var ar = approvalRows[i];
             row.Cells[0].AddParagraph((i + 1).ToString());
-            row.Cells[1].AddParagraph(approvers[i].RoleName);
-            row.Cells[2].AddParagraph(approvers[i].UserName ?? "-");
-            row.Cells[3].AddParagraph(approvers[i].ApprovedAt?.ToString("dd MMM yyyy") ?? "-");
+            row.Cells[1].AddParagraph(ar.RoleName);
+            row.Cells[2].AddParagraph(ar.UserName ?? "-");
+            row.Cells[3].AddParagraph(ar.ApprovedAt?.ToString("dd MMM yyyy") ?? "-");
+            if (ar.SignatureImage != null && ar.SignatureImage.Length > 0)
+            {
+                var tempPath = Path.Combine(Path.GetTempPath(), $"sig_{Guid.NewGuid():N}.png");
+                try
+                {
+                    System.IO.File.WriteAllBytes(tempPath, ar.SignatureImage);
+                    row.Cells[4].AddImage(tempPath);
+                }
+                finally
+                {
+                    try { if (System.IO.File.Exists(tempPath)) System.IO.File.Delete(tempPath); } catch { }
+                }
+            }
+            else
+            {
+                row.Cells[4].AddParagraph(ar.ApprovedAt.HasValue ? "Signed" : "-");
+            }
         }
 
         var renderer = new PdfDocumentRenderer(true);
@@ -272,6 +391,145 @@ public class MemoService(
         using var stream = new MemoryStream();
         renderer.PdfDocument.Save(stream, false);
         return stream.ToArray();
+    }
+
+    public async Task<Result<byte[]>> GenerateDocxAsync(string id, CancellationToken cancellationToken = default)
+    {
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var query = db.Memos.Where(m => m.Id == id);
+        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        var entity = await query.FirstOrDefaultAsync(cancellationToken);
+        if (entity == null) return Result<byte[]>.Failed("Memo not found.");
+        try
+        {
+            var approvalRows = await GetApprovalRowsWithSignaturesAsync(entity, cancellationToken);
+            var docxBytes = BuildMemoDocx(entity, approvalRows);
+            return Result<byte[]>.Success(docxBytes);
+        }
+        catch (Exception ex)
+        {
+            return Result<byte[]>.Failed("Failed to generate document: " + ex.Message);
+        }
+    }
+
+    private static byte[] BuildMemoDocx(Memo entity, List<ApprovalRowWithSignature> approvalRows)
+    {
+        using var stream = new MemoryStream();
+        using (var doc = WordprocessingDocument.Create(stream, WordprocessingDocumentType.Document))
+        {
+            var mainPart = doc.AddMainDocumentPart();
+            mainPart.Document = new W.Document();
+            var body = mainPart.Document.AppendChild(new W.Body());
+
+            body.AppendChild(new W.Paragraph(new W.Run(new W.Text("BUDGET MEMO")))
+            {
+                ParagraphProperties = new W.ParagraphProperties(
+                    new W.ParagraphStyleId { Val = "Title" },
+                    new W.Justification { Val = W.JustificationValues.Center })
+            });
+            body.AppendChild(new W.Paragraph());
+
+            var infoPara = new W.Paragraph();
+            infoPara.AppendChild(new W.Run(new W.Text($"Memo ID: {entity.Id}")));
+            infoPara.AppendChild(new W.Break());
+            infoPara.AppendChild(new W.Run(new W.Text($"Budget Request ID: {entity.BudgetRequestId}")));
+            infoPara.AppendChild(new W.Break());
+            infoPara.AppendChild(new W.Run(new W.Text($"Date: {entity.CreatedOn:dd MMMM yyyy}")));
+            infoPara.AppendChild(new W.Break());
+            infoPara.AppendChild(new W.Run(new W.Text($"Status: {entity.Status}")));
+            body.AppendChild(infoPara);
+            body.AppendChild(new W.Paragraph());
+
+            body.AppendChild(new W.Paragraph(new W.Run(new W.Text("Request Details"))));
+            var reqPara = new W.Paragraph();
+            reqPara.AppendChild(new W.Run(new W.Text($"Requested by: {entity.RequestedBy}")));
+            reqPara.AppendChild(new W.Break());
+            reqPara.AppendChild(new W.Run(new W.Text($"Department: {entity.RequestedByDepartment}")));
+            reqPara.AppendChild(new W.Break());
+            reqPara.AppendChild(new W.Run(new W.Text($"Amount: {entity.Amount:N2}")));
+            reqPara.AppendChild(new W.Break());
+            reqPara.AppendChild(new W.Run(new W.Text($"Purpose: {entity.Purpose ?? ""}")));
+            body.AppendChild(reqPara);
+            body.AppendChild(new W.Paragraph());
+
+            body.AppendChild(new W.Paragraph(new W.Run(new W.Text("Approval Chain"))));
+            var table = new W.Table(
+                new W.TableProperties(
+                    new W.TableBorders(
+                        new W.TopBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 },
+                        new W.BottomBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 },
+                        new W.LeftBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 },
+                        new W.RightBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 },
+                        new W.InsideHorizontalBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 },
+                        new W.InsideVerticalBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 })));
+
+            var headerRow = new W.TableRow();
+            foreach (var header in new[] { "Step", "Role", "Approver", "Date", "Signature" })
+                headerRow.AppendChild(new W.TableCell(new W.Paragraph(new W.Run(new W.Text(header)) { RunProperties = new W.RunProperties(new W.Bold()) })));
+            table.AppendChild(headerRow);
+
+            for (var i = 0; i < approvalRows.Count; i++)
+            {
+                var ar = approvalRows[i];
+                var row = new W.TableRow();
+                row.AppendChild(NewDocxTableCell((i + 1).ToString()));
+                row.AppendChild(NewDocxTableCell(ar.RoleName));
+                row.AppendChild(NewDocxTableCell(ar.UserName ?? "-"));
+                row.AppendChild(NewDocxTableCell(ar.ApprovedAt?.ToString("dd MMM yyyy") ?? "-"));
+                if (ar.SignatureImage != null && ar.SignatureImage.Length > 0)
+                {
+                    var imageCell = new W.TableCell();
+                    var imagePart = mainPart.AddImagePart(ImagePartType.Png);
+                    using (var ms = new MemoryStream(ar.SignatureImage))
+                        imagePart.FeedData(ms);
+                    var relId = mainPart.GetIdOfPart(imagePart);
+                    imageCell.AppendChild(NewDocxParagraphWithImage(relId));
+                    row.AppendChild(imageCell);
+                }
+                else
+                    row.AppendChild(NewDocxTableCell(ar.ApprovedAt.HasValue ? "Signed" : "-"));
+                table.AppendChild(row);
+            }
+            body.AppendChild(table);
+            mainPart.Document.Save();
+        }
+        return stream.ToArray();
+    }
+
+    private static W.TableCell NewDocxTableCell(string text)
+    {
+        return new W.TableCell(new W.Paragraph(new W.Run(new W.Text(text))));
+    }
+
+    private static W.Paragraph NewDocxParagraphWithImage(string relationshipId)
+    {
+        const int emuPerPixel = 9525;
+        var width = (long)(80 * emuPerPixel);
+        var height = (long)(40 * emuPerPixel);
+        var drawing = new W.Drawing(
+            new DW.Inline(
+                new DW.Extent { Cx = width, Cy = height },
+                new DW.EffectExtent { LeftEdge = 0, TopEdge = 0, RightEdge = 0, BottomEdge = 0 },
+                new DW.DocProperties { Id = 1U, Name = "Signature" },
+                new DW.NonVisualGraphicFrameDrawingProperties(new A.GraphicFrameLocks { NoChangeAspect = true }),
+                new A.Graphic(
+                    new A.GraphicData(
+                        new PIC.Picture(
+                            new PIC.NonVisualPictureProperties(
+                                new PIC.NonVisualDrawingProperties { Id = 0U, Name = "Signature.png" },
+                                new PIC.NonVisualPictureDrawingProperties()),
+                            new PIC.BlipFill(
+                                new A.Blip { Embed = relationshipId },
+                                new A.Stretch(new A.FillRectangle())),
+                            new PIC.ShapeProperties(
+                                new A.Transform2D(
+                                    new A.Offset { X = 0, Y = 0 },
+                                    new A.Extents { Cx = width, Cy = height }),
+                                new A.PresetGeometry(new A.AdjustValueList()) { Preset = A.ShapeTypeValues.Rectangle })))
+                    { Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture" })
+            ) { DistanceFromTop = 0, DistanceFromBottom = 0, DistanceFromLeft = 0, DistanceFromRight = 0 });
+        return new W.Paragraph(new W.Run(drawing));
     }
 
     private static List<(string RoleName, string UserName, DateTime? ApprovedAt)> ParseApproversFromJson(string approversJson)

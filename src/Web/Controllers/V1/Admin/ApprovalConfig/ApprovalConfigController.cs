@@ -1,8 +1,11 @@
+using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BeemaEdgeApi.Controllers.V1.BaseController;
 using BeemaEdgeApi.Filters.AuthorizationFilters;
 using Business.Common.TenantDomain;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.ApprovalConfig;
 using SharedKernel.Constant.Permission;
@@ -41,4 +44,16 @@ public class ApprovalConfigController(IApprovalConfigService service) : BaseAdmi
     [Permission(MenuPermissionConstant.ApprovalConfigDelete)]
     public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
         => HandleResult(await service.DeleteAsync(id, cancellationToken));
+
+    [HttpPost("import")]
+    [Permission(MenuPermissionConstant.ApprovalConfigCreate)]
+    public async Task<IActionResult> ImportAsync(IFormFile file, CancellationToken cancellationToken = default)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("Please upload a CSV file.");
+        if (!string.Equals(Path.GetExtension(file.FileName), ".csv", StringComparison.OrdinalIgnoreCase))
+            return BadRequest("Only CSV files are supported.");
+        await using var stream = file.OpenReadStream();
+        return HandleResult(await service.ImportFromCsvAsync(stream, cancellationToken));
+    }
 }

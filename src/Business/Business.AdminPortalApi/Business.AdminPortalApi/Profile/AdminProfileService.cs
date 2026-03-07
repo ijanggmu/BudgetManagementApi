@@ -55,12 +55,13 @@ public class AdminProfileService(
                  on ur.RoleId equals role.Id into rGroup
              from r in rGroup.DefaultIfEmpty()
              where user.Id == userId && !user.IsDeleted
-             group r by new { user.UserName, user.Email, user.PhoneNumber } into grp
+             group r by new { user.UserName, user.Email, user.PhoneNumber, user.DepartmentId } into grp
              select new AdminUserProfileResponseModel
              {
                  FullName = grp.Key.UserName,
                  Email = grp.Key.Email,
                  PhoneNumber = grp.Key.PhoneNumber,
+                 DepartmentId = grp.Key.DepartmentId ?? "",
                  Roles = grp.Where(x => x != null).Select(x => x.Name).ToList()
              })
             .FirstOrDefaultAsync(ct);

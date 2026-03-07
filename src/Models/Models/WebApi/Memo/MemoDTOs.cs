@@ -50,6 +50,20 @@ public class CreateMemoDto
     public string? Notes { get; set; }
 }
 
+/// <summary>
+/// Single-flow creation: creates both a budget request and its memo in one call (HOD creates a memo requesting an item).
+/// </summary>
+public class CreateRequestMemoDto
+{
+    public string DepartmentId { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public string Purpose { get; set; } = string.Empty;
+    public string? MemoTemplateId { get; set; }
+    public string? BudgetHeadingId { get; set; }
+    public string? BudgetSubheadingId { get; set; }
+    public string? Notes { get; set; }
+}
+
 public class UpdateMemoDto
 {
     public string? Purpose { get; set; }

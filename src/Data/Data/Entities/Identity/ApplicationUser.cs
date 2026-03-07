@@ -64,6 +64,11 @@ public class ApplicationUser : IdentityUser<string>, IBaseEntity, IAuditableEnti
     /// Tenant ID for multi-tenancy support. Automatically set when saving.
     /// </summary>
     public string TenantId { get; set; }
+
+    /// <summary>
+    /// Optional department ID for HOD/users restricted to a single department (e.g. memo requests).
+    /// </summary>
+    public string DepartmentId { get; set; }
 }
 
 public class UserTotpBackUpCode

@@ -51,6 +51,8 @@ public class AdminUserProfileResponseModel
     public string Email { get; set; }
     public string PhoneNumber { get; set; }
     public List<string> Roles { get; set; }
+    /// <summary>Optional department ID when user is restricted to one department (e.g. HOD).</summary>
+    public string DepartmentId { get; set; }
 }
 
 public class GetKycResponseModel

@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Data.Migrations.Core
 {
     [DbContext(typeof(ApplicationDataContext))]
-    [Migration("20260307065021_initial-migration")]
+    [Migration("20260307164145_initial-migration")]
     partial class initialmigration
     {
         /// <inheritdoc />
@@ -640,6 +640,9 @@ namespace Data.Migrations.Core
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DepartmentId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -1287,6 +1290,9 @@ namespace Data.Migrations.Core
 
                     b.Property<DateTime?>("RejectedDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("RequestedDate")
                         .HasColumnType("timestamp with time zone");
