@@ -211,6 +211,7 @@ static async Task RunDatabaseMigrationAsync(WebApplication app)
 
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
         await RoleSeeder.SeedData(roleManager);
+        await RoleSeeder.SeedTenantRoles(context, roleManager);
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         await UserSeeder.SeedData(context, userManager);
         await MenuPermissionSeeder.SeedPermissionsForRole(context);

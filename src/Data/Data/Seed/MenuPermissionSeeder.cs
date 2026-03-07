@@ -96,6 +96,7 @@ public static class MenuPermissionSeeder
         tenantAdminPermissions.Add(MenuPermissionConstant.MemoGeneratePdf);
         tenantAdminPermissions.Add(MenuPermissionConstant.SignatureView);
         tenantAdminPermissions.Add(MenuPermissionConstant.SignatureUpload);
+        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.BudgetHeadings.GetAllValues());
 
         tenantAdminPermissions = tenantAdminPermissions.Distinct().ToList();
 

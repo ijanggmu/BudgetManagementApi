@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Data.Migrations.Core
 {
     /// <inheritdoc />
-    public partial class changingdatatypes : Migration
+    public partial class initialmigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -62,6 +62,75 @@ namespace Data.Migrations.Core
                 });
 
             migrationBuilder.CreateTable(
+                name: "Branches",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    BranchName = table.Column<string>(type: "text", nullable: true),
+                    BranchCode = table.Column<string>(type: "text", nullable: true),
+                    Province = table.Column<string>(type: "text", nullable: true),
+                    District = table.Column<string>(type: "text", nullable: true),
+                    Municipality = table.Column<string>(type: "text", nullable: true),
+                    Ward = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Branches", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BudgetHeadings",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Code = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BudgetHeadings", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BudgetMemoAuditLogs",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    EntityType = table.Column<string>(type: "text", nullable: true),
+                    EntityId = table.Column<string>(type: "text", nullable: true),
+                    Action = table.Column<string>(type: "text", nullable: true),
+                    Details = table.Column<string>(type: "text", nullable: true),
+                    UserName = table.Column<string>(type: "text", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BudgetMemoAuditLogs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Countries",
                 columns: table => new
                 {
@@ -77,6 +146,98 @@ namespace Data.Migrations.Core
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Countries", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CurrencyExchangeRateConfigurations",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    BaseCurrency = table.Column<string>(type: "text", nullable: true),
+                    TargetCurrency = table.Column<string>(type: "text", nullable: true),
+                    BaseValue = table.Column<decimal>(type: "numeric", nullable: false),
+                    TargetBuy = table.Column<decimal>(type: "numeric", nullable: false),
+                    TargetSell = table.Column<decimal>(type: "numeric", nullable: false),
+                    IsApproved = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CurrencyExchangeRateConfigurations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Departments",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Departments", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Designations",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Designations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EmailGatewayConfigurations",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    ProviderName = table.Column<string>(type: "text", nullable: true),
+                    Host = table.Column<string>(type: "text", nullable: true),
+                    Port = table.Column<int>(type: "integer", nullable: false),
+                    UserName = table.Column<string>(type: "text", nullable: true),
+                    Password = table.Column<string>(type: "text", nullable: true),
+                    FromEmail = table.Column<string>(type: "text", nullable: true),
+                    DisplayName = table.Column<string>(type: "text", nullable: true),
+                    EnableSsl = table.Column<bool>(type: "boolean", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    AdditionalSettings = table.Column<string>(type: "text", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmailGatewayConfigurations", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -107,24 +268,16 @@ namespace Data.Migrations.Core
                 });
 
             migrationBuilder.CreateTable(
-                name: "ITI",
+                name: "HEOMITravelRates",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
-                    PolicyPeriodInDays = table.Column<int>(type: "integer", nullable: false),
-                    TripType = table.Column<string>(type: "text", nullable: false),
-                    IdType = table.Column<string>(type: "text", nullable: true),
-                    PassportNumber = table.Column<string>(type: "text", nullable: true),
-                    VisitingCountry = table.Column<string>(type: "text", nullable: true),
-                    FatherHusbandName = table.Column<string>(type: "text", nullable: true),
-                    EmergencyContactName = table.Column<string>(type: "text", nullable: true),
-                    EmergencyContactNumber = table.Column<string>(type: "text", nullable: true),
-                    TravellingCountry = table.Column<string>(type: "text", nullable: true),
-                    InsuranceType = table.Column<string>(type: "text", nullable: false),
-                    TypeOfInsured = table.Column<string>(type: "text", nullable: true),
-                    PremiumAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    ExchangeRate = table.Column<decimal>(type: "numeric", nullable: false),
-                    PlanType = table.Column<string>(type: "text", nullable: false),
+                    Plan = table.Column<string>(type: "text", nullable: true),
+                    PeriodFrom = table.Column<int>(type: "integer", nullable: false),
+                    PeriodTo = table.Column<int>(type: "integer", nullable: false),
+                    IndividualRate = table.Column<double>(type: "double precision", nullable: false),
+                    FamilyRate = table.Column<double>(type: "double precision", nullable: false),
+                    IsAnnualTrip = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
@@ -133,18 +286,17 @@ namespace Data.Migrations.Core
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ITI", x => x.Id);
+                    table.PrimaryKey("PK_HEOMITravelRates", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "LeadActivities",
+                name: "MemoTemplates",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
-                    LeadId = table.Column<string>(type: "text", nullable: true),
-                    Kind = table.Column<string>(type: "text", nullable: true),
-                    Notes = table.Column<string>(type: "text", nullable: true),
-                    When = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    BodyTemplate = table.Column<string>(type: "text", nullable: true),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
@@ -155,61 +307,33 @@ namespace Data.Migrations.Core
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LeadActivities", x => x.Id);
+                    table.PrimaryKey("PK_MemoTemplates", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Motors",
+                name: "Noticeboards",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
-                    IsThirdParty = table.Column<bool>(type: "boolean", nullable: false),
-                    IsComprehensive = table.Column<bool>(type: "boolean", nullable: false),
-                    Type = table.Column<string>(type: "text", nullable: true),
-                    PartyId = table.Column<string>(type: "text", nullable: true),
-                    ManufactureYear = table.Column<string>(type: "text", nullable: true),
-                    ManufactureCompany = table.Column<string>(type: "text", nullable: true),
-                    Financer = table.Column<string>(type: "text", nullable: true),
-                    Model = table.Column<string>(type: "text", nullable: true),
-                    SubModel = table.Column<string>(type: "text", nullable: true),
-                    PurchasedNewOld = table.Column<bool>(type: "boolean", nullable: false),
-                    DateOfPurchase = table.Column<string>(type: "text", nullable: true),
-                    ChasisNumber = table.Column<string>(type: "text", nullable: true),
-                    EngineNumber = table.Column<string>(type: "text", nullable: true),
-                    RegistrationNumber = table.Column<string>(type: "text", nullable: true),
-                    VoluntaryExcess = table.Column<decimal>(type: "numeric", nullable: false),
-                    CompulsoryExcess = table.Column<decimal>(type: "numeric", nullable: false),
-                    TotalExcess = table.Column<decimal>(type: "numeric", nullable: false),
-                    CubicCapacity = table.Column<decimal>(type: "numeric", nullable: true),
-                    KilloWatt = table.Column<decimal>(type: "numeric", nullable: true),
-                    Days = table.Column<int>(type: "integer", nullable: false),
-                    VehicleType = table.Column<int>(type: "integer", nullable: false),
-                    YearsFromRegistrationDateYears = table.Column<string>(type: "text", nullable: true),
-                    YearsFromRegistrationDateYearsBS = table.Column<string>(type: "text", nullable: true),
-                    CurrentMarketPrice = table.Column<decimal>(type: "numeric", nullable: false),
-                    AgeOfVehicle = table.Column<int>(type: "integer", nullable: true),
-                    RateOfDepreciation = table.Column<decimal>(type: "numeric", nullable: true),
-                    ValueOfAccessories = table.Column<decimal>(type: "numeric", nullable: true),
-                    VehicleForHireOrReward = table.Column<bool>(type: "boolean", nullable: true),
-                    ParkingPlaceGarage = table.Column<bool>(type: "boolean", nullable: true),
-                    ParkingGarageOpen = table.Column<bool>(type: "boolean", nullable: true),
-                    Maintenance = table.Column<bool>(type: "boolean", nullable: true),
-                    NCDYears = table.Column<int>(type: "integer", nullable: false),
-                    NumberofSeatsIncludingDriver = table.Column<int>(type: "integer", nullable: false),
-                    RiotStrike = table.Column<bool>(type: "boolean", nullable: false),
-                    BlueBookCopyImageUrl = table.Column<string>(type: "text", nullable: true),
-                    NCDCerticficate = table.Column<string>(type: "text", nullable: true),
-                    PhotoOfVechile = table.Column<string>(type: "text", nullable: true),
-                    BlueBookCopyImage = table.Column<string>(type: "text", nullable: true),
+                    Title = table.Column<string>(type: "text", nullable: true),
+                    Content = table.Column<string>(type: "text", nullable: true),
+                    ImageUrl = table.Column<string>(type: "text", nullable: true),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsPinned = table.Column<bool>(type: "boolean", nullable: false),
+                    Priority = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Motors", x => x.Id);
+                    table.PrimaryKey("PK_Noticeboards", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -264,189 +388,6 @@ namespace Data.Migrations.Core
                 });
 
             migrationBuilder.CreateTable(
-                name: "PaymentTransactions",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    PolicyPurchaseId = table.Column<string>(type: "text", nullable: true),
-                    GatewayTransactionId = table.Column<string>(type: "text", nullable: true),
-                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
-                    RequestedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    VerifiedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    RawResponse = table.Column<string>(type: "text", nullable: true),
-                    Status = table.Column<string>(type: "text", nullable: false),
-                    PaymentGatewayStatus = table.Column<string>(type: "text", nullable: true),
-                    PaymentGateway = table.Column<string>(type: "text", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PaymentTransactions", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PrivateVehicles",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    IsComprehensive = table.Column<bool>(type: "boolean", nullable: false),
-                    IsThirdParty = table.Column<bool>(type: "boolean", nullable: false),
-                    EnterSumInsured = table.Column<bool>(type: "boolean", nullable: false),
-                    CompulsoryExcess = table.Column<decimal>(type: "numeric", nullable: true),
-                    TotalExcess = table.Column<decimal>(type: "numeric", nullable: true),
-                    PartyId = table.Column<string>(type: "text", nullable: true),
-                    PortfolioId = table.Column<string>(type: "text", nullable: true),
-                    Type = table.Column<string>(type: "text", nullable: true),
-                    IsLayup = table.Column<bool>(type: "boolean", nullable: false),
-                    IsDirectDiscountPA = table.Column<bool>(type: "boolean", nullable: false),
-                    LayupDaysStart = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    LayupDaysEnd = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    LayupDays = table.Column<int>(type: "integer", nullable: false),
-                    ManufactureYear = table.Column<string>(type: "text", nullable: true),
-                    ManufactureCompany = table.Column<string>(type: "text", nullable: true),
-                    Model = table.Column<string>(type: "text", nullable: true),
-                    SubModel = table.Column<string>(type: "text", nullable: true),
-                    PurchasedNewOld = table.Column<bool>(type: "boolean", nullable: false),
-                    DateOfPurchase = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ChasisNumber = table.Column<string>(type: "text", nullable: true),
-                    EngineNumber = table.Column<string>(type: "text", nullable: true),
-                    AgeForPrint = table.Column<string>(type: "text", nullable: true),
-                    AgeForPrintEnglish = table.Column<string>(type: "text", nullable: true),
-                    RegistrationNumber = table.Column<string>(type: "text", nullable: true),
-                    RegistrationNumberNepali = table.Column<string>(type: "text", nullable: true),
-                    ProposerName = table.Column<string>(type: "text", nullable: true),
-                    TypeOfInsurance = table.Column<int>(type: "integer", nullable: false),
-                    GoodsCarryingCapacity = table.Column<decimal>(type: "numeric", nullable: false),
-                    CubicCapacity = table.Column<decimal>(type: "numeric", nullable: false),
-                    VoluntaryExcess = table.Column<decimal>(type: "numeric", nullable: false),
-                    RiotStrikeAndTerrorism = table.Column<bool>(type: "boolean", nullable: false),
-                    YearsFromRegistrationDateYears = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    YearsFromRegistrationDateYearsBS = table.Column<string>(type: "text", nullable: true),
-                    CurrentMarketPrice = table.Column<string>(type: "text", nullable: true),
-                    IsPersonalAccidentForPaidForDriver = table.Column<bool>(type: "boolean", nullable: false),
-                    IsPersonalAccidentForPaidForPassenger = table.Column<bool>(type: "boolean", nullable: false),
-                    PersonalAccidentForPassengerSeatCount = table.Column<int>(type: "integer", nullable: false),
-                    NumberofSeatsIncludingDriver = table.Column<int>(type: "integer", nullable: false),
-                    SumInsuredAmountForPaidDriver = table.Column<string>(type: "text", nullable: true),
-                    SumInsuredAmountForPassenger = table.Column<string>(type: "text", nullable: true),
-                    HasTailor = table.Column<bool>(type: "boolean", nullable: false),
-                    ValueOfTailor = table.Column<int>(type: "integer", nullable: true),
-                    UseOfPrivateHire = table.Column<bool>(type: "boolean", nullable: false),
-                    AgeOfVehicle = table.Column<decimal>(type: "numeric", nullable: true),
-                    RateOfDepreciation = table.Column<decimal>(type: "numeric", nullable: true),
-                    ValueOfAccessories = table.Column<string>(type: "text", nullable: true),
-                    ValueWithoutAccessories = table.Column<string>(type: "text", nullable: true),
-                    SumInsuredAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    IsVehicleDutyFree = table.Column<bool>(type: "boolean", nullable: false),
-                    VehiclePurpose = table.Column<string>(type: "text", nullable: true),
-                    AccessoriesDetail = table.Column<string>(type: "text", nullable: true),
-                    IsProRataOrShortScale = table.Column<bool>(type: "boolean", nullable: false),
-                    Days = table.Column<string>(type: "text", nullable: true),
-                    NCDYears = table.Column<int>(type: "integer", nullable: false),
-                    VehicleForHireOrReward = table.Column<string>(type: "text", nullable: true),
-                    ParkingPlaceGarage = table.Column<string>(type: "text", nullable: true),
-                    ParkingGarageOpen = table.Column<string>(type: "text", nullable: true),
-                    Maintenance = table.Column<string>(type: "text", nullable: true),
-                    PurposedVehicleUsedOtherThanThePurposer = table.Column<string>(type: "text", nullable: true),
-                    AnyDisabilityOfEyeOrEarOfDriverCrimeAccustaion = table.Column<string>(type: "text", nullable: true),
-                    AnyOtherInsuranceProposedVehicle = table.Column<string>(type: "text", nullable: true),
-                    InsuranceCompanyName = table.Column<string>(type: "text", nullable: true),
-                    IsEntitledForNoClaimDiscountFromOtherInsuranceCompany = table.Column<bool>(type: "boolean", nullable: false),
-                    EntitledForNoClaimDiscountNCDFromOtherInsuranceCompany = table.Column<string>(type: "text", nullable: true),
-                    RenewalNoticeNCD = table.Column<string>(type: "text", nullable: true),
-                    HasAnyComputerOrInsurer = table.Column<string>(type: "text", nullable: true),
-                    AccidentOrLossInThreeYears = table.Column<string>(type: "text", nullable: true),
-                    HasProposersOrAnyOtherPersonsDrivingLicenseEverBeenCancelled = table.Column<string>(type: "text", nullable: true),
-                    CopyOfPolicyIfOtherVehicleAreInsuredInThisCompany = table.Column<string>(type: "text", nullable: true),
-                    RiskType = table.Column<string>(type: "text", nullable: true),
-                    IsIssued = table.Column<bool>(type: "boolean", nullable: false),
-                    IsAgentInvolved = table.Column<bool>(type: "boolean", nullable: false),
-                    PreviousPolicyIssuedYear = table.Column<int>(type: "integer", nullable: false),
-                    PaToRiderAndOnePillionRiderSumInsuredAmount = table.Column<string>(type: "text", nullable: true),
-                    IsPrivateTaxi = table.Column<bool>(type: "boolean", nullable: false),
-                    IsRiotStrikeAndTerrorismForDriver = table.Column<bool>(type: "boolean", nullable: false),
-                    IsRiotStrikeAndTerrorismForPassenger = table.Column<bool>(type: "boolean", nullable: false),
-                    RiotStrikeAndTerrorismForPassengerSeatCount = table.Column<int>(type: "integer", nullable: false),
-                    IsDifferentlyAble = table.Column<bool>(type: "boolean", nullable: false),
-                    SpecialDiscountRate = table.Column<decimal>(type: "numeric", nullable: true),
-                    ISRecoveryCharge = table.Column<bool>(type: "boolean", nullable: false),
-                    MasterPolicyNumber = table.Column<string>(type: "text", nullable: true),
-                    Transportation = table.Column<bool>(type: "boolean", nullable: false),
-                    Replacement = table.Column<bool>(type: "boolean", nullable: false),
-                    Depreciation = table.Column<bool>(type: "boolean", nullable: false),
-                    TransportationRate = table.Column<decimal>(type: "numeric", nullable: false),
-                    TransportationAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    ReplacementRate = table.Column<decimal>(type: "numeric", nullable: false),
-                    ReplacementAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    DepreciationRate = table.Column<decimal>(type: "numeric", nullable: false),
-                    DepreciationAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    HasSmartPolicy = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PrivateVehicles", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Quotations",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    Number = table.Column<string>(type: "text", nullable: true),
-                    Status = table.Column<string>(type: "text", nullable: true),
-                    ProductId = table.Column<string>(type: "text", nullable: true),
-                    ProspectId = table.Column<string>(type: "text", nullable: true),
-                    TotalPremium = table.Column<decimal>(type: "numeric", nullable: true),
-                    DiscountPercent = table.Column<decimal>(type: "numeric", nullable: true),
-                    ValidUntil = table.Column<DateOnly>(type: "date", nullable: true),
-                    SnapshotJson = table.Column<string>(type: "text", nullable: true),
-                    PdfUrl = table.Column<string>(type: "text", nullable: true),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    TenantId = table.Column<string>(type: "text", nullable: true),
-                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Quotations", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RenewalReminders",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    PolicyId = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<string>(type: "text", nullable: true),
-                    DueDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ReminderSentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Channel = table.Column<string>(type: "text", nullable: true),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    TenantId = table.Column<string>(type: "text", nullable: true),
-                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RenewalReminders", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Roles",
                 columns: table => new
                 {
@@ -459,6 +400,7 @@ namespace Data.Migrations.Core
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
                     Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
@@ -466,6 +408,31 @@ namespace Data.Migrations.Core
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Roles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SmsGatewayConfigurations",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    ProviderName = table.Column<string>(type: "text", nullable: true),
+                    ApiUrl = table.Column<string>(type: "text", nullable: true),
+                    ApiKey = table.Column<string>(type: "text", nullable: true),
+                    ApiSecret = table.Column<string>(type: "text", nullable: true),
+                    From = table.Column<string>(type: "text", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    AdditionalSettings = table.Column<string>(type: "text", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SmsGatewayConfigurations", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -499,6 +466,8 @@ namespace Data.Migrations.Core
                     Slug = table.Column<string>(type: "text", nullable: true),
                     Name = table.Column<string>(type: "text", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    UnderwriterDigitalSignatureUrl = table.Column<string>(type: "text", nullable: true),
+                    UnderwriterName = table.Column<string>(type: "text", nullable: true),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
@@ -508,6 +477,55 @@ namespace Data.Migrations.Core
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tenants", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TravelUSDRates",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Issuer = table.Column<string>(type: "text", nullable: true),
+                    Group = table.Column<string>(type: "text", nullable: true),
+                    PlanType = table.Column<string>(type: "text", nullable: true),
+                    PeriodFrom = table.Column<int>(type: "integer", nullable: false),
+                    PeriodTo = table.Column<int>(type: "integer", nullable: false),
+                    IndividaulRate = table.Column<decimal>(type: "numeric(15,2)", nullable: false),
+                    FamilyRate = table.Column<decimal>(type: "numeric(15,2)", nullable: false),
+                    DestintionIncludes = table.Column<string>(type: "text", nullable: true),
+                    MultipleEntries = table.Column<string>(type: "text", nullable: true),
+                    AgeFrom = table.Column<int>(type: "integer", nullable: false),
+                    AgeTo = table.Column<int>(type: "integer", nullable: false),
+                    Currency = table.Column<string>(type: "text", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TravelUSDRates", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserSignatures",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: true),
+                    SignatureUrl = table.Column<string>(type: "text", nullable: true),
+                    UploadedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserSignatures", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -539,6 +557,34 @@ namespace Data.Migrations.Core
                 });
 
             migrationBuilder.CreateTable(
+                name: "BudgetSubheadings",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    BudgetHeadingId = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Code = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BudgetSubheadings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BudgetSubheadings_BudgetHeadings_BudgetHeadingId",
+                        column: x => x.BudgetHeadingId,
+                        principalTable: "BudgetHeadings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -557,6 +603,7 @@ namespace Data.Migrations.Core
                     PhoneCountryId = table.Column<int>(type: "integer", nullable: true),
                     UserTotpBackUpCodes = table.Column<string>(type: "text", nullable: true),
                     TwoFaSetupStatus = table.Column<string>(type: "text", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -584,43 +631,12 @@ namespace Data.Migrations.Core
                 });
 
             migrationBuilder.CreateTable(
-                name: "ITIFamilyMembers",
+                name: "ApprovalConfigs",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
-                    Relation = table.Column<string>(type: "text", nullable: true),
-                    FullName = table.Column<string>(type: "text", nullable: true),
-                    PassportNumber = table.Column<string>(type: "text", nullable: true),
-                    DateOfBirth = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Gender = table.Column<string>(type: "text", nullable: true),
-                    InternationalTravelInsuranceId = table.Column<int>(type: "integer", nullable: false),
-                    InternationalTravelInsuranceId1 = table.Column<string>(type: "text", nullable: true),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ITIFamilyMembers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ITIFamilyMembers_ITI_InternationalTravelInsuranceId1",
-                        column: x => x.InternationalTravelInsuranceId1,
-                        principalTable: "ITI",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "QuotationItems",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    QuotationId = table.Column<string>(type: "text", nullable: true),
-                    CoverageId = table.Column<string>(type: "text", nullable: true),
-                    SumInsured = table.Column<decimal>(type: "numeric", nullable: false),
-                    Premium = table.Column<decimal>(type: "numeric", nullable: false),
+                    DepartmentId = table.Column<string>(type: "text", nullable: true),
+                    StepsJson = table.Column<string>(type: "jsonb", nullable: true),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
@@ -631,11 +647,47 @@ namespace Data.Migrations.Core
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_QuotationItems", x => x.Id);
+                    table.PrimaryKey("PK_ApprovalConfigs", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_QuotationItems_Quotations_QuotationId",
-                        column: x => x.QuotationId,
-                        principalTable: "Quotations",
+                        name: "FK_ApprovalConfigs_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BudgetRequests",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    DepartmentId = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: true),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    Purpose = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    NextApproverRoleId = table.Column<string>(type: "text", nullable: true),
+                    CurrentApprovalStep = table.Column<int>(type: "integer", nullable: false),
+                    RequestedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ApprovedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RejectedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    MemoFileUrl = table.Column<string>(type: "text", nullable: true),
+                    ApprovalHistoryJson = table.Column<string>(type: "jsonb", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BudgetRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BudgetRequests_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -672,7 +724,6 @@ namespace Data.Migrations.Core
                 columns: table => new
                 {
                     TenantId = table.Column<string>(type: "text", nullable: false),
-                    TenantId1 = table.Column<string>(type: "text", nullable: true),
                     LogoUrl = table.Column<string>(type: "text", nullable: true),
                     PaletteJson = table.Column<string>(type: "text", nullable: true),
                     TypographyJson = table.Column<string>(type: "text", nullable: true),
@@ -693,11 +744,6 @@ namespace Data.Migrations.Core
                         principalTable: "Tenants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_CompanyBrandings_Tenants_TenantId1",
-                        column: x => x.TenantId1,
-                        principalTable: "Tenants",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -726,12 +772,59 @@ namespace Data.Migrations.Core
                 });
 
             migrationBuilder.CreateTable(
+                name: "Budgets",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    DepartmentId = table.Column<string>(type: "text", nullable: true),
+                    BudgetHeadingId = table.Column<string>(type: "text", nullable: true),
+                    BudgetSubheadingId = table.Column<string>(type: "text", nullable: true),
+                    Year = table.Column<int>(type: "integer", nullable: false),
+                    Quarter = table.Column<int>(type: "integer", nullable: false),
+                    TotalAmount = table.Column<decimal>(type: "numeric", nullable: false),
+                    AllocatedAmount = table.Column<decimal>(type: "numeric", nullable: false),
+                    RemainingAmount = table.Column<decimal>(type: "numeric", nullable: false),
+                    IsLocked = table.Column<bool>(type: "boolean", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Budgets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Budgets_BudgetHeadings_BudgetHeadingId",
+                        column: x => x.BudgetHeadingId,
+                        principalTable: "BudgetHeadings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Budgets_BudgetSubheadings_BudgetSubheadingId",
+                        column: x => x.BudgetSubheadingId,
+                        principalTable: "BudgetSubheadings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Budgets_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Admins",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
                     FullName = table.Column<string>(type: "text", nullable: true),
                     UserId = table.Column<string>(type: "text", nullable: true),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
@@ -743,30 +836,6 @@ namespace Data.Migrations.Core
                     table.PrimaryKey("PK_Admins", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Admins_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Agents",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    FullName = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<string>(type: "text", nullable: true),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Agents", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Agents_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -835,36 +904,13 @@ namespace Data.Migrations.Core
                 });
 
             migrationBuilder.CreateTable(
-                name: "Corporates",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    CorporateName = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<string>(type: "text", nullable: true),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Corporates", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Corporates_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Customers",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
                     FullName = table.Column<string>(type: "text", nullable: true),
                     UserId = table.Column<string>(type: "text", nullable: true),
+                    TenantId = table.Column<string>(type: "text", nullable: true),
                     IndividualType = table.Column<string>(type: "text", nullable: true),
                     CourtesyTitle = table.Column<string>(type: "text", nullable: true),
                     FirstName = table.Column<string>(type: "text", nullable: true),
@@ -987,14 +1033,22 @@ namespace Data.Migrations.Core
                 });
 
             migrationBuilder.CreateTable(
-                name: "Leads",
+                name: "Memos",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
-                    ProspectId = table.Column<string>(type: "text", nullable: true),
+                    BudgetRequestId = table.Column<string>(type: "text", nullable: true),
+                    MemoTemplateId = table.Column<string>(type: "text", nullable: true),
+                    BudgetHeadingId = table.Column<string>(type: "text", nullable: true),
+                    BudgetSubheadingId = table.Column<string>(type: "text", nullable: true),
+                    RequestedBy = table.Column<string>(type: "text", nullable: true),
+                    RequestedByDepartment = table.Column<string>(type: "text", nullable: true),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    Purpose = table.Column<string>(type: "text", nullable: true),
+                    Department = table.Column<string>(type: "text", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
-                    Source = table.Column<string>(type: "text", nullable: true),
-                    OwnerUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    FileUrl = table.Column<string>(type: "text", nullable: true),
+                    ApproversJson = table.Column<string>(type: "jsonb", nullable: true),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
@@ -1005,11 +1059,29 @@ namespace Data.Migrations.Core
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Leads", x => x.Id);
+                    table.PrimaryKey("PK_Memos", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Leads_Prospects_ProspectId",
-                        column: x => x.ProspectId,
-                        principalTable: "Prospects",
+                        name: "FK_Memos_BudgetHeadings_BudgetHeadingId",
+                        column: x => x.BudgetHeadingId,
+                        principalTable: "BudgetHeadings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Memos_BudgetRequests_BudgetRequestId",
+                        column: x => x.BudgetRequestId,
+                        principalTable: "BudgetRequests",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Memos_BudgetSubheadings_BudgetSubheadingId",
+                        column: x => x.BudgetSubheadingId,
+                        principalTable: "BudgetSubheadings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Memos_MemoTemplates_MemoTemplateId",
+                        column: x => x.MemoTemplateId,
+                        principalTable: "MemoTemplates",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1043,90 +1115,6 @@ namespace Data.Migrations.Core
                         onDelete: ReferentialAction.Restrict);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "PolicyDrafts",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    InsuranceType = table.Column<string>(type: "text", nullable: true),
-                    DraftNo = table.Column<string>(type: "text", nullable: true),
-                    PaymentTransactionId = table.Column<string>(type: "text", nullable: true),
-                    NetPremium = table.Column<decimal>(type: "numeric", nullable: false),
-                    BranchCode = table.Column<string>(type: "text", nullable: true),
-                    PortfolioAlias = table.Column<string>(type: "text", nullable: true),
-                    PortfolioId = table.Column<string>(type: "text", nullable: true),
-                    PolicyNumber = table.Column<string>(type: "text", nullable: true),
-                    DocumentNumber = table.Column<string>(type: "text", nullable: true),
-                    InvoiceNumber = table.Column<string>(type: "text", nullable: true),
-                    ReceiptNumber = table.Column<string>(type: "text", nullable: true),
-                    TypeOfParty = table.Column<string>(type: "text", nullable: true),
-                    PortfolioParent = table.Column<string>(type: "text", nullable: true),
-                    Class = table.Column<string>(type: "text", nullable: true),
-                    EffectiveDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExpiryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    BancassuanceBankName = table.Column<string>(type: "text", nullable: true),
-                    BancassuanceBankBranch = table.Column<string>(type: "text", nullable: true),
-                    CustomerId = table.Column<string>(type: "text", nullable: true),
-                    MotorId = table.Column<string>(type: "text", nullable: true),
-                    ITIId = table.Column<string>(type: "text", nullable: true),
-                    PrivateVehicleId = table.Column<string>(type: "text", nullable: true),
-                    PurchasedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Status = table.Column<string>(type: "text", nullable: false),
-                    PaymentGateway = table.Column<string>(type: "text", nullable: true),
-                    TransactionReference = table.Column<string>(type: "text", nullable: true),
-                    IsSubmitted = table.Column<bool>(type: "boolean", nullable: false),
-                    SumInsured = table.Column<decimal>(type: "numeric", nullable: false),
-                    BasicPremium = table.Column<decimal>(type: "numeric", nullable: false),
-                    ThirdPartyPremium = table.Column<decimal>(type: "numeric", nullable: false),
-                    RSMDTPremium = table.Column<decimal>(type: "numeric", nullable: false),
-                    PersonalAccidentPremium = table.Column<decimal>(type: "numeric", nullable: false),
-                    GrossPremium = table.Column<decimal>(type: "numeric", nullable: false),
-                    TotalPremium = table.Column<decimal>(type: "numeric", nullable: false),
-                    StampDuty = table.Column<decimal>(type: "numeric", nullable: false),
-                    VatAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    GovernmentSubsidyAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    PayableAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PolicyDrafts", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PolicyDrafts_Customers_CustomerId",
-                        column: x => x.CustomerId,
-                        principalTable: "Customers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_PolicyDrafts_ITI_ITIId",
-                        column: x => x.ITIId,
-                        principalTable: "ITI",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_PolicyDrafts_Motors_MotorId",
-                        column: x => x.MotorId,
-                        principalTable: "Motors",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_PolicyDrafts_PaymentTransactions_PaymentTransactionId",
-                        column: x => x.PaymentTransactionId,
-                        principalTable: "PaymentTransactions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_PolicyDrafts_PrivateVehicles_PrivateVehicleId",
-                        column: x => x.PrivateVehicleId,
-                        principalTable: "PrivateVehicles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_Addresses_CustomerId",
                 table: "Addresses",
@@ -1143,14 +1131,10 @@ namespace Data.Migrations.Core
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Agents_FullName",
-                table: "Agents",
-                column: "FullName");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Agents_UserId",
-                table: "Agents",
-                column: "UserId");
+                name: "IX_ApprovalConfigs_DepartmentId_TenantId",
+                table: "ApprovalConfigs",
+                columns: new[] { "DepartmentId", "TenantId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserClaims_UserId",
@@ -1163,19 +1147,74 @@ namespace Data.Migrations.Core
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CompanyBrandings_TenantId1",
-                table: "CompanyBrandings",
-                column: "TenantId1");
+                name: "IX_Branches_BranchCode",
+                table: "Branches",
+                column: "BranchCode",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Branches_BranchName_TenantId",
+                table: "Branches",
+                columns: new[] { "BranchName", "TenantId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BudgetHeadings_Code_TenantId",
+                table: "BudgetHeadings",
+                columns: new[] { "Code", "TenantId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BudgetMemoAuditLogs_TenantId_CreatedOn",
+                table: "BudgetMemoAuditLogs",
+                columns: new[] { "TenantId", "CreatedOn" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BudgetMemoAuditLogs_TenantId_EntityType_EntityId",
+                table: "BudgetMemoAuditLogs",
+                columns: new[] { "TenantId", "EntityType", "EntityId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BudgetRequests_DepartmentId",
+                table: "BudgetRequests",
+                column: "DepartmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BudgetRequests_TenantId_RequestedDate",
+                table: "BudgetRequests",
+                columns: new[] { "TenantId", "RequestedDate" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BudgetSubheadings_BudgetHeadingId",
+                table: "BudgetSubheadings",
+                column: "BudgetHeadingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BudgetSubheadings_Code_TenantId",
+                table: "BudgetSubheadings",
+                columns: new[] { "Code", "TenantId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Budgets_BudgetHeadingId",
+                table: "Budgets",
+                column: "BudgetHeadingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Budgets_BudgetSubheadingId",
+                table: "Budgets",
+                column: "BudgetSubheadingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Budgets_DepartmentId_Year_Quarter_TenantId",
+                table: "Budgets",
+                columns: new[] { "DepartmentId", "Year", "Quarter", "TenantId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Contacts_AddressId",
                 table: "Contacts",
                 column: "AddressId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Corporates_UserId",
-                table: "Corporates",
-                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Countries_CountryISO2",
@@ -1206,40 +1245,73 @@ namespace Data.Migrations.Core
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ITIFamilyMembers_InternationalTravelInsuranceId1",
-                table: "ITIFamilyMembers",
-                column: "InternationalTravelInsuranceId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Leads_ProspectId",
-                table: "Leads",
-                column: "ProspectId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PolicyDrafts_CustomerId",
-                table: "PolicyDrafts",
-                column: "CustomerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PolicyDrafts_ITIId",
-                table: "PolicyDrafts",
-                column: "ITIId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PolicyDrafts_MotorId",
-                table: "PolicyDrafts",
-                column: "MotorId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PolicyDrafts_PaymentTransactionId",
-                table: "PolicyDrafts",
-                column: "PaymentTransactionId",
+                name: "IX_Departments_Name_TenantId",
+                table: "Departments",
+                columns: new[] { "Name", "TenantId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_PolicyDrafts_PrivateVehicleId",
-                table: "PolicyDrafts",
-                column: "PrivateVehicleId");
+                name: "IX_Designations_Title_TenantId",
+                table: "Designations",
+                columns: new[] { "Title", "TenantId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MemoTemplates_Name_TenantId",
+                table: "MemoTemplates",
+                columns: new[] { "Name", "TenantId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Memos_BudgetHeadingId",
+                table: "Memos",
+                column: "BudgetHeadingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Memos_BudgetRequestId_TenantId",
+                table: "Memos",
+                columns: new[] { "BudgetRequestId", "TenantId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Memos_BudgetSubheadingId",
+                table: "Memos",
+                column: "BudgetSubheadingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Memos_MemoTemplateId",
+                table: "Memos",
+                column: "MemoTemplateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Noticeboards_Active_Pinned_Priority",
+                table: "Noticeboards",
+                columns: new[] { "IsActive", "IsPinned", "Priority" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Noticeboards_CreatedOn",
+                table: "Noticeboards",
+                column: "CreatedOn");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Noticeboards_TenantId",
+                table: "Noticeboards",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_SentAt",
+                table: "Notifications",
+                column: "SentAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_TenantId",
+                table: "Notifications",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_UserId_ReadAt",
+                table: "Notifications",
+                columns: new[] { "UserId", "ReadAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Prospects_PrimaryContactId",
@@ -1247,20 +1319,27 @@ namespace Data.Migrations.Core
                 column: "PrimaryContactId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_QuotationItems_QuotationId",
-                table: "QuotationItems",
-                column: "QuotationId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_RoleClaims_RoleId",
                 table: "RoleClaims",
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Roles_NormalizedName_TenantId",
+                table: "Roles",
+                columns: new[] { "NormalizedName", "TenantId" },
+                unique: true,
+                filter: "\"IsDeleted\" = false");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Roles_TenantId_NormalizedName",
+                table: "Roles",
+                columns: new[] { "TenantId", "NormalizedName" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
                 table: "Roles",
-                column: "NormalizedName",
-                unique: true);
+                column: "NormalizedName");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserOtps_UserId",
@@ -1271,6 +1350,12 @@ namespace Data.Migrations.Core
                 name: "IX_UserRoles_RoleId",
                 table: "UserRoles",
                 column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSignatures_UserId_TenantId",
+                table: "UserSignatures",
+                columns: new[] { "UserId", "TenantId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "EmailIndex",
@@ -1309,7 +1394,7 @@ namespace Data.Migrations.Core
                 name: "Admins");
 
             migrationBuilder.DropTable(
-                name: "Agents");
+                name: "ApprovalConfigs");
 
             migrationBuilder.DropTable(
                 name: "AspNetUserClaims");
@@ -1324,22 +1409,37 @@ namespace Data.Migrations.Core
                 name: "AttendanceEntries");
 
             migrationBuilder.DropTable(
+                name: "Branches");
+
+            migrationBuilder.DropTable(
+                name: "BudgetMemoAuditLogs");
+
+            migrationBuilder.DropTable(
+                name: "Budgets");
+
+            migrationBuilder.DropTable(
                 name: "CompanyBrandings");
 
             migrationBuilder.DropTable(
-                name: "Corporates");
+                name: "CurrencyExchangeRateConfigurations");
+
+            migrationBuilder.DropTable(
+                name: "Designations");
+
+            migrationBuilder.DropTable(
+                name: "EmailGatewayConfigurations");
 
             migrationBuilder.DropTable(
                 name: "EmailLogs");
 
             migrationBuilder.DropTable(
-                name: "ITIFamilyMembers");
+                name: "HEOMITravelRates");
 
             migrationBuilder.DropTable(
-                name: "LeadActivities");
+                name: "Memos");
 
             migrationBuilder.DropTable(
-                name: "Leads");
+                name: "Noticeboards");
 
             migrationBuilder.DropTable(
                 name: "NotificationHistories");
@@ -1348,19 +1448,19 @@ namespace Data.Migrations.Core
                 name: "Notifications");
 
             migrationBuilder.DropTable(
-                name: "PolicyDrafts");
-
-            migrationBuilder.DropTable(
-                name: "QuotationItems");
-
-            migrationBuilder.DropTable(
-                name: "RenewalReminders");
+                name: "Prospects");
 
             migrationBuilder.DropTable(
                 name: "RoleClaims");
 
             migrationBuilder.DropTable(
+                name: "SmsGatewayConfigurations");
+
+            migrationBuilder.DropTable(
                 name: "SmsLogs");
+
+            migrationBuilder.DropTable(
+                name: "TravelUSDRates");
 
             migrationBuilder.DropTable(
                 name: "UserOtps");
@@ -1369,37 +1469,37 @@ namespace Data.Migrations.Core
                 name: "UserRoles");
 
             migrationBuilder.DropTable(
-                name: "Tenants");
-
-            migrationBuilder.DropTable(
-                name: "Prospects");
+                name: "UserSignatures");
 
             migrationBuilder.DropTable(
                 name: "Customers");
 
             migrationBuilder.DropTable(
-                name: "ITI");
+                name: "Tenants");
 
             migrationBuilder.DropTable(
-                name: "Motors");
+                name: "BudgetRequests");
 
             migrationBuilder.DropTable(
-                name: "PaymentTransactions");
+                name: "BudgetSubheadings");
 
             migrationBuilder.DropTable(
-                name: "PrivateVehicles");
-
-            migrationBuilder.DropTable(
-                name: "Quotations");
-
-            migrationBuilder.DropTable(
-                name: "Roles");
+                name: "MemoTemplates");
 
             migrationBuilder.DropTable(
                 name: "Contacts");
 
             migrationBuilder.DropTable(
+                name: "Roles");
+
+            migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Departments");
+
+            migrationBuilder.DropTable(
+                name: "BudgetHeadings");
 
             migrationBuilder.DropTable(
                 name: "Address");

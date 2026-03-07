@@ -7,7 +7,12 @@ namespace Data.Entities.Tenant;
 public enum MemoStatus
 {
     Draft = 0,
-    Final = 1
+    Final = 1,       // Kept for backward compatibility (existing memos)
+    Prepared = 2,
+    Supported = 3,
+    Recommended = 4,
+    Approved = 5,
+    Archived = 6
 }
 
 public class MemoConfiguration : IEntityTypeConfiguration<Memo>
@@ -19,6 +24,18 @@ public class MemoConfiguration : IEntityTypeConfiguration<Memo>
             .WithMany()
             .HasForeignKey(x => x.BudgetRequestId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<MemoTemplate>()
+            .WithMany()
+            .HasForeignKey(x => x.MemoTemplateId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<BudgetHeading>()
+            .WithMany()
+            .HasForeignKey(x => x.BudgetHeadingId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<BudgetSubheading>()
+            .WithMany()
+            .HasForeignKey(x => x.BudgetSubheadingId)
+            .OnDelete(DeleteBehavior.Restrict);
         builder.Property(x => x.ApproversJson)
             .HasColumnType("jsonb");
         builder.HasIndex(x => new { x.BudgetRequestId, x.TenantId }).IsUnique();
@@ -29,6 +46,9 @@ public class MemoConfiguration : IEntityTypeConfiguration<Memo>
 public class Memo : TenantEntity
 {
     public string BudgetRequestId { get; set; } = default!;
+    public string? MemoTemplateId { get; set; }
+    public string? BudgetHeadingId { get; set; }
+    public string? BudgetSubheadingId { get; set; }
     public string RequestedBy { get; set; } = default!;
     public string RequestedByDepartment { get; set; } = default!;
     public decimal Amount { get; set; }

@@ -17,7 +17,8 @@ namespace Business.Common.TenantDomain;
 public class MemoService(
     ApplicationDataContext db,
     IUserProfileService userProfileService,
-    ISieveExtension sieveExtension)
+    ISieveExtension sieveExtension,
+    IBudgetMemoAuditService auditService)
     : IMemoService
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -41,6 +42,8 @@ public class MemoService(
             query = query.Where(m => m.Status.ToString() == requestModel.Status);
         if (!string.IsNullOrEmpty(requestModel.BudgetRequestId))
             query = query.Where(m => m.BudgetRequestId == requestModel.BudgetRequestId);
+        if (requestModel.IncludeArchived == false)
+            query = query.Where(m => m.Status != MemoStatus.Archived);
 
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
         var list = await result.ToListAsync(cancellationToken);
@@ -95,12 +98,15 @@ public class MemoService(
         {
             Id = Guid.NewGuid().ToString(),
             BudgetRequestId = request.Id,
+            MemoTemplateId = dto.MemoTemplateId,
+            BudgetHeadingId = dto.BudgetHeadingId,
+            BudgetSubheadingId = dto.BudgetSubheadingId,
             RequestedBy = requester?.UserName ?? requester?.Email ?? request.UserId,
             RequestedByDepartment = dept?.Name ?? "",
             Amount = request.Amount,
-            Purpose = dto.Purpose ?? request.Purpose,
+            Purpose = dto.Purpose ?? request.Purpose ?? "",
             Department = dept?.Name ?? "",
-            Status = MemoStatus.Final,
+            Status = MemoStatus.Draft,
             ApproversJson = request.ApprovalHistoryJson ?? "[]",
             TenantId = request.TenantId ?? tenantId ?? "",
             CreatedBy = userProfileService.GetUserId(),
@@ -108,6 +114,7 @@ public class MemoService(
         };
         await db.Memos.AddAsync(entity, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
+        await auditService.LogAsync("Memo", entity.Id, "Created", $"BudgetRequest {entity.BudgetRequestId}", cancellationToken);
         return Result<MemoResponseDto>.Success(MapToDto(entity));
     }
 
@@ -119,13 +126,16 @@ public class MemoService(
         if (isSuperAdmin) query = query.IgnoreQueryFilters();
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<MemoResponseDto>.Failed("Memo not found.");
+        var oldStatus = entity.Status;
         if (dto.Purpose != null) entity.Purpose = dto.Purpose;
-        if (!string.IsNullOrEmpty(dto.Status))
-            entity.Status = Enum.TryParse<MemoStatus>(dto.Status, true, out var s) ? s : entity.Status;
+        if (!string.IsNullOrEmpty(dto.Status) && Enum.TryParse<MemoStatus>(dto.Status, true, out var parsedStatus))
+            entity.Status = parsedStatus;
         entity.LastModifiedBy = userProfileService.GetUserId();
         entity.LastModifiedOn = DateTime.UtcNow;
         db.Memos.Update(entity);
         await db.SaveChangesAsync(cancellationToken);
+        if (oldStatus != entity.Status)
+            await auditService.LogAsync("Memo", entity.Id, "StatusChange", $"{oldStatus} → {entity.Status}", cancellationToken);
         return Result<MemoResponseDto>.Success(MapToDto(entity));
     }
 
@@ -142,6 +152,7 @@ public class MemoService(
         entity.LastModifiedOn = DateTime.UtcNow;
         db.Memos.Update(entity);
         await db.SaveChangesAsync(cancellationToken);
+        await auditService.LogAsync("Memo", entity.Id, "Deleted", null, cancellationToken);
         return Result<bool>.Success(true);
     }
 
@@ -348,10 +359,13 @@ public class MemoService(
         {
             Id = m.Id,
             BudgetRequestId = m.BudgetRequestId,
+            MemoTemplateId = m.MemoTemplateId,
+            BudgetHeadingId = m.BudgetHeadingId,
+            BudgetSubheadingId = m.BudgetSubheadingId,
             RequestedBy = m.RequestedBy,
             RequestedByDepartment = m.RequestedByDepartment,
             Amount = m.Amount,
-            Purpose = m.Purpose,
+            Purpose = m.Purpose ?? "",
             Department = m.Department,
             Approvers = approvers,
             Status = m.Status.ToString(),

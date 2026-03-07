@@ -14,6 +14,14 @@ public class BudgetConfiguration : IEntityTypeConfiguration<Budget>
             .WithMany()
             .HasForeignKey(x => x.DepartmentId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<BudgetHeading>()
+            .WithMany()
+            .HasForeignKey(x => x.BudgetHeadingId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<BudgetSubheading>()
+            .WithMany()
+            .HasForeignKey(x => x.BudgetSubheadingId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
@@ -21,9 +29,19 @@ public class BudgetConfiguration : IEntityTypeConfiguration<Budget>
 public class Budget : TenantEntity
 {
     public string DepartmentId { get; set; } = default!;
+    public string? BudgetHeadingId { get; set; }
+    public string? BudgetSubheadingId { get; set; }
     public int Year { get; set; }
     public int Quarter { get; set; }
     public decimal TotalAmount { get; set; }
     public decimal AllocatedAmount { get; set; }
     public decimal RemainingAmount { get; set; }
+    /// <summary>
+    /// When true, department roles cannot modify this budget; only Financial Authority can unlock.
+    /// </summary>
+    public bool IsLocked { get; set; }
+    /// <summary>
+    /// Revision version for audit; incremented on each update.
+    /// </summary>
+    public int Version { get; set; } = 1;
 }

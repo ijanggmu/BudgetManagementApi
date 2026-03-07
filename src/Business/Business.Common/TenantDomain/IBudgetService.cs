@@ -10,4 +10,5 @@ public interface IBudgetService
     Task<Result<BudgetResponseDto>> CreateAsync(CreateBudgetDto dto, CancellationToken cancellationToken = default);
     Task<Result<BudgetResponseDto>> UpdateAsync(string id, UpdateBudgetDto dto, CancellationToken cancellationToken = default);
     Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default);
+    Task<Result<BudgetResponseDto>> SetLockAsync(string id, bool isLocked, CancellationToken cancellationToken = default);
 }

@@ -30,8 +30,12 @@ public static class TenantDomainServicesExtension
         services.AddScoped<IEntitySettingsService, EntitySettingsService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
         services.AddScoped<IBudgetService, BudgetService>();
+        services.AddScoped<IBudgetHeadingService, BudgetHeadingService>();
+        services.AddScoped<IBudgetSubheadingService, BudgetSubheadingService>();
         services.AddScoped<IBudgetRequestService, BudgetRequestService>();
         services.AddScoped<IMemoService, MemoService>();
+        services.AddScoped<IMemoTemplateService, MemoTemplateService>();
+        services.AddScoped<IBudgetMemoAuditService, BudgetMemoAuditService>();
         services.AddScoped<IApprovalConfigService, ApprovalConfigService>();
         services.AddScoped<IUserSignatureService, UserSignatureService>();
         services.AddScoped<IBudgetReportService, BudgetReportService>();

@@ -101,6 +101,7 @@ public static class MenuPermissionDefinitions
     public static readonly MenuPermissionSet ApprovalConfig = PermissionHelper.GeneratePermissions("23-5", "Approval Config");
     public static readonly MenuPermissionSet BudgetReport = PermissionHelper.GeneratePermissions(
         "23-7", "Budget Report", includeCreate: false, includeUpdate: false, includeDelete: false);
+    public static readonly MenuPermissionSet BudgetHeadings = PermissionHelper.GeneratePermissions("23-9", "Budget Headings");
 
     /// <summary>
     /// Gets a permission set by name (for backward compatibility and easy access)
@@ -147,6 +148,7 @@ public static class MenuPermissionDefinitions
             nameof(Department) => Department,
             nameof(ApprovalConfig) => ApprovalConfig,
             nameof(BudgetReport) => BudgetReport,
+            nameof(BudgetHeadings) => BudgetHeadings,
             _ => null
         };
     }

@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Data.Migrations.Core
 {
     [DbContext(typeof(ApplicationDataContext))]
-    [Migration("20260108140708_LeadFieldAddition")]
-    partial class LeadFieldAddition
+    [Migration("20260305104533_initial-migration")]
+    partial class initialmigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -62,234 +62,6 @@ namespace Data.Migrations.Core
                     b.HasIndex("UserId");
 
                     b.ToTable("Admins");
-                });
-
-            modelBuilder.Entity("Data.Entities.Calculation.CalculationConfiguration", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<int>("ApprovalStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ApprovedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DataType")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("EffectiveFrom")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("EffectiveTo")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Level")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("LowerLimit")
-                        .HasColumnType("numeric");
-
-                    b.Property<bool>("LowerLimitEquals")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("PortfolioAlias")
-                        .HasColumnType("text");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("TypeEnumValue")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("UpperLimit")
-                        .HasColumnType("numeric");
-
-                    b.Property<bool>("UpperLimitEquals")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal>("Value")
-                        .HasColumnType("decimal(15, 4)");
-
-                    b.Property<string>("ValueType")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CalculationConfigurations");
-                });
-
-            modelBuilder.Entity("Data.Entities.Calculation.GlobalConfiguration", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DataType")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Level")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("LowerLimit")
-                        .HasColumnType("numeric");
-
-                    b.Property<bool>("LowerLimitEquals")
-                        .HasColumnType("boolean");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("TypeEnumValue")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("UpperLimit")
-                        .HasColumnType("numeric");
-
-                    b.Property<bool>("UpperLimitEquals")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal>("Value")
-                        .HasColumnType("decimal(15, 4)");
-
-                    b.Property<string>("ValueType")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GlobalConfigurations");
-                });
-
-            modelBuilder.Entity("Data.Entities.Calculation.PropertyRiskConfiguration", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PropertyDescription")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("Rate")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("RateCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RiskCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RiskType")
-                        .HasColumnType("text");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PropertyRiskConfigurations");
-                });
-
-            modelBuilder.Entity("Data.Entities.Calculation.PropertySubsidySILimit", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("SILabel")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("SILimit")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PropertySubsidySILimits");
                 });
 
             modelBuilder.Entity("Data.Entities.Common.Country", b =>
@@ -477,42 +249,6 @@ namespace Data.Migrations.Core
                     b.HasKey("Id");
 
                     b.ToTable("TravelUSDRates");
-                });
-
-            modelBuilder.Entity("Data.Entities.CorporateEntity.Corporate", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CorporateName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Corporates");
                 });
 
             modelBuilder.Entity("Data.Entities.CustomerEntity.Customer", b =>
@@ -781,202 +517,6 @@ namespace Data.Migrations.Core
                     b.ToTable("EmailLogs");
                 });
 
-            modelBuilder.Entity("Data.Entities.FodoEntity.Fodo", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BranchId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DesignationId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("EmployeeId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("FullName")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PermanentDistrict")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PermanentMunicipality")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PermanentProvince")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("PermanentWard")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("TemporaryDistrict")
-                        .HasColumnType("text");
-
-                    b.Property<string>("TemporaryMunicipality")
-                        .HasColumnType("text");
-
-                    b.Property<string>("TemporaryProvince")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("TemporaryWard")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BranchId");
-
-                    b.HasIndex("DesignationId");
-
-                    b.HasIndex("EmployeeId")
-                        .IsUnique();
-
-                    b.HasIndex("FullName");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Fodos", (string)null);
-                });
-
-            modelBuilder.Entity("Data.Entities.ITIEntity.ITIFamilyMember", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FullName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Gender")
-                        .HasColumnType("text");
-
-                    b.Property<string>("InternationalTravelInsuranceId")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PassportNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Relation")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InternationalTravelInsuranceId");
-
-                    b.ToTable("ITIFamilyMembers");
-                });
-
-            modelBuilder.Entity("Data.Entities.ITIEntity.InternationalTravelInsurance", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("EmergencyContactName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("EmergencyContactNumber")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("ExchangeRate")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("FatherHusbandName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("IdType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("InsuranceType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PassportNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PlanType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("PolicyPeriodInDays")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("PremiumAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("TravellingCountry")
-                        .HasColumnType("text");
-
-                    b.Property<string>("TripType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TypeOfInsured")
-                        .HasColumnType("text");
-
-                    b.Property<string>("VisitingCountry")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ITI");
-                });
-
             modelBuilder.Entity("Data.Entities.Identity.ApplicationRole", b =>
                 {
                     b.Property<string>("Id")
@@ -1030,6 +570,9 @@ namespace Data.Migrations.Core
                         .IsUnique()
                         .HasDatabaseName("IX_Roles_NormalizedName_TenantId")
                         .HasFilter("\"IsDeleted\" = false");
+
+                    b.HasIndex("TenantId", "NormalizedName")
+                        .IsUnique();
 
                     b.ToTable("Roles", (string)null);
                 });
@@ -1324,700 +867,6 @@ namespace Data.Migrations.Core
                     b.ToTable("SmsLogs");
                 });
 
-            modelBuilder.Entity("Data.Entities.Marine.MarineTariffSchedule", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("AllRiskValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("BasicRiskValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("MinimumRisk")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("Product")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductCategory")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductCategoryCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductDescription")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MarineTariffSchedules");
-                });
-
-            modelBuilder.Entity("Data.Entities.MotorEntity.Motor", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("AgeOfVehicle")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("BlueBookCopyImage")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BlueBookCopyImageUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ChasisNumber")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("CompulsoryExcess")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal?>("CubicCapacity")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("CurrentMarketPrice")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("DateOfPurchase")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Days")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("EngineNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Financer")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsComprehensive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsThirdParty")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal?>("KilloWatt")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool?>("Maintenance")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("ManufactureCompany")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ManufactureYear")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Model")
-                        .HasColumnType("text");
-
-                    b.Property<string>("NCDCerticficate")
-                        .HasColumnType("text");
-
-                    b.Property<int>("NCDYears")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("NumberofSeatsIncludingDriver")
-                        .HasColumnType("integer");
-
-                    b.Property<bool?>("ParkingGarageOpen")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool?>("ParkingPlaceGarage")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("PartyId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PhotoOfVechile")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("PurchasedNewOld")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal?>("RateOfDepreciation")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("RegistrationNumber")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("RiotStrike")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("SubModel")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("TotalExcess")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("text");
-
-                    b.Property<decimal?>("ValueOfAccessories")
-                        .HasColumnType("numeric");
-
-                    b.Property<bool?>("VehicleForHireOrReward")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("VehicleType")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("VoluntaryExcess")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("YearsFromRegistrationDateYears")
-                        .HasColumnType("text");
-
-                    b.Property<string>("YearsFromRegistrationDateYearsBS")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Motors");
-                });
-
-            modelBuilder.Entity("Data.Entities.Payment.PaymentTransaction", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("GatewayTransactionId")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PaymentGateway")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PaymentGatewayStatus")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PolicyPurchaseId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RawResponse")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("RequestedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("VerifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PaymentTransactions");
-                });
-
-            modelBuilder.Entity("Data.Entities.PolicyE2e.PolicyDraft", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BancassuanceBankBranch")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BancassuanceBankName")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("BasicPremium")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("BranchCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Class")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CustomerId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("DocumentNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("DraftNo")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("EffectiveDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("GovernmentSubsidyAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("GrossPremium")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("ITIId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("InsuranceType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("InvoiceNumber")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsSubmitted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("MotorId")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("NetPremium")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("PayableAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("PaymentGateway")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PaymentTransactionId")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("PersonalAccidentPremium")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("PolicyNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PortfolioAlias")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PortfolioId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PortfolioParent")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PrivateVehicleId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("PurchasedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("RSMDTPremium")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("ReceiptNumber")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("StampDuty")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("SumInsured")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("ThirdPartyPremium")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("TotalPremium")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("TransactionReference")
-                        .HasColumnType("text");
-
-                    b.Property<string>("TypeOfParty")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("VatAmount")
-                        .HasColumnType("numeric");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("ITIId");
-
-                    b.HasIndex("MotorId");
-
-                    b.HasIndex("PaymentTransactionId")
-                        .IsUnique();
-
-                    b.HasIndex("PrivateVehicleId");
-
-                    b.ToTable("PolicyDrafts");
-                });
-
-            modelBuilder.Entity("Data.Entities.PrivateVehicleEntity.PrivateVehicle", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AccessoriesDetail")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AccidentOrLossInThreeYears")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AgeForPrint")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AgeForPrintEnglish")
-                        .HasColumnType("text");
-
-                    b.Property<decimal?>("AgeOfVehicle")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("AnyDisabilityOfEyeOrEarOfDriverCrimeAccustaion")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AnyOtherInsuranceProposedVehicle")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ChasisNumber")
-                        .HasColumnType("text");
-
-                    b.Property<decimal?>("CompulsoryExcess")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("CopyOfPolicyIfOtherVehicleAreInsuredInThisCompany")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("CubicCapacity")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("CurrentMarketPrice")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DateOfPurchase")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Days")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("Depreciation")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal>("DepreciationAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("DepreciationRate")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("EngineNumber")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("EnterSumInsured")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("EntitledForNoClaimDiscountNCDFromOtherInsuranceCompany")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("GoodsCarryingCapacity")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("HasAnyComputerOrInsurer")
-                        .HasColumnType("text");
-
-                    b.Property<string>("HasProposersOrAnyOtherPersonsDrivingLicenseEverBeenCancelled")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("HasSmartPolicy")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("HasTailor")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("ISRecoveryCharge")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("InsuranceCompanyName")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsAgentInvolved")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsComprehensive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDifferentlyAble")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDirectDiscountPA")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsEntitledForNoClaimDiscountFromOtherInsuranceCompany")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsIssued")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsLayup")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsPersonalAccidentForPaidForDriver")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsPersonalAccidentForPaidForPassenger")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsPrivateTaxi")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsProRataOrShortScale")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsRiotStrikeAndTerrorismForDriver")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsRiotStrikeAndTerrorismForPassenger")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsThirdParty")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsVehicleDutyFree")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("LayupDays")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LayupDaysEnd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("LayupDaysStart")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Maintenance")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ManufactureCompany")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ManufactureYear")
-                        .HasColumnType("text");
-
-                    b.Property<string>("MasterPolicyNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Model")
-                        .HasColumnType("text");
-
-                    b.Property<int>("NCDYears")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("NumberofSeatsIncludingDriver")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("PaToRiderAndOnePillionRiderSumInsuredAmount")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ParkingGarageOpen")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ParkingPlaceGarage")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PartyId")
-                        .HasColumnType("text");
-
-                    b.Property<int>("PersonalAccidentForPassengerSeatCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("PortfolioId")
-                        .HasColumnType("text");
-
-                    b.Property<int>("PreviousPolicyIssuedYear")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ProposerName")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("PurchasedNewOld")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("PurposedVehicleUsedOtherThanThePurposer")
-                        .HasColumnType("text");
-
-                    b.Property<decimal?>("RateOfDepreciation")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("RegistrationNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RegistrationNumberNepali")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RenewalNoticeNCD")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("Replacement")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal>("ReplacementAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("ReplacementRate")
-                        .HasColumnType("numeric");
-
-                    b.Property<bool>("RiotStrikeAndTerrorism")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("RiotStrikeAndTerrorismForPassengerSeatCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("RiskType")
-                        .HasColumnType("text");
-
-                    b.Property<decimal?>("SpecialDiscountRate")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("SubModel")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("SumInsuredAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("SumInsuredAmountForPaidDriver")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SumInsuredAmountForPassenger")
-                        .HasColumnType("text");
-
-                    b.Property<decimal?>("TotalExcess")
-                        .HasColumnType("numeric");
-
-                    b.Property<bool>("Transportation")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal>("TransportationAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("TransportationRate")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("text");
-
-                    b.Property<int>("TypeOfInsurance")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("UseOfPrivateHire")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("ValueOfAccessories")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("ValueOfTailor")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ValueWithoutAccessories")
-                        .HasColumnType("text");
-
-                    b.Property<string>("VehicleForHireOrReward")
-                        .HasColumnType("text");
-
-                    b.Property<string>("VehiclePurpose")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("VoluntaryExcess")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateTime>("YearsFromRegistrationDateYears")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("YearsFromRegistrationDateYearsBS")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PrivateVehicles");
-                });
-
             modelBuilder.Entity("Data.Entities.Tenant.Address", b =>
                 {
                     b.Property<string>("Id")
@@ -2067,6 +916,48 @@ namespace Data.Migrations.Core
                     b.HasKey("Id");
 
                     b.ToTable("Address");
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.ApprovalConfig", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DepartmentId")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("StepsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("ApprovalConfigs", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.Tenant.AttendanceEntry", b =>
@@ -2180,6 +1071,296 @@ namespace Data.Migrations.Core
                     b.ToTable("Branches", (string)null);
                 });
 
+            modelBuilder.Entity("Data.Entities.Tenant.Budget", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("AllocatedAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("BudgetHeadingId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BudgetSubheadingId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DepartmentId")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Quarter")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("RemainingAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetHeadingId");
+
+                    b.HasIndex("BudgetSubheadingId");
+
+                    b.HasIndex("DepartmentId", "Year", "Quarter", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("Budgets", (string)null);
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.BudgetHeading", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("BudgetHeadings", (string)null);
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.BudgetMemoAuditLog", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Action")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EntityId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EntityType")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "CreatedOn");
+
+                    b.HasIndex("TenantId", "EntityType", "EntityId");
+
+                    b.ToTable("BudgetMemoAuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.BudgetRequest", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("ApprovalHistoryJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CurrentApprovalStep")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DepartmentId")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MemoFileUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NextApproverRoleId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Purpose")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("RejectedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("RequestedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("TenantId", "RequestedDate");
+
+                    b.ToTable("BudgetRequests", (string)null);
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.BudgetSubheading", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BudgetHeadingId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetHeadingId");
+
+                    b.HasIndex("Code", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("BudgetSubheadings", (string)null);
+                });
+
             modelBuilder.Entity("Data.Entities.Tenant.CompanyBranding", b =>
                 {
                     b.Property<string>("TenantId")
@@ -2267,6 +1448,51 @@ namespace Data.Migrations.Core
                     b.ToTable("Contacts");
                 });
 
+            modelBuilder.Entity("Data.Entities.Tenant.Department", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("Departments", (string)null);
+                });
+
             modelBuilder.Entity("Data.Entities.Tenant.Designation", b =>
                 {
                     b.Property<string>("Id")
@@ -2309,9 +1535,12 @@ namespace Data.Migrations.Core
                     b.ToTable("Designations", (string)null);
                 });
 
-            modelBuilder.Entity("Data.Entities.Tenant.Lead", b =>
+            modelBuilder.Entity("Data.Entities.Tenant.EmailGatewayConfiguration", b =>
                 {
                     b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AdditionalSettings")
                         .HasColumnType("text");
 
                     b.Property<string>("CreatedBy")
@@ -2320,11 +1549,20 @@ namespace Data.Migrations.Core
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("DeadLineDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("text");
 
-                    b.Property<decimal>("EstimatedPremium")
-                        .HasColumnType("numeric");
+                    b.Property<bool>("EnableSsl")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("FromEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Host")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -2335,10 +1573,13 @@ namespace Data.Migrations.Core
                     b.Property<DateTime?>("LastModifiedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("OwnerUserId")
+                    b.Property<string>("Password")
                         .HasColumnType("text");
 
-                    b.Property<string>("ProspectId")
+                    b.Property<int>("Port")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProviderName")
                         .HasColumnType("text");
 
                     b.Property<byte[]>("RowVersion")
@@ -2346,8 +1587,74 @@ namespace Data.Migrations.Core
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
-                    b.Property<string>("Source")
+                    b.Property<string>("TenantId")
                         .HasColumnType("text");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmailGatewayConfigurations");
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.Memo", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("ApproversJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("BudgetHeadingId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BudgetRequestId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BudgetSubheadingId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Department")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MemoTemplateId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Purpose")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestedByDepartment")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -2357,14 +1664,24 @@ namespace Data.Migrations.Core
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProspectId");
+                    b.HasIndex("BudgetHeadingId");
 
-                    b.ToTable("Leads");
+                    b.HasIndex("BudgetSubheadingId");
+
+                    b.HasIndex("MemoTemplateId");
+
+                    b.HasIndex("BudgetRequestId", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("Memos", (string)null);
                 });
 
-            modelBuilder.Entity("Data.Entities.Tenant.LeadActivity", b =>
+            modelBuilder.Entity("Data.Entities.Tenant.MemoTemplate", b =>
                 {
                     b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BodyTemplate")
                         .HasColumnType("text");
 
                     b.Property<string>("CreatedBy")
@@ -2373,11 +1690,11 @@ namespace Data.Migrations.Core
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("Kind")
-                        .HasColumnType("text");
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
@@ -2385,10 +1702,7 @@ namespace Data.Migrations.Core
                     b.Property<DateTime?>("LastModifiedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("LeadId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Notes")
+                    b.Property<string>("Name")
                         .HasColumnType("text");
 
                     b.Property<byte[]>("RowVersion")
@@ -2399,12 +1713,78 @@ namespace Data.Migrations.Core
                     b.Property<string>("TenantId")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("When")
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("MemoTemplates", (string)null);
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.Noticeboard", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("LeadActivities");
+                    b.HasIndex("CreatedOn")
+                        .HasDatabaseName("IX_Noticeboards_CreatedOn");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_Noticeboards_TenantId");
+
+                    b.HasIndex("IsActive", "IsPinned", "Priority")
+                        .HasDatabaseName("IX_Noticeboards_Active_Pinned_Priority");
+
+                    b.ToTable("Noticeboards");
                 });
 
             modelBuilder.Entity("Data.Entities.Tenant.Notification", b =>
@@ -2457,6 +1837,15 @@ namespace Data.Migrations.Core
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SentAt")
+                        .HasDatabaseName("IX_Notifications_SentAt");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_Notifications_TenantId");
+
+                    b.HasIndex("UserId", "ReadAt")
+                        .HasDatabaseName("IX_Notifications_UserId_ReadAt");
 
                     b.ToTable("Notifications");
                 });
@@ -2518,278 +1907,6 @@ namespace Data.Migrations.Core
                     b.ToTable("NotificationHistories");
                 });
 
-            modelBuilder.Entity("Data.Entities.Tenant.PremiumCalculationConfiguration", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CalculationEngineType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateOnly>("EffectiveFrom")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly?>("EffectiveTo")
-                        .HasColumnType("date");
-
-                    b.Property<string>("FiscalYear")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PortfolioAlias")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Version")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PortfolioAlias", "FiscalYear", "IsActive")
-                        .HasDatabaseName("IX_PremiumCalculationConfig_Portfolio_FiscalYear_Active");
-
-                    b.HasIndex("PortfolioAlias", "FiscalYear", "EffectiveFrom", "EffectiveTo")
-                        .HasDatabaseName("IX_PremiumCalculationConfig_Portfolio_FiscalYear_Dates");
-
-                    b.ToTable("PremiumCalculationConfigurations");
-                });
-
-            modelBuilder.Entity("Data.Entities.Tenant.PremiumCalculationParameter", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Category")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("ConfigurationId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("character varying(450)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DataType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("DefaultValue")
-                        .HasColumnType("text");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsRequired")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal?>("MaxValue")
-                        .HasColumnType("decimal(18, 4)");
-
-                    b.Property<decimal?>("MinValue")
-                        .HasColumnType("decimal(18, 4)");
-
-                    b.Property<string>("ParameterKey")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("ParameterName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConfigurationId", "ParameterKey")
-                        .IsUnique()
-                        .HasDatabaseName("IX_PremiumCalculationParameter_ConfigId_Key");
-
-                    b.ToTable("PremiumCalculationParameters");
-                });
-
-            modelBuilder.Entity("Data.Entities.Tenant.PremiumCalculationRateTable", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ConfigurationId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("character varying(450)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DataJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LookupKey")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("SchemaJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TableName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConfigurationId", "TableName")
-                        .HasDatabaseName("IX_PremiumCalculationRateTable_ConfigId_TableName");
-
-                    b.ToTable("PremiumCalculationRateTables");
-                });
-
-            modelBuilder.Entity("Data.Entities.Tenant.PremiumCalculationRule", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Condition")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ConfigurationId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("character varying(450)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Expression")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("integer");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("RuleName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("RuleType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConfigurationId", "Priority")
-                        .HasDatabaseName("IX_PremiumCalculationRule_ConfigId_Priority");
-
-                    b.ToTable("PremiumCalculationRules");
-                });
-
             modelBuilder.Entity("Data.Entities.Tenant.Prospect", b =>
                 {
                     b.Property<string>("Id")
@@ -2828,9 +1945,21 @@ namespace Data.Migrations.Core
                     b.ToTable("Prospects");
                 });
 
-            modelBuilder.Entity("Data.Entities.Tenant.Quotation", b =>
+            modelBuilder.Entity("Data.Entities.Tenant.SmsGatewayConfiguration", b =>
                 {
                     b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AdditionalSettings")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApiKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApiSecret")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApiUrl")
                         .HasColumnType("text");
 
                     b.Property<string>("CreatedBy")
@@ -2839,8 +1968,11 @@ namespace Data.Migrations.Core
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal?>("DiscountPercent")
-                        .HasColumnType("numeric");
+                    b.Property<string>("From")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -2851,121 +1983,8 @@ namespace Data.Migrations.Core
                     b.Property<DateTime?>("LastModifiedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Number")
+                    b.Property<string>("ProviderName")
                         .HasColumnType("text");
-
-                    b.Property<string>("PdfUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProspectId")
-                        .HasColumnType("text");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("SnapshotJson")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("text");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.Property<decimal?>("TotalPremium")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateOnly?>("ValidUntil")
-                        .HasColumnType("date");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Quotations");
-                });
-
-            modelBuilder.Entity("Data.Entities.Tenant.QuotationItem", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CoverageId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("Premium")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("QuotationId")
-                        .HasColumnType("text");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<decimal>("SumInsured")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("TenantId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuotationId");
-
-                    b.ToTable("QuotationItems");
-                });
-
-            modelBuilder.Entity("Data.Entities.Tenant.RenewalReminder", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Channel")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PolicyId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("ReminderSentAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -2975,12 +1994,9 @@ namespace Data.Migrations.Core
                     b.Property<string>("TenantId")
                         .HasColumnType("text");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
-                    b.ToTable("RenewalReminders");
+                    b.ToTable("SmsGatewayConfigurations");
                 });
 
             modelBuilder.Entity("Data.Entities.Tenant.Tenant", b =>
@@ -3021,6 +2037,51 @@ namespace Data.Migrations.Core
                     b.HasKey("Id");
 
                     b.ToTable("Tenants");
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.UserSignature", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("SignatureUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("UserSignatures", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -3099,16 +2160,6 @@ namespace Data.Migrations.Core
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Data.Entities.CorporateEntity.Corporate", b =>
-                {
-                    b.HasOne("Data.Entities.Identity.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Data.Entities.CustomerEntity.Customer", b =>
                 {
                     b.HasOne("Data.Entities.Identity.ApplicationUser", "KycReviewedByUser")
@@ -3134,40 +2185,6 @@ namespace Data.Migrations.Core
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Customer");
-                });
-
-            modelBuilder.Entity("Data.Entities.FodoEntity.Fodo", b =>
-                {
-                    b.HasOne("Data.Entities.Tenant.Branch", "Branch")
-                        .WithMany()
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Data.Entities.Tenant.Designation", "Designation")
-                        .WithMany()
-                        .HasForeignKey("DesignationId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Data.Entities.Identity.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Branch");
-
-                    b.Navigation("Designation");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Data.Entities.ITIEntity.ITIFamilyMember", b =>
-                {
-                    b.HasOne("Data.Entities.ITIEntity.InternationalTravelInsurance", "InternationalTravelInsurance")
-                        .WithMany("FamilyMembers")
-                        .HasForeignKey("InternationalTravelInsuranceId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("InternationalTravelInsurance");
                 });
 
             modelBuilder.Entity("Data.Entities.Identity.ApplicationRoleClaim", b =>
@@ -3215,42 +2232,46 @@ namespace Data.Migrations.Core
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Data.Entities.PolicyE2e.PolicyDraft", b =>
+            modelBuilder.Entity("Data.Entities.Tenant.ApprovalConfig", b =>
                 {
-                    b.HasOne("Data.Entities.CustomerEntity.Customer", "Customer")
+                    b.HasOne("Data.Entities.Tenant.Department", null)
                         .WithMany()
-                        .HasForeignKey("CustomerId")
+                        .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
 
-                    b.HasOne("Data.Entities.ITIEntity.InternationalTravelInsurance", "ITI")
+            modelBuilder.Entity("Data.Entities.Tenant.Budget", b =>
+                {
+                    b.HasOne("Data.Entities.Tenant.BudgetHeading", null)
                         .WithMany()
-                        .HasForeignKey("ITIId")
+                        .HasForeignKey("BudgetHeadingId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Data.Entities.MotorEntity.Motor", "Motor")
+                    b.HasOne("Data.Entities.Tenant.BudgetSubheading", null)
                         .WithMany()
-                        .HasForeignKey("MotorId")
+                        .HasForeignKey("BudgetSubheadingId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Data.Entities.Payment.PaymentTransaction", "PaymentTransaction")
-                        .WithOne("PolicyDraft")
-                        .HasForeignKey("Data.Entities.PolicyE2e.PolicyDraft", "PaymentTransactionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Data.Entities.PrivateVehicleEntity.PrivateVehicle", "PrivateVehicle")
+                    b.HasOne("Data.Entities.Tenant.Department", null)
                         .WithMany()
-                        .HasForeignKey("PrivateVehicleId")
+                        .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
 
-                    b.Navigation("Customer");
+            modelBuilder.Entity("Data.Entities.Tenant.BudgetRequest", b =>
+                {
+                    b.HasOne("Data.Entities.Tenant.Department", null)
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
 
-                    b.Navigation("ITI");
-
-                    b.Navigation("Motor");
-
-                    b.Navigation("PaymentTransaction");
-
-                    b.Navigation("PrivateVehicle");
+            modelBuilder.Entity("Data.Entities.Tenant.BudgetSubheading", b =>
+                {
+                    b.HasOne("Data.Entities.Tenant.BudgetHeading", null)
+                        .WithMany()
+                        .HasForeignKey("BudgetHeadingId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Data.Entities.Tenant.CompanyBranding", b =>
@@ -3274,47 +2295,27 @@ namespace Data.Migrations.Core
                     b.Navigation("Address");
                 });
 
-            modelBuilder.Entity("Data.Entities.Tenant.Lead", b =>
+            modelBuilder.Entity("Data.Entities.Tenant.Memo", b =>
                 {
-                    b.HasOne("Data.Entities.Tenant.Prospect", "Prospect")
+                    b.HasOne("Data.Entities.Tenant.BudgetHeading", null)
                         .WithMany()
-                        .HasForeignKey("ProspectId")
+                        .HasForeignKey("BudgetHeadingId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Prospect");
-                });
+                    b.HasOne("Data.Entities.Tenant.BudgetRequest", null)
+                        .WithMany()
+                        .HasForeignKey("BudgetRequestId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity("Data.Entities.Tenant.PremiumCalculationParameter", b =>
-                {
-                    b.HasOne("Data.Entities.Tenant.PremiumCalculationConfiguration", "Configuration")
-                        .WithMany("Parameters")
-                        .HasForeignKey("ConfigurationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.HasOne("Data.Entities.Tenant.BudgetSubheading", null)
+                        .WithMany()
+                        .HasForeignKey("BudgetSubheadingId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Configuration");
-                });
-
-            modelBuilder.Entity("Data.Entities.Tenant.PremiumCalculationRateTable", b =>
-                {
-                    b.HasOne("Data.Entities.Tenant.PremiumCalculationConfiguration", "Configuration")
-                        .WithMany("RateTables")
-                        .HasForeignKey("ConfigurationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Configuration");
-                });
-
-            modelBuilder.Entity("Data.Entities.Tenant.PremiumCalculationRule", b =>
-                {
-                    b.HasOne("Data.Entities.Tenant.PremiumCalculationConfiguration", "Configuration")
-                        .WithMany("Rules")
-                        .HasForeignKey("ConfigurationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Configuration");
+                    b.HasOne("Data.Entities.Tenant.MemoTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("MemoTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Data.Entities.Tenant.Prospect", b =>
@@ -3325,14 +2326,6 @@ namespace Data.Migrations.Core
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("PrimaryContact");
-                });
-
-            modelBuilder.Entity("Data.Entities.Tenant.QuotationItem", b =>
-                {
-                    b.HasOne("Data.Entities.Tenant.Quotation", null)
-                        .WithMany("Items")
-                        .HasForeignKey("QuotationId")
-                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -3367,33 +2360,9 @@ namespace Data.Migrations.Core
                     b.Navigation("Addresses");
                 });
 
-            modelBuilder.Entity("Data.Entities.ITIEntity.InternationalTravelInsurance", b =>
-                {
-                    b.Navigation("FamilyMembers");
-                });
-
             modelBuilder.Entity("Data.Entities.Identity.ApplicationUser", b =>
                 {
                     b.Navigation("Otp");
-                });
-
-            modelBuilder.Entity("Data.Entities.Payment.PaymentTransaction", b =>
-                {
-                    b.Navigation("PolicyDraft");
-                });
-
-            modelBuilder.Entity("Data.Entities.Tenant.PremiumCalculationConfiguration", b =>
-                {
-                    b.Navigation("Parameters");
-
-                    b.Navigation("RateTables");
-
-                    b.Navigation("Rules");
-                });
-
-            modelBuilder.Entity("Data.Entities.Tenant.Quotation", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Data.Entities.Tenant.Tenant", b =>

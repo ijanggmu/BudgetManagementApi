@@ -720,6 +720,22 @@ public static partial class MenuPermissionsList
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.BudgetReport, false),
                         Children = null
                     },
+                    new MenuItem
+                    {
+                        MenuId = 9,
+                        MenuName = "Budget Headings",
+                        MenuSlug = "/budget-headings",
+                        Icon = "LayersOutlined",
+                        Rank = 9,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.BudgetHeadings, false),
+                        Children = null
+                    },
                 }
             }
         });

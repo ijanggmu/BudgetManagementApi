@@ -24,6 +24,7 @@ public class BudgetRequestController(IBudgetRequestService service) : BaseAdminA
 
     [HttpPost("create")]
     [Permission(MenuPermissionConstant.BudgetRequestCreate)]
+    [Permission(MenuPermissionConstant.BudgetRequestCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateBudgetRequestDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await service.CreateAsync(dto, cancellationToken));
 

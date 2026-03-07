@@ -65,11 +65,15 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
 
     // Budget Management
     public DbSet<Department> Departments { get; set; }
+    public DbSet<BudgetHeading> BudgetHeadings { get; set; }
+    public DbSet<BudgetSubheading> BudgetSubheadings { get; set; }
     public DbSet<Budget> Budgets { get; set; }
     public DbSet<BudgetRequest> BudgetRequests { get; set; }
     public DbSet<ApprovalConfig> ApprovalConfigs { get; set; }
+    public DbSet<MemoTemplate> MemoTemplates { get; set; }
     public DbSet<Memo> Memos { get; set; }
     public DbSet<UserSignature> UserSignatures { get; set; }
+    public DbSet<BudgetMemoAuditLog> BudgetMemoAuditLogs { get; set; }
 
     #endregion  DbSets
 

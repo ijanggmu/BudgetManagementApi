@@ -302,6 +302,12 @@ public static class MenuPermissionConstant
     public const string BudgetReportView = "23-7-1";
     public const string BudgetReportViewName = "Budget Report View";
     public const string BudgetReportExport = "23-7-5";
+    public const string BudgetHeadingsView = "23-9-1";
+    public const string BudgetHeadingsViewName = "Budget Headings View";
+    public const string BudgetHeadingsCreate = "23-9-2";
+    public const string BudgetHeadingsUpdate = "23-9-3";
+    public const string BudgetHeadingsDelete = "23-9-4";
+    public const string BudgetHeadingsExport = "23-9-5";
 }
 public static class CmsMenuConstant
 {

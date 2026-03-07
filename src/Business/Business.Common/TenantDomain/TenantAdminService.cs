@@ -183,6 +183,7 @@ public class TenantAdminService : ITenantAdminService
             }
 
             var rolesName = await SeedTenantRolesAsync(tenant.Id, tenant.Slug);
+            await SeedTenantDefaultRolesAsync(tenant.Id);
             await SeedTenantAdminPermissions(rolesName.AdminRoleName, tenant.Id);
             await SeedFoDoPermissions(rolesName.FodoRoleName, tenant.Id);
             // Add Admin role
@@ -495,6 +496,56 @@ public class TenantAdminService : ITenantAdminService
             FodoRoleName: createdFodoRole
         );
     }
+
+    /// <summary>
+    /// Seeds default tenant roles (CEO, CFO, HOD) for a newly created tenant.
+    /// </summary>
+    private async Task SeedTenantDefaultRolesAsync(string tenantId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
+
+        var tenantRoles = SystemRoles.GetTenantDefaultRoles();
+
+        foreach (var roleName in tenantRoles)
+        {
+            var normalizedName = _roleManager.NormalizeKey(roleName);
+            var exists = await _db.Roles
+                .AnyAsync(r => r.TenantId == tenantId && r.NormalizedName == normalizedName);
+
+            if (exists)
+                continue;
+
+            var role = new ApplicationRole
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = roleName,
+                NormalizedName = normalizedName,
+                Description = roleName,
+                RoleLevel = SystemRoles.CEOCFOHODLevel,
+                RoleType = roleName,
+                TenantId = tenantId
+            };
+
+            var result = await _roleManager.CreateAsync(role);
+
+            if (!result.Succeeded)
+            {
+                _logger.LogError(
+                    "Failed to create role {RoleName} for tenant {TenantId}. Errors: {Errors}",
+                    roleName,
+                    tenantId,
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+                throw new InvalidOperationException(
+                    $"Role {roleName} creation failed for tenant {tenantId}");
+            }
+
+            _logger.LogInformation(
+                "Created role {RoleName} for tenant {TenantId}",
+                roleName,
+                tenantId);
+        }
+    }
+
     private async Task SeedTenantAdminPermissions(string roleName, string tenantId)
     {
         var roleId = await _db.Roles.Where(userRole => userRole.Name == roleName && userRole.TenantId == tenantId)

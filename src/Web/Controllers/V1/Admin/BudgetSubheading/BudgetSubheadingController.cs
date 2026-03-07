@@ -7,15 +7,15 @@ using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Budget;
 using SharedKernel.Constant.Permission;
 
-namespace BeemaEdgeApi.Controllers.V1.Admin.Budget;
+namespace BeemaEdgeApi.Controllers.V1.Admin.BudgetSubheading;
 
 [AdminOrSuperAdmin]
-public class BudgetController(IBudgetService service) : BaseAdminApiController
+public class BudgetSubheadingController(IBudgetSubheadingService service) : BaseAdminApiController
 {
-    [HttpPost]
+    [HttpGet]
     [Permission(MenuPermissionConstant.BudgetView)]
-    public async Task<IActionResult> ListAsync([FromBody] BudgetListRequestModel requestModel, CancellationToken cancellationToken = default)
-        => HandleResult(await service.GetAllAsync(requestModel ?? new BudgetListRequestModel(), cancellationToken));
+    public async Task<IActionResult> ListAsync([FromQuery] string? budgetHeadingId, CancellationToken cancellationToken = default)
+        => HandleResult(await service.GetAllAsync(budgetHeadingId, cancellationToken));
 
     [HttpGet("{id}")]
     [Permission(MenuPermissionConstant.BudgetView)]
@@ -24,21 +24,16 @@ public class BudgetController(IBudgetService service) : BaseAdminApiController
 
     [HttpPost("create")]
     [Permission(MenuPermissionConstant.BudgetCreate)]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateBudgetDto dto, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> CreateAsync([FromBody] CreateBudgetSubheadingDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await service.CreateAsync(dto, cancellationToken));
 
     [HttpPut("{id}")]
     [Permission(MenuPermissionConstant.BudgetUpdate)]
-    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateBudgetDto dto, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateBudgetSubheadingDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await service.UpdateAsync(id, dto, cancellationToken));
 
     [HttpDelete("{id}")]
     [Permission(MenuPermissionConstant.BudgetDelete)]
     public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
         => HandleResult(await service.DeleteAsync(id, cancellationToken));
-
-    [HttpPost("{id}/set-lock")]
-    [Permission(MenuPermissionConstant.BudgetUpdate)]
-    public async Task<IActionResult> SetLockAsync(string id, [FromBody] SetBudgetLockDto dto, CancellationToken cancellationToken = default)
-        => HandleResult(await service.SetLockAsync(id, dto.IsLocked, cancellationToken));
 }

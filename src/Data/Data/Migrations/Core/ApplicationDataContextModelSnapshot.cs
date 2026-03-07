@@ -1076,6 +1076,12 @@ namespace Data.Migrations.Core
                     b.Property<decimal>("AllocatedAmount")
                         .HasColumnType("numeric");
 
+                    b.Property<string>("BudgetHeadingId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BudgetSubheadingId")
+                        .HasColumnType("text");
+
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
@@ -1086,6 +1092,9 @@ namespace Data.Migrations.Core
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsLocked")
                         .HasColumnType("boolean");
 
                     b.Property<string>("LastModifiedBy")
@@ -1111,15 +1120,119 @@ namespace Data.Migrations.Core
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("numeric");
 
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Year")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BudgetHeadingId");
+
+                    b.HasIndex("BudgetSubheadingId");
+
                     b.HasIndex("DepartmentId", "Year", "Quarter", "TenantId")
                         .IsUnique();
 
                     b.ToTable("Budgets", (string)null);
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.BudgetHeading", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("BudgetHeadings", (string)null);
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.BudgetMemoAuditLog", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Action")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EntityId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EntityType")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "CreatedOn");
+
+                    b.HasIndex("TenantId", "EntityType", "EntityId");
+
+                    b.ToTable("BudgetMemoAuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.Tenant.BudgetRequest", b =>
@@ -1129,6 +1242,9 @@ namespace Data.Migrations.Core
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
+
+                    b.Property<string>("ApprovalHistoryJson")
+                        .HasColumnType("jsonb");
 
                     b.Property<DateTime?>("ApprovedDate")
                         .HasColumnType("timestamp with time zone");
@@ -1190,6 +1306,56 @@ namespace Data.Migrations.Core
                     b.HasIndex("TenantId", "RequestedDate");
 
                     b.ToTable("BudgetRequests", (string)null);
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.BudgetSubheading", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BudgetHeadingId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetHeadingId");
+
+                    b.HasIndex("Code", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("BudgetSubheadings", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.Tenant.CompanyBranding", b =>
@@ -1440,7 +1606,13 @@ namespace Data.Migrations.Core
                     b.Property<string>("ApproversJson")
                         .HasColumnType("jsonb");
 
+                    b.Property<string>("BudgetHeadingId")
+                        .HasColumnType("text");
+
                     b.Property<string>("BudgetRequestId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BudgetSubheadingId")
                         .HasColumnType("text");
 
                     b.Property<string>("CreatedBy")
@@ -1464,6 +1636,9 @@ namespace Data.Migrations.Core
                     b.Property<DateTime?>("LastModifiedOn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("MemoTemplateId")
+                        .HasColumnType("text");
+
                     b.Property<string>("Purpose")
                         .HasColumnType("text");
 
@@ -1486,10 +1661,61 @@ namespace Data.Migrations.Core
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BudgetHeadingId");
+
+                    b.HasIndex("BudgetSubheadingId");
+
+                    b.HasIndex("MemoTemplateId");
+
                     b.HasIndex("BudgetRequestId", "TenantId")
                         .IsUnique();
 
                     b.ToTable("Memos", (string)null);
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.MemoTemplate", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BodyTemplate")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("TenantId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name", "TenantId")
+                        .IsUnique();
+
+                    b.ToTable("MemoTemplates", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.Tenant.Noticeboard", b =>
@@ -2013,6 +2239,16 @@ namespace Data.Migrations.Core
 
             modelBuilder.Entity("Data.Entities.Tenant.Budget", b =>
                 {
+                    b.HasOne("Data.Entities.Tenant.BudgetHeading", null)
+                        .WithMany()
+                        .HasForeignKey("BudgetHeadingId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Data.Entities.Tenant.BudgetSubheading", null)
+                        .WithMany()
+                        .HasForeignKey("BudgetSubheadingId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Data.Entities.Tenant.Department", null)
                         .WithMany()
                         .HasForeignKey("DepartmentId")
@@ -2024,6 +2260,14 @@ namespace Data.Migrations.Core
                     b.HasOne("Data.Entities.Tenant.Department", null)
                         .WithMany()
                         .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Data.Entities.Tenant.BudgetSubheading", b =>
+                {
+                    b.HasOne("Data.Entities.Tenant.BudgetHeading", null)
+                        .WithMany()
+                        .HasForeignKey("BudgetHeadingId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
@@ -2050,9 +2294,24 @@ namespace Data.Migrations.Core
 
             modelBuilder.Entity("Data.Entities.Tenant.Memo", b =>
                 {
+                    b.HasOne("Data.Entities.Tenant.BudgetHeading", null)
+                        .WithMany()
+                        .HasForeignKey("BudgetHeadingId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Data.Entities.Tenant.BudgetRequest", null)
                         .WithMany()
                         .HasForeignKey("BudgetRequestId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Data.Entities.Tenant.BudgetSubheading", null)
+                        .WithMany()
+                        .HasForeignKey("BudgetSubheadingId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Data.Entities.Tenant.MemoTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("MemoTemplateId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
