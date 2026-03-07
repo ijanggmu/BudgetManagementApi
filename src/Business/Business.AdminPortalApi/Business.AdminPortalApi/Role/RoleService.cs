@@ -68,6 +68,7 @@ public class RoleService(
         {
             RoleId = x.Id,
             RoleName = x.Name,
+            RoleDisplayName = x.RoleDisplayName ?? x.Name,
             RoleDescription = x.Description,
             RoleType = x.RoleType,
             TotalUserAssignedWithRole = dataContext.UserRoles.Where(y => y.RoleId == x.Id).Count()
@@ -94,6 +95,8 @@ public class RoleService(
         {
             existingRole.IsDeleted = false;
             existingRole.Description = model.RoleDescription;
+            if (model.RoleDisplayName != null)
+                existingRole.RoleDisplayName = model.RoleDisplayName;
             await roleManager.UpdateAsync(existingRole);
             return Result<MessageResponseModel>.Success(new MessageResponseModel("Role created successfully."));
         }
@@ -110,6 +113,7 @@ public class RoleService(
         {
             Id = Guid.NewGuid().ToString(),
             Name = model.RoleName,
+            RoleDisplayName = model.RoleDisplayName ?? model.RoleName,
             RoleType = model.RoleType,
             Description = model.RoleDescription,
             // Set TenantId for tenant-wise role creation (non-superadmin admins)
@@ -141,6 +145,7 @@ public class RoleService(
             RoleId = role.Id,
             RoleType = role.RoleType,
             RoleName = role.Name,
+            RoleDisplayName = role.RoleDisplayName ?? role.Name,
             RoleDescription = role.Description
         });
     }
@@ -171,6 +176,8 @@ public class RoleService(
             {
                 role.Name = roleModel.RoleName.Trim();
                 role.Description = roleModel.RoleDescription?.Trim();
+                if (roleModel.RoleDisplayName != null)
+                    role.RoleDisplayName = roleModel.RoleDisplayName.Trim();
 
                 await roleManager.UpdateAsync(role);
                 return Result<MessageResponseModel>.Success(new MessageResponseModel("Role updated successfully."));

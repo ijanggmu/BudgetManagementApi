@@ -23,6 +23,8 @@ public class ApplicationRoleConfiguration : IEntityTypeConfiguration<Application
 public class ApplicationRole: IdentityRole<string>, IBaseEntity, IAuditableEntity, ITenantEntity
 {
     public string Description { get; set; }
+    /// <summary>Human-readable display name for the role (e.g. "Chief Executive Officer" for CEO).</summary>
+    public string RoleDisplayName { get; set; }
     public string RoleType { get; set; }
     public int RoleLevel { get; set; }
 

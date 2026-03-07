@@ -12,7 +12,7 @@ public class UpdateRoleRequestModel
     [Required(ErrorMessage = "Role Name is required")]
     [RegularExpression(@"^\s*(\w+\s)*\w+\s*$", ErrorMessage = "Can contain only one space")]
     public string RoleName { get; set; }
-
+    public string RoleDisplayName { get; set; }
     public string RoleDescription { get; set; }
 
 }

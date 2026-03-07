@@ -17,6 +17,7 @@ public static class RoleSeeder
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = SystemRoles.SuperAdmin,
+                RoleDisplayName = "Super Admin",
                 Description = SystemRoles.SuperAdmin,
                 RoleLevel = SystemRoles.SuperAdminLevel,
                 RoleType = SystemRoles.SuperAdmin
@@ -25,9 +26,28 @@ public static class RoleSeeder
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = SystemRoles.Admin,
+                RoleDisplayName = "Administrator",
                 Description = SystemRoles.Admin,
                 RoleLevel = SystemRoles.AdminLevel,
                 RoleType = SystemRoles.Admin
+            },
+            new ApplicationRole
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = SystemRoles.FoDo,
+                RoleDisplayName = "Marketing Executive",
+                Description = SystemRoles.FoDo,
+                RoleLevel = SystemRoles.FoDoLevel,
+                RoleType = SystemRoles.FoDo
+            },
+            new ApplicationRole
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = SystemRoles.MarketingExecutive,
+                RoleDisplayName = "Marketing Executive",
+                Description = SystemRoles.MarketingExecutive,
+                RoleLevel = SystemRoles.MarketingExecutiveLevel,
+                RoleType = SystemRoles.MarketingExecutive
             }
         };
 
@@ -66,6 +86,7 @@ public static class RoleSeeder
                     Id = Guid.NewGuid().ToString(),
                     Name = roleName,
                     NormalizedName = normalizedName,
+                    RoleDisplayName = GetRoleDisplayName(roleName),
                     Description = roleName,
                     RoleLevel = SystemRoles.CEOCFOHODLevel,
                     RoleType = roleName,
@@ -77,6 +98,17 @@ public static class RoleSeeder
         }
 
         await context.SaveChangesAsync();
+    }
+
+    private static string GetRoleDisplayName(string roleName)
+    {
+        return roleName switch
+        {
+            SystemRoles.CEO => "Chief Executive Officer",
+            SystemRoles.CFO => "Chief Financial Officer",
+            SystemRoles.HOD => "Head of Department",
+            _ => roleName
+        };
     }
 }
 

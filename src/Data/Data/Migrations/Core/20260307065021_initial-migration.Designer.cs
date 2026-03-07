@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Data.Migrations.Core
 {
     [DbContext(typeof(ApplicationDataContext))]
-    [Migration("20260305104533_initial-migration")]
+    [Migration("20260307065021_initial-migration")]
     partial class initialmigration
     {
         /// <inheritdoc />
@@ -551,6 +551,9 @@ namespace Data.Migrations.Core
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<string>("RoleDisplayName")
+                        .HasColumnType("text");
 
                     b.Property<int>("RoleLevel")
                         .HasColumnType("integer");

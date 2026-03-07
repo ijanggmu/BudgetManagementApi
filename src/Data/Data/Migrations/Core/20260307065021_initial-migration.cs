@@ -393,6 +393,7 @@ namespace Data.Migrations.Core
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
+                    RoleDisplayName = table.Column<string>(type: "text", nullable: true),
                     RoleType = table.Column<string>(type: "text", nullable: true),
                     RoleLevel = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),

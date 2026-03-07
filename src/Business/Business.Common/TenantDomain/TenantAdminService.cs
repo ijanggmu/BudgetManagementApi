@@ -431,6 +431,7 @@ public class TenantAdminService : ITenantAdminService
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = adminRoleName,
+                RoleDisplayName = "Tenant Administrator",
                 Description = $"Tenant Admin Role for {tenantId}",
                 RoleLevel = SystemRoles.AdminLevel,
                 RoleType = SystemRoles.Admin,
@@ -464,6 +465,7 @@ public class TenantAdminService : ITenantAdminService
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = fodoRoleName,
+                RoleDisplayName = "Marketing Executive",
                 Description = $"Marketing Executive Role for {tenantId}",
                 RoleLevel = SystemRoles.FoDoLevel,
                 RoleType = SystemRoles.FoDo,
@@ -520,6 +522,7 @@ public class TenantAdminService : ITenantAdminService
                 Id = Guid.NewGuid().ToString(),
                 Name = roleName,
                 NormalizedName = normalizedName,
+                RoleDisplayName = GetTenantRoleDisplayName(roleName),
                 Description = roleName,
                 RoleLevel = SystemRoles.CEOCFOHODLevel,
                 RoleType = roleName,
@@ -544,6 +547,17 @@ public class TenantAdminService : ITenantAdminService
                 roleName,
                 tenantId);
         }
+    }
+
+    private static string GetTenantRoleDisplayName(string roleName)
+    {
+        return roleName switch
+        {
+            SystemRoles.CEO => "Chief Executive Officer",
+            SystemRoles.CFO => "Chief Financial Officer",
+            SystemRoles.HOD => "Head of Department",
+            _ => roleName
+        };
     }
 
     private async Task SeedTenantAdminPermissions(string roleName, string tenantId)

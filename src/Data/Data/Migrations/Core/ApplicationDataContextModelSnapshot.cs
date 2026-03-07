@@ -549,6 +549,9 @@ namespace Data.Migrations.Core
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("RoleDisplayName")
+                        .HasColumnType("text");
+
                     b.Property<int>("RoleLevel")
                         .HasColumnType("integer");
 
