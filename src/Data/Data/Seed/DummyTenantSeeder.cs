@@ -181,8 +181,6 @@ public static class DummyTenantSeeder
         permissions.AddRange(MenuPermissionDefinitions.ApprovalConfig.GetAllValues());
         permissions.AddRange(MenuPermissionDefinitions.BudgetReport.GetAllValues());
         permissions.AddRange(MenuPermissionDefinitions.BudgetHeadings.GetAllValues());
-        permissions.Add(MenuPermissionConstant.BudgetRequestView);
-        permissions.Add(MenuPermissionConstant.BudgetRequestCreate);
         permissions.Add(MenuPermissionConstant.BudgetRequestApprove);
         permissions.Add(MenuPermissionConstant.BudgetRequestReject);
         permissions.Add(MenuPermissionConstant.MemoView);

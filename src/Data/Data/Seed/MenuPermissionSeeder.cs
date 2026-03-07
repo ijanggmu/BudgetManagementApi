@@ -84,8 +84,6 @@ public static class MenuPermissionSeeder
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Department.GetAllValues());
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.ApprovalConfig.GetAllValues());
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.BudgetReport.GetAllValues());
-        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestCreate);
         tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestApprove);
         tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestReject);
         tenantAdminPermissions.Add(MenuPermissionConstant.MemoView);

@@ -587,28 +587,6 @@ public static partial class MenuPermissionsList
                     },
                     new MenuItem
                     {
-                        MenuId = 2,
-                        MenuName = "Budget Requests",
-                        MenuSlug = "/budget-requests",
-                        Icon = "SendOutlined",
-                        Rank = 2,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
-                        Permissions = new List<Permission>
-                        {
-                            new Permission(MenuPermissionConstant.BudgetRequestViewName, MenuPermissionConstant.BudgetRequestView, false),
-                            new Permission("Budget Request Create", MenuPermissionConstant.BudgetRequestCreate, false),
-                            new Permission("Approve", MenuPermissionConstant.BudgetRequestApprove, false),
-                            new Permission("Reject", MenuPermissionConstant.BudgetRequestReject, false)
-                        },
-                        Children = null
-                    },
-                    new MenuItem
-                    {
                         MenuId = 3,
                         MenuName = "Memos",
                         MenuSlug = "/memos",
@@ -662,7 +640,6 @@ public static partial class MenuPermissionsList
                         AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
                         Permissions = new List<Permission>
                         {
-                            new Permission(MenuPermissionConstant.BudgetRequestViewName, MenuPermissionConstant.BudgetRequestView, false),
                             new Permission("Approve", MenuPermissionConstant.BudgetRequestApprove, false),
                             new Permission("Reject", MenuPermissionConstant.BudgetRequestReject, false)
                         },

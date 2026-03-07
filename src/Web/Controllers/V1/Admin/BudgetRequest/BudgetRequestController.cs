@@ -13,18 +13,17 @@ namespace BeemaEdgeApi.Controllers.V1.Admin.BudgetRequest;
 public class BudgetRequestController(IBudgetRequestService service) : BaseAdminApiController
 {
     [HttpPost]
-    [Permission(MenuPermissionConstant.BudgetRequestView)]
+    [Permission(MenuPermissionConstant.MemoView)]
     public async Task<IActionResult> ListAsync([FromBody] BudgetRequestListRequestModel requestModel, CancellationToken cancellationToken = default)
         => HandleResult(await service.GetAllAsync(requestModel ?? new BudgetRequestListRequestModel(), cancellationToken));
 
     [HttpGet("{id}")]
-    [Permission(MenuPermissionConstant.BudgetRequestView)]
+    [Permission(MenuPermissionConstant.MemoView)]
     public async Task<IActionResult> GetAsync(string id, CancellationToken cancellationToken = default)
         => HandleResult(await service.GetByIdAsync(id, cancellationToken));
 
     [HttpPost("create")]
-    [Permission(MenuPermissionConstant.BudgetRequestCreate)]
-    [Permission(MenuPermissionConstant.BudgetRequestCreate)]
+    [Permission(MenuPermissionConstant.MemoCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateBudgetRequestDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await service.CreateAsync(dto, cancellationToken));
 
@@ -39,7 +38,7 @@ public class BudgetRequestController(IBudgetRequestService service) : BaseAdminA
         => HandleResult(await service.RejectAsync(id, dto ?? new RejectBudgetRequestDto(), cancellationToken));
 
     [HttpDelete("{id}")]
-    [Permission(MenuPermissionConstant.BudgetRequestView)]
+    [Permission(MenuPermissionConstant.MemoView)]
     public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
         => HandleResult(await service.DeleteAsync(id, cancellationToken));
 
