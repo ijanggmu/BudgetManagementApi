@@ -32,7 +32,7 @@ public class CustomerTwoFactorService(
 
         var user = await userManager.FindByIdAsync(userId);
 
-        if (!await dbContext.Roles.AnyAsync(x => roleIds.Contains(x.Name) && x.RoleType == SystemRoles.FoDo, cancellationToken))
+        if (!await dbContext.Roles.AnyAsync(x => roleIds.Contains(x.Name) && x.RoleType == SystemRoles.Admin, cancellationToken))
             return Result<TwoFaResponseModel>.Failed(ResponseMessage.UserNotFound);
 
         var qrCode = await totpService.GenerateTotpQrCode(user);

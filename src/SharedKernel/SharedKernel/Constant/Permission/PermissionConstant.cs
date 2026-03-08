@@ -14,19 +14,13 @@ public static class MenuPermissionConstant
     {
         Dashboard,
         Administration,
-        SalesMarketing,
         Operations,
         System,
         Roles,
         Admins,
         AdminManagement,
-        AdminLeads,
-        AdminQuotations,
-        Leads,
-        Quotations,
         PremiumCalculation,
         Tenants,
-        MarketingExecutives,
         Notifications,
         Logs,
         Config
@@ -45,16 +39,12 @@ public static class MenuPermissionConstant
     // Menu Names (for backward compatibility)
     public const string DashboardName = "Dashboard";
     public const string AdministrationName = "Administration";
-    public const string SalesMarketingName = "Sales & Marketing";
     public const string OperationsName = "Operations";
     public const string SystemName = "System";
     public const string RolesName = "Roles";
     public const string MenuName = "Menu";
     public const string AdminManagementName = "Admin Management";
     public const string TenantsName = "Tenants";
-    public const string MarketingExecutivesName = "Marketing Executives";
-    public const string AdminLeadsName = "Leads";
-    public const string AdminQuotationsName = "Quotations";
     public const string PremiumCalculationName = "Premium Calculation";
     public const string PremiumOverviewName = "Overview";
     public const string PremiumConfigurationsName = "Configurations";
@@ -96,35 +86,6 @@ public static class MenuPermissionConstant
     public const string AdminManagementUpdate = "18-4-3";
     public const string AdminManagementDelete = "18-4-4";
     public const string AdminManagementExport = "18-4-5";
-
-    // Sales & Marketing
-    public const string SalesMarketingView = "19-1";
-    public const string SalesMarketingViewName = "Sales & Marketing";
-    
-    public const string MarketingExecutivesView = "19-13-1";
-    public const string MarketingExecutivesViewName = "Marketing Executives View";
-    public const string MarketingExecutivesCreate = "19-13-2";
-    public const string MarketingExecutivesUpdate = "19-13-3";
-    public const string MarketingExecutivesDelete = "19-13-4";
-    public const string MarketingExecutivesExport = "19-13-5";
-    // Backward compatibility
-    public const string FodoName = "Marketing Executives";
-    public const string FodoView = "19-13-1";
-    public const string FodoViewName = "Marketing Executives View";
-    
-    public const string AdminLeadsView = "19-5-1";
-    public const string AdminLeadsViewName = "Leads View";
-    public const string AdminLeadsCreate = "19-5-2";
-    public const string AdminLeadsUpdate = "19-5-3";
-    public const string AdminLeadsDelete = "19-5-4";
-    public const string AdminLeadsExport = "19-5-5";
-    
-    public const string AdminQuotationsView = "19-6-1";
-    public const string AdminQuotationsViewName = "Quotations View";
-    public const string AdminQuotationsCreate = "19-6-2";
-    public const string AdminQuotationsUpdate = "19-6-3";
-    public const string AdminQuotationsDelete = "19-6-4";
-    public const string AdminQuotationsExport = "19-6-5";
 
     // Operations
     public const string OperationsView = "20-1";
@@ -172,9 +133,6 @@ public static class MenuPermissionConstant
     public const string PasswordName = "Password";
     public const string TwoFactorName = "Two Factor";
     public const string ReportingName = "Reporting";
-    public const string MarketingExecutiveLeadsName = "My Leads";
-    public const string MarketingExecutiveQuotationsName = "My Quotations";
-
     // Branch
     public const string BranchView = "18-14-1";
     public const string BranchViewName = "Branch View";
@@ -216,19 +174,6 @@ public static class MenuPermissionConstant
     public const string TwoFactorView = "18-19-1";
     public const string TwoFactorViewName = "Two Factor View";
     public const string TwoFactorUpdate = "18-19-3";
-
-    // Marketing Executive Leads
-    public const string MarketingExecutiveLeadsView = "19-14-1";
-    public const string MarketingExecutiveLeadsViewName = "Marketing Executive Leads View";
-    public const string MarketingExecutiveLeadsCreate = "19-14-2";
-    public const string MarketingExecutiveLeadsUpdate = "19-14-3";
-
-    // Marketing Executive Quotations
-    public const string MarketingExecutiveQuotationsView = "19-15-1";
-    public const string MarketingExecutiveQuotationsViewName = "Marketing Executive Quotations View";
-    public const string MarketingExecutiveQuotationsCreate = "19-15-2";
-    public const string MarketingExecutiveQuotationsUpdate = "19-15-3";
-    public const string MarketingExecutiveQuotationsDelete = "19-15-4";
 
     // Notice Board (Operations)
     public const string NoticeBoardView = "20-22-1";
@@ -317,16 +262,12 @@ public enum MenuRank
 {
     Dashboard = 1,
     Administration,
-    SalesMarketing,
     Operations,
     System,
     // Child menus (for reference, not used in parent menus)
     Tenants,
     Roles,
     AdminManagement,
-    MarketingExecutives,
-    AdminLeads,
-    AdminQuotations,
     PremiumCalculation,
     Notifications,
     Logs,
@@ -349,7 +290,7 @@ public class MenuItem
     /// <summary>
     /// List of roles that can see this menu item. 
     /// If null or empty, menu is visible to all roles.
-    /// Values: "SuperAdmin", "Admin", "FoDo", "MarketingExecutive", or "All"
+    /// Values: "SuperAdmin", "Admin", or "All"
     /// </summary>
     public List<string>? AllowedRoles { get; set; }
 

@@ -13,7 +13,6 @@ public static class MenuPermissionSeeder
     {
         await SeedSuperAdminPermissions(dbContext);
         await SeedTenantAdminPermissions(dbContext);
-        await SeedFoDoPermissions(dbContext);
     }
 
     private static async Task SeedSuperAdminPermissions(ApplicationDataContext dbContext)
@@ -52,21 +51,8 @@ public static class MenuPermissionSeeder
 
         var roleClaim = await dbContext.RoleClaims.FirstOrDefaultAsync(x => x.RoleId == roleId);
 
-        // Tenant Admin permissions: Sales & Marketing, Operations, System sections with full CRUD+Export
-        var tenantAdminPermissions = new List<string>
-        {
-            // Sales & Marketing section - Full CRUD+Export
-            MenuPermissionConstant.SalesMarketingView
-        };
-
-        // Add all CRUD+Export permissions for Marketing Executives
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.MarketingExecutives.GetAllValues());
-
-        // Add all CRUD+Export permissions for Admin Leads
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.AdminLeads.GetAllValues());
-
-        // Add all CRUD+Export permissions for Admin Quotations
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.AdminQuotations.GetAllValues());
+        // Tenant Admin permissions: Operations, System sections with full CRUD+Export
+        var tenantAdminPermissions = new List<string>();
 
         // Operations section
         tenantAdminPermissions.Add(MenuPermissionConstant.OperationsView);
@@ -111,52 +97,6 @@ public static class MenuPermissionSeeder
             // Merge with existing permissions, avoiding duplicates
             var existingPermissions = roleClaim.Permissions ?? new List<string>();
             var mergedPermissions = existingPermissions.Union(tenantAdminPermissions).Distinct().ToList();
-            roleClaim.Permissions = mergedPermissions;
-            dbContext.RoleClaims.Update(roleClaim);
-        }
-
-        await dbContext.SaveChangesAsync();
-    }
-
-    private static async Task SeedFoDoPermissions(ApplicationDataContext dbContext)
-    {
-        var roleId = await dbContext.Roles.Where(userRole => userRole.Name == SystemRoles.FoDo)
-                                          .Select(y => y.Id).FirstOrDefaultAsync();
-
-        if (string.IsNullOrEmpty(roleId))
-            return;
-
-        var roleClaim = await dbContext.RoleClaims.FirstOrDefaultAsync(x => x.RoleId == roleId);
-
-        // FoDo permissions: Only Sales & Marketing section (NO admin access)
-        // FoDo can manage their own leads and quotations through FoDo endpoints
-        // They CANNOT access Admin endpoints (AdminLeadController, AdminQuotationController, etc.)
-        // because those require AdminLeadsView/AdminQuotationsView permissions which FoDo doesn't have
-        var fodoPermissions = new List<string>
-        {
-            // Sales & Marketing section - View only (parent menu)
-            MenuPermissionConstant.SalesMarketingView,
-            
-            // Note: FoDo endpoints (FoDo/Lead, FoDo/Quotation) don't require specific permissions
-            // They are protected by role-based authorization (BaseFoDoApiController)
-            // FoDo users can only access their own data through FoDo endpoints, not Admin endpoints
-        };
-
-        fodoPermissions = fodoPermissions.Distinct().ToList();
-
-        if (roleClaim == null)
-        {
-            await dbContext.RoleClaims.AddAsync(new ApplicationRoleClaim
-            {
-                RoleId = roleId,
-                Permissions = fodoPermissions
-            });
-        }
-        else
-        {
-            // Merge with existing permissions, avoiding duplicates
-            var existingPermissions = roleClaim.Permissions ?? new List<string>();
-            var mergedPermissions = existingPermissions.Union(fodoPermissions).Distinct().ToList();
             roleClaim.Permissions = mergedPermissions;
             dbContext.RoleClaims.Update(roleClaim);
         }

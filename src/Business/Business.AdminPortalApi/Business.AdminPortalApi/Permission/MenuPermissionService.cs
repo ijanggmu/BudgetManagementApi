@@ -124,8 +124,6 @@ public class MenuPermissionService : IMenuPermissionService
         {
             var name when name.Equals(SharedKernel.Constant.Roles.SystemRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase) => "SuperAdmin",
             var name when name.Equals(SharedKernel.Constant.Roles.SystemRoles.Admin, StringComparison.OrdinalIgnoreCase) => "Admin",
-            var name when name.Equals(SharedKernel.Constant.Roles.SystemRoles.FoDo, StringComparison.OrdinalIgnoreCase) ||
-                         name.Equals(SharedKernel.Constant.Roles.SystemRoles.MarketingExecutive, StringComparison.OrdinalIgnoreCase) => "FoDo",
             _ => null
         };
     }

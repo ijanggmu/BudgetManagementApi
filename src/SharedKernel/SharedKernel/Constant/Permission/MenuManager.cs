@@ -54,12 +54,11 @@ public static partial class MenuPermissionsList
                 return false;
 
             // Check if user has any of the allowed roles
-            return menu.AllowedRoles.Any(allowedRole => 
-                userRoles.Any(userRole => 
+            return menu.AllowedRoles.Any(allowedRole =>
+                userRoles.Any(userRole =>
                     string.Equals(allowedRole, userRole, StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(allowedRole, "SuperAdmin", StringComparison.OrdinalIgnoreCase) && userRole == "SuperAdmin" ||
-                    string.Equals(allowedRole, "Admin", StringComparison.OrdinalIgnoreCase) && (userRole == "Admin" || userRole == "TenantAdmin") ||
-                    string.Equals(allowedRole, "FoDo", StringComparison.OrdinalIgnoreCase) && (userRole == "FoDo" || userRole == "MarketingExecutive")
+                    string.Equals(allowedRole, "Admin", StringComparison.OrdinalIgnoreCase) && (userRole == "Admin" || userRole == "TenantAdmin")
                 ));
         }
 

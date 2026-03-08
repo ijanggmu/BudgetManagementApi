@@ -19,14 +19,6 @@ public static class MenuPermissionDefinitions
     public static readonly MenuPermissionSet Menu = PermissionHelper.GeneratePermissions("18-3", "Menu", includeCreate: false, includeDelete: false, includeExport: false);
     public static readonly MenuPermissionSet AdminManagement = PermissionHelper.GeneratePermissions("18-4", "Admin Management");
 
-    // Sales & Marketing Section
-    public static readonly MenuPermissionSet SalesMarketing = PermissionHelper.GeneratePermissions(
-        "19", "Sales & Marketing", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-
-    public static readonly MenuPermissionSet MarketingExecutives = PermissionHelper.GeneratePermissions("19-13", "Marketing Executives");
-    public static readonly MenuPermissionSet AdminLeads = PermissionHelper.GeneratePermissions("19-5", "Leads");
-    public static readonly MenuPermissionSet AdminQuotations = PermissionHelper.GeneratePermissions("19-6", "Quotations");
-
     // Operations Section
     public static readonly MenuPermissionSet Operations = PermissionHelper.GeneratePermissions(
         "20", "Operations", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
@@ -62,12 +54,6 @@ public static class MenuPermissionDefinitions
     // Operations - Additional
     public static readonly MenuPermissionSet Reporting = PermissionHelper.GeneratePermissions(
         "20-20", "Reporting", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-
-    // Sales & Marketing - Marketing Executive specific
-    public static readonly MenuPermissionSet MarketingExecutiveLeads = PermissionHelper.GeneratePermissions(
-        "19-14", "Marketing Executive Leads", includeCreate: true, includeUpdate: true, includeDelete: false, includeExport: false);
-    public static readonly MenuPermissionSet MarketingExecutiveQuotations = PermissionHelper.GeneratePermissions(
-        "19-15", "Marketing Executive Quotations", includeCreate: true, includeUpdate: true, includeDelete: true, includeExport: false);
 
     // System Section
     public static readonly MenuPermissionSet System = PermissionHelper.GeneratePermissions(
@@ -116,10 +102,6 @@ public static class MenuPermissionDefinitions
             nameof(Roles) => Roles,
             nameof(Menu) => Menu,
             nameof(AdminManagement) => AdminManagement,
-            nameof(SalesMarketing) => SalesMarketing,
-            nameof(MarketingExecutives) => MarketingExecutives,
-            nameof(AdminLeads) => AdminLeads,
-            nameof(AdminQuotations) => AdminQuotations,
             nameof(Operations) => Operations,
             nameof(PremiumCalculation) => PremiumCalculation,
             nameof(PremiumOverview) => PremiumOverview,
@@ -137,8 +119,6 @@ public static class MenuPermissionDefinitions
             nameof(Password) => Password,
             nameof(TwoFactor) => TwoFactor,
             nameof(Reporting) => Reporting,
-            nameof(MarketingExecutiveLeads) => MarketingExecutiveLeads,
-            nameof(MarketingExecutiveQuotations) => MarketingExecutiveQuotations,
             nameof(NoticeBoard) => NoticeBoard,
             nameof(EmailGateway) => EmailGateway,
             nameof(SmsGateway) => SmsGateway,

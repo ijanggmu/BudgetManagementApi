@@ -91,36 +91,20 @@ public class NotificationService : INotificationService
         }
         else
         {
-            // TenantAdmin (SystemRoles.Admin) can ONLY send to FoDo/MarketingExecutive role type users in their tenant
-            // Query users who have roles with RoleType = FoDo or MarketingExecutive
-            var fodoRoleTypes = new[] { SystemRoles.FoDo, SystemRoles.MarketingExecutive };
-
-            targetUserIds = await _db.UserRoles
-                .Join(_db.Roles,
-                    ur => ur.RoleId,
-                    r => r.Id,
-                    (ur, r) => new { ur.UserId, r.RoleType, r.TenantId, ur.IsDeleted })
-                .Where(x => !x.IsDeleted &&
-                           x.TenantId == tenantId &&
-                           fodoRoleTypes.Contains(x.RoleType))
-                .Select(x => x.UserId)
-                .Distinct()
-                .Join(_db.Users,
-                    userId => userId,
-                    u => u.Id,
-                    (userId, u) => new { u.Id, u.IsDeleted, u.IsDisabled })
-                .Where(x => !x.IsDeleted && !x.IsDisabled)
-                .Select(x => x.Id)
+            // TenantAdmin (SystemRoles.Admin) can send to all users in their tenant
+            targetUserIds = await _db.Users
+                .Where(u => u.TenantId == tenantId && !u.IsDeleted && !u.IsDisabled)
+                .Select(u => u.Id)
                 .ToListAsync(cancellationToken);
 
-            userTypeDescription = $"FoDo/MarketingExecutive users in tenant {tenantId}";
+            userTypeDescription = $"all users in tenant {tenantId}";
         }
 
         if (!targetUserIds.Any())
         {
             var errorMessage = isSuperAdmin
                 ? $"No active users found{(string.IsNullOrWhiteSpace(tenantId) ? " across all tenants" : $" in tenant {tenantId}")}."
-                : "No active FoDo/Marketing Executive users found in the tenant.";
+                : "No active users found in the tenant.";
             return Result<MessageResponseModel>.Failed(errorMessage);
         }
 

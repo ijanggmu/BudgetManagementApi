@@ -105,9 +105,7 @@ public class MenuPermissionService(ApplicationDataContext context,
                                string.Equals(allowedRole, existingRole.RoleType, StringComparison.OrdinalIgnoreCase) ||
                                (string.Equals(allowedRole, "SuperAdmin", StringComparison.OrdinalIgnoreCase) && existingRole.RoleType == "SuperAdmin") ||
                                (string.Equals(allowedRole, "Admin", StringComparison.OrdinalIgnoreCase) &&
-                                (existingRole.RoleType == "Admin" || existingRole.RoleType == "TenantAdmin")) ||
-                               (string.Equals(allowedRole, "FoDo", StringComparison.OrdinalIgnoreCase) &&
-                                (existingRole.RoleType == "FoDo" || existingRole.RoleType == "MarketingExecutive"))
+                                (existingRole.RoleType == "Admin" || existingRole.RoleType == "TenantAdmin"))
                            ))
             .ToList();
 

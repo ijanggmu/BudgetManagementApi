@@ -164,7 +164,6 @@ public static class DummyTenantSeeder
 
         var permissions = new List<string>
         {
-            MenuPermissionConstant.SalesMarketingView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
             MenuPermissionConstant.SystemView,
@@ -173,9 +172,6 @@ public static class DummyTenantSeeder
             MenuPermissionConstant.ConfigView,
             MenuPermissionConstant.DashboardView
         };
-        permissions.AddRange(MenuPermissionDefinitions.MarketingExecutives.GetAllValues());
-        permissions.AddRange(MenuPermissionDefinitions.AdminLeads.GetAllValues());
-        permissions.AddRange(MenuPermissionDefinitions.AdminQuotations.GetAllValues());
         permissions.AddRange(MenuPermissionDefinitions.Budget.GetAllValues());
         permissions.AddRange(MenuPermissionDefinitions.Department.GetAllValues());
         permissions.AddRange(MenuPermissionDefinitions.ApprovalConfig.GetAllValues());

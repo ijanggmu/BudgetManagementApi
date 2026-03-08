@@ -52,14 +52,6 @@ public class DashboardService : IDashboardService
                 : Result<object>.Failed(result.Error, result.ErrorCode);
         }
 
-        if (userRoles.Contains(SystemRoles.FoDo) || userRoles.Contains(SystemRoles.MarketingExecutive))
-        {
-            var result = await GetMarketingExecutiveDashboardAsync(cancellationToken);
-            return result.IsSuccess
-                ? Result<object>.Success(result.Data)
-                : Result<object>.Failed(result.Error, result.ErrorCode);
-        }
-
         return Result<object>.Failed("Access denied. No valid role found.");
     }
 
@@ -146,103 +138,8 @@ public class DashboardService : IDashboardService
         if (string.IsNullOrWhiteSpace(userId))
             return Result<MarketingExecutiveDashboardDto>.Failed("User not authenticated.");
 
-        var userRoles = await _tenantResolutionService.GetUserRolesAsync(userId);
-        var isMarketingExecutive = userRoles.Contains(SystemRoles.FoDo) || userRoles.Contains(SystemRoles.MarketingExecutive);
-
-        if (!isMarketingExecutive)
-            return Result<MarketingExecutiveDashboardDto>.Failed("Access denied. Marketing Executive role required.");
-
-        var tenantId = _tenantContext.TenantId;
-        if (string.IsNullOrWhiteSpace(tenantId))
-            return Result<MarketingExecutiveDashboardDto>.Failed("Tenant ID not found.");
-
-        var now = DateTime.UtcNow;
-        var currentMonthStart = new DateTime(now.Year, now.Month, 1).ToUniversalTime();
-        var lastMonthStart = currentMonthStart.AddMonths(-1);
-        var lastMonthEnd = currentMonthStart.AddDays(-1);
-
-        // Total Leads (current month vs last month)
-        var currentMonthLeads = 2;
-
-        var lastMonthLeads = 9;
-
-        var leadPercentageChange = lastMonthLeads > 0
-            ? ((currentMonthLeads - lastMonthLeads) / (decimal)lastMonthLeads) * 100
-            : (currentMonthLeads > 0 ? 100 : 0);
-
-        var leadStat = new LeadStatDto(
-            currentMonthLeads,
-            Math.Round(Math.Abs(leadPercentageChange), 2),
-            currentMonthLeads >= lastMonthLeads ? "increase" : "decrease"
-        );
-
-        // Conversion Rate (Won leads / Total leads)
-        var totalLeads = 100;
-        var wonLeads = 12;
-
-        var currentMonthWonLeads = 12312;
-
-        var lastMonthWonLeads = 222;
-
-        var currentMonthConversionRate = currentMonthLeads > 0
-            ? (currentMonthWonLeads / (decimal)currentMonthLeads) * 100
-            : 0;
-
-        var lastMonthConversionRate = lastMonthLeads > 0
-            ? (lastMonthWonLeads / (decimal)lastMonthLeads) * 100
-            : 0;
-
-        var conversionRateChange = lastMonthConversionRate > 0
-            ? currentMonthConversionRate - lastMonthConversionRate
-            : (currentMonthConversionRate > 0 ? currentMonthConversionRate : 0);
-
-        var conversionRate = new ConversionRateDto(
-            Math.Round(currentMonthConversionRate, 2),
-            Math.Round(Math.Abs(conversionRateChange), 2),
-            currentMonthConversionRate >= lastMonthConversionRate ? "increase" : "decrease"
-        );
-
-        // Average Premium (from quotations linked to leads)
-        var currentMonthQuotations = 98;
-
-        var lastMonthQuotations = 127;
-
-        var currentMonthAvgPremium = 1212.11m;
-
-        var lastMonthAvgPremium = 0;
-
-        var avgPremiumChange = currentMonthAvgPremium - lastMonthAvgPremium;
-
-        var averagePremium = new AveragePremiumDto(
-            Math.Round(currentMonthAvgPremium, 2),
-            Math.Round(Math.Abs(avgPremiumChange), 2),
-            currentMonthAvgPremium >= lastMonthAvgPremium ? "increase" : "decrease"
-        );
-
-        // Sales Funnel - Leads with premium (from quotations)
-        // Get all leads that have quotations with premium > 0
-
-
-        var totalActiveLeadsWithPremium = 123;
-        var totalQualifiedLeadsWithPremium = 121123;
-        var totalConvertedLeadsWithPremium = 12213;
-        var totalClosedLeadsWithPremium = 12;
-
-        var salesFunnel = new SalesFunnelDto(
-            totalActiveLeadsWithPremium,
-            totalQualifiedLeadsWithPremium,
-            totalConvertedLeadsWithPremium,
-            totalClosedLeadsWithPremium
-        );
-
-        var dashboard = new MarketingExecutiveDashboardDto(
-            leadStat,
-            conversionRate,
-            averagePremium,
-            salesFunnel
-        );
-
-        return Result<MarketingExecutiveDashboardDto>.Success(dashboard);
+        // FoDo/Marketing Executive roles have been removed; this dashboard is no longer in use.
+        return Result<MarketingExecutiveDashboardDto>.Failed("Access denied. Marketing Executive role has been removed.");
     }
 }
 

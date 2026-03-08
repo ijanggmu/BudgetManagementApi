@@ -194,7 +194,7 @@ ISmsService smsService) : ICustomerAuthService
 
         var roleIds = await userManager.GetRolesAsync(user);
 
-        if (!await dbContext.Roles.AnyAsync(x => roleIds.Contains(x.Name) && x.RoleType == SystemRoles.FoDo))
+        if (!await dbContext.Roles.AnyAsync(x => roleIds.Contains(x.Name) && x.RoleType == SystemRoles.Admin))
             return Result<MessageResponseModel>.Failed(ResponseMessage.Invalid2FACode);
 
         var accessToken = tokenService.CreateToken(user, roleIds.ToList());

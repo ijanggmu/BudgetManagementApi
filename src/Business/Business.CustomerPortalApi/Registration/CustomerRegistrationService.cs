@@ -109,7 +109,7 @@ public class CustomerRegistrationService(
                 return Result<MessageResponseModel>.Failed(identityResult.Errors.Select(x => x.Description)
                     .FirstOrDefault());
 
-            var roleResult = await userManager.AddToRoleAsync(user, SystemRoles.FoDo);
+            var roleResult = await userManager.AddToRoleAsync(user, SystemRoles.Admin);
 
             if (!roleResult.Succeeded)
                 return Result<MessageResponseModel>.Failed(identityResult.Errors.Select(x => x.Description)

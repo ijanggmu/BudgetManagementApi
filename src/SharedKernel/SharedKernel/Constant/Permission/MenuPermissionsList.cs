@@ -169,116 +169,6 @@ public static partial class MenuPermissionsList
             },
 
             // ============================================
-            // 19. SALES & MARKETING (Parent Group)
-            // ============================================
-            new MenuItem
-            {
-                MenuId = 19,
-                MenuName = MenuPermissionConstant.SalesMarketingName,
-                MenuSlug = "SalesMarketing",
-                Icon = "ShoppingOutlined",
-                Rank = (int)MenuRank.SalesMarketing,
-                Level = 1,
-                IsDisabled = false,
-                IsMenu = true,
-                ToHide = false,
-                HideChildren = false,
-                AllowedRoles = new List<string> { "SuperAdmin", "Admin", "FoDo" }, // Sales & Marketing for all admin roles
-                Permissions = new List<Permission>
-                {
-                    new Permission(MenuPermissionConstant.SalesMarketingViewName, MenuPermissionConstant.SalesMarketingView, false)
-                },
-                Children = new List<MenuItem>
-                {
-                    // 19-13. Sales & Marketing > Marketing Executives
-                    new MenuItem
-                    {
-                        MenuId = 13,
-                        MenuName = MenuPermissionConstant.MarketingExecutivesName,
-                        MenuSlug = "/fodo",
-                        Icon = "UserOutlined",
-                        Rank = 1,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Marketing Executives for SuperAdmin and TenantAdmin
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutives, false),
-                        Children = null
-                    },
-                    // 19-5. Sales & Marketing > Admin Leads
-                    new MenuItem
-                    {
-                        MenuId = 5,
-                        MenuName = MenuPermissionConstant.AdminLeadsName,
-                        MenuSlug = "/admin-leads",
-                        Icon = "Target",
-                        Rank = 2,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Admin Leads for SuperAdmin and TenantAdmin
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminLeads, false),
-                        Children = null
-                    },
-                    // 19-6. Sales & Marketing > Admin Quotations
-                    new MenuItem
-                    {
-                        MenuId = 6,
-                        MenuName = MenuPermissionConstant.AdminQuotationsName,
-                        MenuSlug = "/admin-quotations",
-                        Icon = "FileText",
-                        Rank = 3,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Admin Quotations for SuperAdmin and TenantAdmin
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminQuotations, false),
-                        Children = null
-                    },
-                    // 19-14. Sales & Marketing > Marketing Executive Leads (for Marketing Executive role)
-                    new MenuItem
-                    {
-                        MenuId = 14,
-                        MenuName = MenuPermissionConstant.MarketingExecutiveLeadsName,
-                        MenuSlug = "/leads",
-                        Icon = "Target",
-                        Rank = 4,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        AllowedRoles = new List<string> { "FoDo" }, // Marketing Executive Leads for FoDo only
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutiveLeads, false),
-                        Children = null
-                    },
-                    // 19-15. Sales & Marketing > Marketing Executive Quotations (for Marketing Executive role)
-                    new MenuItem
-                    {
-                        MenuId = 15,
-                        MenuName = MenuPermissionConstant.MarketingExecutiveQuotationsName,
-                        MenuSlug = "/quotations",
-                        Icon = "FileText",
-                        Rank = 5,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        AllowedRoles = new List<string> { "FoDo" }, // Marketing Executive Quotations for FoDo only
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.MarketingExecutiveQuotations, false),
-                        Children = null
-                    },
-                }
-            },
-
-            // ============================================
             // 20. OPERATIONS (Parent Group)
             // ============================================
             new MenuItem
@@ -293,7 +183,7 @@ public static partial class MenuPermissionsList
                 IsMenu = true,
                 ToHide = false,
                 HideChildren = false,
-                AllowedRoles = new List<string> { "SuperAdmin", "Admin","FoDo" }, // Operations for SuperAdmin and TenantAdmin
+                AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
                 Permissions = new List<Permission>
                 {
                     new Permission(MenuPermissionConstant.OperationsViewName, MenuPermissionConstant.OperationsView, false)
@@ -313,7 +203,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "FoDo" },
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
                         Permissions = new List<Permission>
                         {
                             new Permission(MenuPermissionConstant.PremiumCalculationViewName, MenuPermissionConstant.PremiumCalculationView, false)
@@ -333,7 +223,7 @@ public static partial class MenuPermissionsList
                                 IsMenu = true,
                                 ToHide = false,
                                 HideChildren = false,
-                                AllowedRoles = new List<string> { "SuperAdmin", "Admin", "FoDo" },
+                                AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
                                 Permissions = new List<Permission>
                                 {
                                     new Permission(MenuPermissionConstant.PremiumOverviewViewName, MenuPermissionConstant.PremiumOverviewView, false)

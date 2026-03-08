@@ -13,23 +13,15 @@ public static class UserSeeder
     {
         var usersToSeed = new[]
         {
-        new
-        {
-            UserName = "superadmin",
-            Email = "superadmin@hei.com",
-            Role = SystemRoles.SuperAdmin,
-            FullName = "Super Admin",
-            EntityType = "Admin"
-        },
-        new
-        {
-            UserName = "superfodo",
-            Email = "superfodo@hei.com",
-            Role = SystemRoles.FoDo,
-            FullName = "Super FoDo",
-            EntityType = "FoDo"
-        }
-    };
+            new
+            {
+                UserName = "superadmin",
+                Email = "superadmin@hei.com",
+                Role = SystemRoles.SuperAdmin,
+                FullName = "Super Admin",
+                EntityType = "Admin"
+            }
+        };
 
         foreach (var userInfo in usersToSeed)
         {
@@ -57,22 +49,13 @@ public static class UserSeeder
 
             await userManager.AddToRoleAsync(newUser, userInfo.Role);
 
-            switch (userInfo.EntityType)
+            if (userInfo.EntityType == "Admin")
             {
-                case "Admin":
-                    await context.Admins.AddAsync(new Admin
-                    {
-                        FullName = userInfo.FullName,
-                        UserId = newUser.Id
-                    });
-                    break;
-                case "FoDo":
-                    //await context.Fodos.AddAsync(new Entities.FodoEntity.Fodo
-                    //{
-                    //    FullName = userInfo.FullName,
-                    //    UserId = newUser.Id
-                    //});
-                    break;
+                await context.Admins.AddAsync(new Admin
+                {
+                    FullName = userInfo.FullName,
+                    UserId = newUser.Id
+                });
             }
 
             await context.SaveChangesAsync();

@@ -8,7 +8,7 @@ namespace Data.Seed;
 
 public static class RoleSeeder
 {
-    /// <summary>Seeds global/system roles (SuperAdmin, Admin, FoDo, MarketingExecutive).</summary>
+    /// <summary>Seeds global/system roles (SuperAdmin, Admin).</summary>
     public static async Task SeedData(RoleManager<ApplicationRole> roleManager)
     {
         var roleList = new List<ApplicationRole>
@@ -30,24 +30,6 @@ public static class RoleSeeder
                 Description = SystemRoles.Admin,
                 RoleLevel = SystemRoles.AdminLevel,
                 RoleType = SystemRoles.Admin
-            },
-            new ApplicationRole
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = SystemRoles.FoDo,
-                RoleDisplayName = "Marketing Executive",
-                Description = SystemRoles.FoDo,
-                RoleLevel = SystemRoles.FoDoLevel,
-                RoleType = SystemRoles.FoDo
-            },
-            new ApplicationRole
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = SystemRoles.MarketingExecutive,
-                RoleDisplayName = "Marketing Executive",
-                Description = SystemRoles.MarketingExecutive,
-                RoleLevel = SystemRoles.MarketingExecutiveLevel,
-                RoleType = SystemRoles.MarketingExecutive
             }
         };
 

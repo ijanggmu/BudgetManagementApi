@@ -185,7 +185,6 @@ public class TenantAdminService : ITenantAdminService
             var rolesName = await SeedTenantRolesAsync(tenant.Id, tenant.Slug);
             await SeedTenantDefaultRolesAsync(tenant.Id);
             await SeedTenantAdminPermissions(rolesName.AdminRoleName, tenant.Id);
-            await SeedFoDoPermissions(rolesName.FodoRoleName, tenant.Id);
             // Add Admin role
             var addRoleResult = await _userManager.AddToRoleAsync(adminUser, SystemRoles.Admin);
             if (!addRoleResult.Succeeded)
@@ -204,7 +203,7 @@ public class TenantAdminService : ITenantAdminService
             };
             await _db.Admins.AddAsync(admin, cancellationToken);
 
-            // Seed tenant-specific roles (Admin and FoDo) for this tenant
+            // Seed tenant-specific roles (Admin) for this tenant
 
             await _db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -402,8 +401,7 @@ public class TenantAdminService : ITenantAdminService
     }
 
     /// <summary>
-    /// Seeds tenant-specific roles (Admin and FoDo) for a tenant.
-    /// These roles are scoped to the tenant and can be customized per tenant.
+    /// Seeds tenant-specific Admin role for a tenant.
     /// </summary>
     private async Task<SeedRoleResponseModel> SeedTenantRolesAsync(
     string tenantId,
@@ -413,19 +411,13 @@ public class TenantAdminService : ITenantAdminService
         ArgumentException.ThrowIfNullOrWhiteSpace(tenantName);
 
         var adminRoleName = $"{SystemRoles.Admin}-{tenantName}";
-        var fodoRoleName = $"{SystemRoles.FoDo}-{tenantName}";
 
-        // Fetch existing roles ONCE
-        var existingRoles = await _db.Roles
-            .Where(r => r.TenantId == tenantId &&
-                       (r.Name == adminRoleName || r.Name == fodoRoleName))
-            .Select(r => r.Name)
-            .ToListAsync();
+        var exists = await _db.Roles
+            .AnyAsync(r => r.TenantId == tenantId && r.Name == adminRoleName);
 
         string? createdAdminRole = null;
-        string? createdFodoRole = null;
 
-        if (!existingRoles.Contains(adminRoleName))
+        if (!exists)
         {
             var adminRole = new ApplicationRole
             {
@@ -459,44 +451,7 @@ public class TenantAdminService : ITenantAdminService
                 tenantId);
         }
 
-        if (!existingRoles.Contains(fodoRoleName))
-        {
-            var fodoRole = new ApplicationRole
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = fodoRoleName,
-                RoleDisplayName = "Marketing Executive",
-                Description = $"Marketing Executive Role for {tenantId}",
-                RoleLevel = SystemRoles.FoDoLevel,
-                RoleType = SystemRoles.FoDo,
-                TenantId = tenantId
-            };
-
-            var result = await _roleManager.CreateAsync(fodoRole);
-
-            if (!result.Succeeded)
-            {
-                _logger.LogError(
-                    "Failed to create FoDo role for tenant {TenantId}. Errors: {Errors}",
-                    tenantId,
-                    string.Join(", ", result.Errors.Select(e => e.Description)));
-
-                throw new InvalidOperationException(
-                    $"FoDo role creation failed for tenant {tenantId}");
-            }
-
-            createdFodoRole = fodoRoleName;
-
-            _logger.LogInformation(
-                "Created FoDo role {RoleName} for tenant {TenantId}",
-                fodoRoleName,
-                tenantId);
-        }
-
-        return new SeedRoleResponseModel(
-            AdminRoleName: createdAdminRole,
-            FodoRoleName: createdFodoRole
-        );
+        return new SeedRoleResponseModel(AdminRoleName: createdAdminRole);
     }
 
     /// <summary>
@@ -570,21 +525,8 @@ public class TenantAdminService : ITenantAdminService
 
         var roleClaim = await _db.RoleClaims.FirstOrDefaultAsync(x => x.RoleId == roleId);
 
-        // Tenant Admin permissions: Sales & Marketing, Operations, System sections with full CRUD+Export
-        var tenantAdminPermissions = new List<string>
-        {
-            // Sales & Marketing section - Full CRUD+Export
-            MenuPermissionConstant.SalesMarketingView
-        };
-
-        // Add all CRUD+Export permissions for Marketing Executives
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.MarketingExecutives.GetAllValues());
-
-        // Add all CRUD+Export permissions for Admin Leads
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.AdminLeads.GetAllValues());
-
-        // Add all CRUD+Export permissions for Admin Quotations
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.AdminQuotations.GetAllValues());
+        // Tenant Admin permissions: Operations, System sections with full CRUD+Export
+        var tenantAdminPermissions = new List<string>();
 
         // Operations section
         tenantAdminPermissions.Add(MenuPermissionConstant.OperationsView);
@@ -619,51 +561,6 @@ public class TenantAdminService : ITenantAdminService
         await _db.SaveChangesAsync();
     }
 
-    private async Task SeedFoDoPermissions(string roleName, string tenantId)
-    {
-        var roleId = await _db.Roles.Where(userRole => userRole.Name == roleName && userRole.TenantId == tenantId)
-                                          .Select(y => y.Id).FirstOrDefaultAsync();
-
-        if (string.IsNullOrEmpty(roleId))
-            return;
-
-        var roleClaim = await _db.RoleClaims.FirstOrDefaultAsync(x => x.RoleId == roleId);
-
-        // FoDo permissions: Only Sales & Marketing section (NO admin access)
-        // FoDo can manage their own leads and quotations through FoDo endpoints
-        // They CANNOT access Admin endpoints (AdminLeadController, AdminQuotationController, etc.)
-        // because those require AdminLeadsView/AdminQuotationsView permissions which FoDo doesn't have
-        var fodoPermissions = new List<string>
-        {
-            // Sales & Marketing section - View only (parent menu)
-            MenuPermissionConstant.SalesMarketingView,
-            
-            // Note: FoDo endpoints (FoDo/Lead, FoDo/Quotation) don't require specific permissions
-            // They are protected by role-based authorization (BaseFoDoApiController)
-            // FoDo users can only access their own data through FoDo endpoints, not Admin endpoints
-        };
-
-        fodoPermissions = fodoPermissions.Distinct().ToList();
-
-        if (roleClaim == null)
-        {
-            await _db.RoleClaims.AddAsync(new ApplicationRoleClaim
-            {
-                RoleId = roleId,
-                Permissions = fodoPermissions
-            });
-        }
-        else
-        {
-            // Merge with existing permissions, avoiding duplicates
-            var existingPermissions = roleClaim.Permissions ?? new List<string>();
-            var mergedPermissions = existingPermissions.Union(fodoPermissions).Distinct().ToList();
-            roleClaim.Permissions = mergedPermissions;
-            _db.RoleClaims.Update(roleClaim);
-        }
-
-        await _db.SaveChangesAsync();
-    }
-    public record SeedRoleResponseModel(string AdminRoleName, string FodoRoleName);
+    public record SeedRoleResponseModel(string? AdminRoleName);
 
 }
