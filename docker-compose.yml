@@ -41,7 +41,7 @@ services:
       VIRTUAL_HOST: "bms.beemaedge.com,hei-bms.beemaedge.com,uail-bms.beemaedge.com"
       LETSENCRYPT_HOST: "bms.beemaedge.com,hei-bms.beemaedge.com,uail-bms.beemaedge.com"
       LETSENCRYPT_EMAIL: sthaejan00@gmail.com
-      VIRTUAL_PORT: 3000             # Next.js runs on 3000 by default
+      VIRTUAL_PORT: 3000              # Next.js runs on 3000 by default
 
     expose:
       - "3000"

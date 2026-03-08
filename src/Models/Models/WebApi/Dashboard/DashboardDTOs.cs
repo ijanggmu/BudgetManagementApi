@@ -9,13 +9,40 @@ public record SuperAdminDashboardDto(
     int TotalMarketingExecutives
 );
 
-// TenantAdmin Dashboard
+// TenantAdmin / Admin Dashboard
 public record TenantAdminDashboardDto(
     int TotalBranches,
     int TotalQuotations,
     int TotalLeads,
     int TotalMarketingExecutives,
     int TotalDesignations
+);
+
+// CEO Dashboard – high-level overview
+public record CEODashboardDto(
+    int PendingApprovalsCount,
+    int TotalBudgetsCount,
+    int TotalDepartmentsCount,
+    int MemosCount,
+    string RoleLabel
+);
+
+// CFO Dashboard – financial overview
+public record CFODashboardDto(
+    int TotalBudgetsCount,
+    int ApprovedRequestsCount,
+    int PendingApprovalsCount,
+    int BudgetReportsCount,
+    string RoleLabel
+);
+
+// HOD Dashboard – department-focused
+public record HODDashboardDto(
+    int MyDepartmentBudgetsCount,
+    int MyMemosCount,
+    int PendingRequestsForMe,
+    int DepartmentsCount,
+    string RoleLabel
 );
 
 // Marketing Executive Dashboard

@@ -23,13 +23,6 @@ public static class MenuPermissionDefinitions
     public static readonly MenuPermissionSet Operations = PermissionHelper.GeneratePermissions(
         "20", "Operations", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
 
-    public static readonly MenuPermissionSet PremiumCalculation = PermissionHelper.GeneratePermissions(
-        "20-9", "Premium Calculation", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-
-    public static readonly MenuPermissionSet PremiumOverview = PermissionHelper.GeneratePermissions(
-        "20-9-10", "Premium Overview", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
-
-    public static readonly MenuPermissionSet PremiumConfigurations = PermissionHelper.GeneratePermissions("20-9-11", "Premium Configurations");
     public static readonly MenuPermissionSet Notifications = PermissionHelper.GeneratePermissions(
         "20-14", "Notifications", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
 
@@ -50,10 +43,6 @@ public static class MenuPermissionDefinitions
         "18-18", "Password", includeCreate: false, includeUpdate: true, includeDelete: false, includeExport: false);
     public static readonly MenuPermissionSet TwoFactor = PermissionHelper.GeneratePermissions(
         "18-19", "Two Factor", includeCreate: false, includeUpdate: true, includeDelete: false, includeExport: false);
-
-    // Operations - Additional
-    public static readonly MenuPermissionSet Reporting = PermissionHelper.GeneratePermissions(
-        "20-20", "Reporting", includeCreate: false, includeUpdate: false, includeDelete: false, includeExport: false);
 
     // System Section
     public static readonly MenuPermissionSet System = PermissionHelper.GeneratePermissions(
@@ -103,9 +92,6 @@ public static class MenuPermissionDefinitions
             nameof(Menu) => Menu,
             nameof(AdminManagement) => AdminManagement,
             nameof(Operations) => Operations,
-            nameof(PremiumCalculation) => PremiumCalculation,
-            nameof(PremiumOverview) => PremiumOverview,
-            nameof(PremiumConfigurations) => PremiumConfigurations,
             nameof(Notifications) => Notifications,
             nameof(System) => System,
             nameof(Logs) => Logs,
@@ -118,7 +104,6 @@ public static class MenuPermissionDefinitions
             nameof(Profile) => Profile,
             nameof(Password) => Password,
             nameof(TwoFactor) => TwoFactor,
-            nameof(Reporting) => Reporting,
             nameof(NoticeBoard) => NoticeBoard,
             nameof(EmailGateway) => EmailGateway,
             nameof(SmsGateway) => SmsGateway,

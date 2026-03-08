@@ -62,12 +62,16 @@ public class AdminProfileService(
                  Email = grp.Key.Email,
                  PhoneNumber = grp.Key.PhoneNumber,
                  DepartmentId = grp.Key.DepartmentId ?? "",
-                 Roles = grp.Where(x => x != null).Select(x => x.Name).ToList()
+                 Roles = grp.Where(x => x != null).Select(x => x.Name).ToList(),
+                 RoleType = grp.Where(x => x != null).Select(x => x.RoleType ?? x.Name).FirstOrDefault() ?? ""
              })
             .FirstOrDefaultAsync(ct);
 
         if (profile == null)
             return Result<AdminUserProfileResponseModel>.Failed(ResponseMessage.UserNotFound);
+
+        if (string.IsNullOrEmpty(profile.RoleType) && profile.Roles?.Count > 0)
+            profile.RoleType = profile.Roles[0];
 
         return Result<AdminUserProfileResponseModel>.Success(profile);
     }

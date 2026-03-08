@@ -42,6 +42,41 @@ public static class RoleSeeder
         }
     }
 
+    /// <summary>Seeds global roles (CEO, CFO, HOD) with no tenant for demo login without creating a tenant.</summary>
+    public static async Task SeedGlobalDemoRoles(ApplicationDataContext context, RoleManager<ApplicationRole> roleManager)
+    {
+        var globalDemoRoles = new[]
+        {
+            (Name: SystemRoles.CEO, DisplayName: "Chief Executive Officer"),
+            (Name: SystemRoles.CFO, DisplayName: "Chief Financial Officer"),
+            (Name: SystemRoles.HOD, DisplayName: "Head of Department")
+        };
+
+        foreach (var (name, displayName) in globalDemoRoles)
+        {
+            var normalizedName = roleManager.NormalizeKey(name);
+            var exists = await context.Roles
+                .IgnoreQueryFilters()
+                .AnyAsync(r => r.TenantId == null && r.NormalizedName == normalizedName);
+            if (exists)
+                continue;
+
+            var role = new ApplicationRole
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = name,
+                NormalizedName = normalizedName,
+                RoleDisplayName = displayName,
+                Description = name,
+                RoleLevel = SystemRoles.CEOCFOHODLevel,
+                RoleType = name
+                // TenantId left null for global demo role
+            };
+            await roleManager.CreateAsync(role);
+        }
+        await context.SaveChangesAsync();
+    }
+
     /// <summary>Seeds tenant-specific roles (CEO, CFO, HOD) for each tenant.</summary>
     public static async Task SeedTenantRoles(ApplicationDataContext context, RoleManager<ApplicationRole> roleManager)
     {

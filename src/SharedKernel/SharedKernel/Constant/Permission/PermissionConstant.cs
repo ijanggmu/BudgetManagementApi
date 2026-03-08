@@ -19,7 +19,6 @@ public static class MenuPermissionConstant
         Roles,
         Admins,
         AdminManagement,
-        PremiumCalculation,
         Tenants,
         Notifications,
         Logs,
@@ -45,9 +44,6 @@ public static class MenuPermissionConstant
     public const string MenuName = "Menu";
     public const string AdminManagementName = "Admin Management";
     public const string TenantsName = "Tenants";
-    public const string PremiumCalculationName = "Premium Calculation";
-    public const string PremiumOverviewName = "Overview";
-    public const string PremiumConfigurationsName = "Configurations";
     public const string NotificationsName = "Notifications";
     public const string LogsName = "Logs";
     public const string SystemLogName = "System Log";
@@ -91,19 +87,6 @@ public static class MenuPermissionConstant
     public const string OperationsView = "20-1";
     public const string OperationsViewName = "Operations";
     
-    public const string PremiumCalculationView = "20-9-1";
-    public const string PremiumCalculationViewName = "Premium Calculation";
-    
-    public const string PremiumOverviewView = "20-9-10-1";
-    public const string PremiumOverviewViewName = "Premium Overview View";
-    
-    public const string PremiumConfigurationsView = "20-9-11-1";
-    public const string PremiumConfigurationsViewName = "Premium Configurations View";
-    public const string PremiumConfigurationsCreate = "20-9-11-2";
-    public const string PremiumConfigurationsUpdate = "20-9-11-3";
-    public const string PremiumConfigurationsDelete = "20-9-11-4";
-    public const string PremiumConfigurationsExport = "20-9-11-5";
-    
     public const string NotificationsView = "20-14-1";
     public const string NotificationsViewName = "Notifications View";
 
@@ -132,7 +115,6 @@ public static class MenuPermissionConstant
     public const string ProfileName = "Profile";
     public const string PasswordName = "Password";
     public const string TwoFactorName = "Two Factor";
-    public const string ReportingName = "Reporting";
     // Branch
     public const string BranchView = "18-14-1";
     public const string BranchViewName = "Branch View";
@@ -185,9 +167,6 @@ public static class MenuPermissionConstant
     public const string NoticeBoardDelete = "20-22-4";
     public const string NoticeBoardDeleteName = "Notice Board Delete";
 
-    // Reporting (Operations)
-    public const string ReportingView = "20-20-1";
-    public const string ReportingViewName = "Reporting View";
 
     // Common Utilities (used by multiple roles for lookups)
     public const string CommonUtilitiesView = "22-1-1";
@@ -268,7 +247,6 @@ public enum MenuRank
     Tenants,
     Roles,
     AdminManagement,
-    PremiumCalculation,
     Notifications,
     Logs,
     Config

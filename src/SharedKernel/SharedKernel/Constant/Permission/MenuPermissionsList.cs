@@ -190,64 +190,6 @@ public static partial class MenuPermissionsList
                 },
                 Children = new List<MenuItem>
                 {
-                    // 20-9. Operations > Premium Calculation (with children)
-                    new MenuItem
-                    {
-                        MenuId = 9,
-                        MenuName = MenuPermissionConstant.PremiumCalculationName,
-                        MenuSlug = "Permium",
-                        Icon = "Calculator",
-                        Rank = 1,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
-                        Permissions = new List<Permission>
-                        {
-                            new Permission(MenuPermissionConstant.PremiumCalculationViewName, MenuPermissionConstant.PremiumCalculationView, false)
-                        },
-                        Children = new List<MenuItem>
-                        {
-                            // 20-9-10. Operations > Premium Calculation > Overview
-                            new MenuItem
-                            {
-                                MenuId = 10,
-                                MenuName = MenuPermissionConstant.PremiumOverviewName,
-                                MenuSlug = "/premium-calculator",
-                                Icon = "Calculator",
-                                Rank = 1,
-                                Level = 3,
-                                IsDisabled = false,
-                                IsMenu = true,
-                                ToHide = false,
-                                HideChildren = false,
-                                AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
-                                Permissions = new List<Permission>
-                                {
-                                    new Permission(MenuPermissionConstant.PremiumOverviewViewName, MenuPermissionConstant.PremiumOverviewView, false)
-                                },
-                                Children = null
-                            },
-                            // 20-9-11. Operations > Premium Calculation > Configurations
-                            new MenuItem
-                            {
-                                MenuId = 11,
-                                MenuName = MenuPermissionConstant.PremiumConfigurationsName,
-                                MenuSlug = "/premiums/configurations",
-                                Icon = "Settings",
-                                Rank = 2,
-                                Level = 3,
-                                IsDisabled = false,
-                                IsMenu = true,
-                                ToHide = false,
-                                HideChildren = false,
-                                Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.PremiumConfigurations, false),
-                                Children = null
-                            }
-                        }
-                    },
                     // 20-14. Operations > Notifications
                     new MenuItem
                     {
@@ -281,22 +223,6 @@ public static partial class MenuPermissionsList
                         ToHide = false,
                         HideChildren = false,
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Entity, false),
-                        Children = null
-                    },
-                    // 20-20. Operations > Reporting
-                    new MenuItem
-                    {
-                        MenuId = 20,
-                        MenuName = MenuPermissionConstant.ReportingName,
-                        MenuSlug = "/reporting",
-                        Icon = "BarChartOutlined",
-                        Rank = 5,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Reporting, false),
                         Children = null
                     },
                     // 20-22. Operations > Notice Board
