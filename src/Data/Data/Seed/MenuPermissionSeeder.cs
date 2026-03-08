@@ -65,12 +65,15 @@ public static class MenuPermissionSeeder
         tenantAdminPermissions.Add(MenuPermissionConstant.SystemLogView);
         tenantAdminPermissions.Add(MenuPermissionConstant.ConfigView);
         tenantAdminPermissions.Add(MenuPermissionConstant.DashboardView);
+        tenantAdminPermissions.Add(MenuPermissionConstant.ProfileView);
 
         // Budget Management (23-xx) - full access for TenantAdmin
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Budget.GetAllValues());
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Department.GetAllValues());
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.ApprovalConfig.GetAllValues());
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.BudgetReport.GetAllValues());
+        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestView);
+        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestCreate);
         tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestApprove);
         tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestReject);
         tenantAdminPermissions.Add(MenuPermissionConstant.MemoView);
@@ -170,17 +173,21 @@ public static class MenuPermissionSeeder
         var p = new List<string>
         {
             MenuPermissionConstant.DashboardView,
+            MenuPermissionConstant.BudgetManagementView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
             MenuPermissionConstant.SystemView,
             MenuPermissionConstant.LogsView,
             MenuPermissionConstant.SystemLogView,
-            MenuPermissionConstant.ConfigView
+            MenuPermissionConstant.ConfigView,
+            MenuPermissionConstant.ProfileView
         };
         p.AddRange(MenuPermissionDefinitions.Budget.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.Department.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.ApprovalConfig.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.BudgetReport.GetAllValues());
+        p.Add(MenuPermissionConstant.BudgetRequestView);
+        p.Add(MenuPermissionConstant.BudgetRequestCreate);
         p.Add(MenuPermissionConstant.BudgetRequestApprove);
         p.Add(MenuPermissionConstant.BudgetRequestReject);
         p.Add(MenuPermissionConstant.MemoView);
@@ -200,13 +207,16 @@ public static class MenuPermissionSeeder
         return new List<string>
         {
             MenuPermissionConstant.DashboardView,
+            MenuPermissionConstant.BudgetManagementView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
             MenuPermissionConstant.BudgetReportView,
             MenuPermissionConstant.BudgetReportExport,
+            MenuPermissionConstant.BudgetRequestView,
             MenuPermissionConstant.BudgetRequestApprove,
             MenuPermissionConstant.BudgetRequestReject,
-            MenuPermissionConstant.MemoView
+            MenuPermissionConstant.MemoView,
+            MenuPermissionConstant.ProfileView
         }.Distinct().ToList();
     }
 
@@ -215,16 +225,19 @@ public static class MenuPermissionSeeder
         var p = new List<string>
         {
             MenuPermissionConstant.DashboardView,
+            MenuPermissionConstant.BudgetManagementView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
             MenuPermissionConstant.BudgetReportView,
             MenuPermissionConstant.BudgetReportExport,
+            MenuPermissionConstant.BudgetRequestView,
             MenuPermissionConstant.BudgetRequestApprove,
             MenuPermissionConstant.BudgetRequestReject,
             MenuPermissionConstant.ApprovalConfigView,
             MenuPermissionConstant.SignatureView,
             MenuPermissionConstant.SignatureUpload,
-            MenuPermissionConstant.DepartmentView
+            MenuPermissionConstant.DepartmentView,
+            MenuPermissionConstant.ProfileView
         };
         p.AddRange(MenuPermissionDefinitions.Budget.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.BudgetReport.GetAllValues());
@@ -243,6 +256,7 @@ public static class MenuPermissionSeeder
         return new List<string>
         {
             MenuPermissionConstant.DashboardView,
+            MenuPermissionConstant.BudgetManagementView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
             MenuPermissionConstant.DepartmentView,
@@ -252,7 +266,8 @@ public static class MenuPermissionSeeder
             MenuPermissionConstant.BudgetRequestCreate,
             MenuPermissionConstant.MemoView,
             MenuPermissionConstant.MemoCreate,
-            MenuPermissionConstant.MemoGeneratePdf
+            MenuPermissionConstant.MemoGeneratePdf,
+            MenuPermissionConstant.ProfileView
         }.Distinct().ToList();
     }
 }

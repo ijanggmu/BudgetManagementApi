@@ -85,7 +85,12 @@ public class ApprovalConfigService(
         var exists = await db.ApprovalConfigs.AnyAsync(a => a.DepartmentId == dto.DepartmentId && a.TenantId == tenantId, cancellationToken);
         if (exists) return Result<ApprovalConfigResponseDto>.Failed("Approval config for this department already exists.");
 
-        var stepsJson = JsonSerializer.Serialize(dto.Steps.Select(s => new { s.StepOrder, s.MinAmount, s.MaxAmount, s.ApproverRoleId, s.IsMandatory }).ToList(), JsonOptions);
+        var roleIds = dto.Steps.Select(s => s.ApproverRoleId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+        var roleNames = roleIds.Count > 0
+            ? await db.Roles.Where(r => roleIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.Name ?? r.NormalizedName ?? "", cancellationToken)
+            : new Dictionary<string, string>();
+        var stepsWithNames = dto.Steps.Select(s => new { s.StepOrder, s.MinAmount, s.MaxAmount, s.ApproverRoleId, ApproverRoleName = roleNames.GetValueOrDefault(s.ApproverRoleId, ""), s.IsMandatory }).ToList();
+        var stepsJson = JsonSerializer.Serialize(stepsWithNames, JsonOptions);
         var entity = new ApprovalConfig
         {
             Id = Guid.NewGuid().ToString(),
@@ -110,7 +115,14 @@ public class ApprovalConfigService(
         if (entity == null) return Result<ApprovalConfigResponseDto>.Failed("Approval config not found.");
         if (dto.DepartmentId != null) entity.DepartmentId = dto.DepartmentId;
         if (dto.Steps != null)
-            entity.StepsJson = JsonSerializer.Serialize(dto.Steps.Select(s => new { s.StepOrder, s.MinAmount, s.MaxAmount, s.ApproverRoleId, s.IsMandatory }).ToList(), JsonOptions);
+        {
+            var roleIds = dto.Steps.Select(s => s.ApproverRoleId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+            var roleNames = roleIds.Count > 0
+                ? await db.Roles.Where(r => roleIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.Name ?? r.NormalizedName ?? "", cancellationToken)
+                : new Dictionary<string, string>();
+            var stepsWithNames = dto.Steps.Select(s => new { s.StepOrder, s.MinAmount, s.MaxAmount, s.ApproverRoleId, ApproverRoleName = roleNames.GetValueOrDefault(s.ApproverRoleId, ""), s.IsMandatory }).ToList();
+            entity.StepsJson = JsonSerializer.Serialize(stepsWithNames, JsonOptions);
+        }
         entity.LastModifiedBy = userProfileService.GetUserId();
         entity.LastModifiedOn = DateTime.UtcNow;
         db.ApprovalConfigs.Update(entity);

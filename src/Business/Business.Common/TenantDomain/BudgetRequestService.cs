@@ -25,36 +25,52 @@ public class BudgetRequestService(
 
     public async Task<Result<List<BudgetRequestResponseDto>>> GetAllAsync(BudgetRequestListRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
-        IQueryable<BudgetRequest> query = db.BudgetRequests.AsQueryable();
-        if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
-            query = query.IgnoreQueryFilters().Where(b => b.TenantId == requestModel.TenantId);
-        else if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
-        if (!string.IsNullOrEmpty(requestModel.DepartmentId))
-            query = query.Where(b => b.DepartmentId == requestModel.DepartmentId);
-        if (!string.IsNullOrEmpty(requestModel.Status))
-            query = query.Where(b => b.Status.ToString() == requestModel.Status);
-        if (!string.IsNullOrEmpty(requestModel.UserId))
-            query = query.Where(b => b.UserId == requestModel.UserId);
+        requestModel ??= new BudgetRequestListRequestModel();
+        if (string.IsNullOrEmpty(requestModel.Sorts)) requestModel.Sorts = "-CreatedOn";
+        if (requestModel.Filters == null) requestModel.Filters = string.Empty;
 
-        var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
-        var list = await result.ToListAsync(cancellationToken);
-        var deptIds = list.Select(b => b.DepartmentId).Distinct().ToList();
-        var userIds = list.Select(b => b.UserId).Distinct().ToList();
-        var departments = await db.Departments.Where(d => deptIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, d => d.Name, cancellationToken);
-        var roles = await db.Roles.ToDictionaryAsync(r => r.Id, r => r.Name ?? r.NormalizedName ?? "", cancellationToken);
-        var users = await db.Users.Where(u => userIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.UserName ?? u.Email ?? "", cancellationToken);
-
-        var dtos = list.Select(b => MapToDto(b, departments.GetValueOrDefault(b.DepartmentId), users.GetValueOrDefault(b.UserId), roles.GetValueOrDefault(b.NextApproverRoleId ?? ""))).ToList();
-        return Result<List<BudgetRequestResponseDto>>.Success(dtos, new Pagination
+        try
         {
-            TotalItems = totalCount,
-            TotalPages = totalPage,
-            PageSize = requestModel.PageSize,
-            CurrentPage = requestModel.PageNumber
-        });
+            var roleId = userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+            IQueryable<BudgetRequest> query = db.BudgetRequests.AsQueryable();
+            if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
+                query = query.IgnoreQueryFilters().Where(b => b.TenantId == requestModel.TenantId);
+            else if (isSuperAdmin)
+                query = query.IgnoreQueryFilters();
+            if (!string.IsNullOrEmpty(requestModel.DepartmentId))
+                query = query.Where(b => b.DepartmentId == requestModel.DepartmentId);
+            if (!string.IsNullOrEmpty(requestModel.Status))
+                query = query.Where(b => b.Status.ToString() == requestModel.Status);
+            if (!string.IsNullOrEmpty(requestModel.UserId))
+                query = query.Where(b => b.UserId == requestModel.UserId);
+
+            var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
+            var list = await result.ToListAsync(cancellationToken);
+            var deptIds = list.Select(b => b.DepartmentId).Distinct().ToList();
+            var userIds = list.Select(b => b.UserId).Distinct().ToList();
+            var departments = deptIds.Count > 0
+                ? await db.Departments.Where(d => deptIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, d => d.Name, cancellationToken)
+                : new Dictionary<string, string>();
+            var roleList = await db.Roles.ToListAsync(cancellationToken);
+            var roles = roleList.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First().Name ?? g.First().NormalizedName ?? "");
+            var users = userIds.Count > 0
+                ? await db.Users.Where(u => userIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.UserName ?? u.Email ?? "", cancellationToken)
+                : new Dictionary<string, string>();
+
+            var dtos = list.Select(b => MapToDto(b, departments.GetValueOrDefault(b.DepartmentId), users.GetValueOrDefault(b.UserId), roles.GetValueOrDefault(b.NextApproverRoleId ?? ""))).ToList();
+            return Result<List<BudgetRequestResponseDto>>.Success(dtos, new Pagination
+            {
+                TotalItems = totalCount,
+                TotalPages = totalPage,
+                PageSize = requestModel.PageSize,
+                CurrentPage = requestModel.PageNumber
+            });
+        }
+        catch (Exception ex)
+        {
+            return Result<List<BudgetRequestResponseDto>>.Failed(ex.Message);
+        }
     }
 
     public async Task<Result<BudgetRequestResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)

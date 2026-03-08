@@ -16,9 +16,8 @@ public class AdminProfileController(IAdminProfileService adminProfileService) : 
     /// Get current admin user profile
     /// </summary>
     /// <returns>Admin profile information</returns>
-    ///
     [HttpGet]
-    //[Permission(MenuPermissionConstant.ProfileView)]
+    [Permission(MenuPermissionConstant.ProfileView)]
     public async Task<IActionResult> GetAsync(CancellationToken cancellationToken = default)
         => HandleResult(await adminProfileService.GetProfileAsync(cancellationToken));
 

@@ -192,6 +192,8 @@ public static class MenuPermissionConstant
     public const string SmsGatewayExport = "20-24-5";
 
     // Budget Management (23-xx)
+    /// <summary>Budget Management parent menu – required to show "Budget Management" in sidebar.</summary>
+    public const string BudgetManagementView = "23-1";
     public const string BudgetView = "23-1-1";
     public const string BudgetViewName = "Budget View";
     public const string BudgetCreate = "23-1-2";

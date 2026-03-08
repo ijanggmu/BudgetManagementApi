@@ -90,25 +90,19 @@ public class DashboardService : IDashboardService
         if (!userRoles.Contains(SystemRoles.SuperAdmin))
             return Result<SuperAdminDashboardDto>.Failed("Access denied. SuperAdmin role required.");
 
-        // SuperAdmin can see all data across all tenants
+        // SuperAdmin – BMS overview across all tenants
         var totalTenants = await _db.Tenants.CountAsync(cancellationToken);
-        var totalRoles = await _db.Roles.CountAsync(cancellationToken);
-
-        // Total leads across all tenants
-        var totalLeads = 0;
-
-        // Total admins across all tenants (including SuperAdmin's own tenant)
         var totalAdmins = await _db.Admins.CountAsync(cancellationToken);
-
-        // Total marketing executives (Fodos) across all tenants
-        var totalMarketingExecutives = 0;
+        var totalRoles = await _db.Roles.CountAsync(cancellationToken);
+        var totalBudgets = await _db.Budgets.IgnoreQueryFilters().CountAsync(cancellationToken);
+        var totalBudgetRequests = await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(cancellationToken);
 
         var dashboard = new SuperAdminDashboardDto(
             totalTenants,
-            totalRoles,
-            totalLeads,
             totalAdmins,
-            totalMarketingExecutives
+            totalRoles,
+            totalBudgets,
+            totalBudgetRequests
         );
 
         return Result<SuperAdminDashboardDto>.Success(dashboard);
@@ -130,27 +124,33 @@ public class DashboardService : IDashboardService
         var tenantId = _tenantContext.TenantId;
         var useGlobalCounts = isSuperAdmin || string.IsNullOrWhiteSpace(tenantId);
 
-        // For SuperAdmin or demo Admin (no tenant), show all data. For TenantAdmin, filter by tenant
-        var totalBranches = useGlobalCounts
-            ? await _db.Branches.IgnoreQueryFilters().CountAsync(cancellationToken)
-            : await _db.Branches.CountAsync(b => b.TenantId == tenantId, cancellationToken);
-
-        var totalQuotations = 1;
-
-        var totalLeads = 2;
-
-        var totalMarketingExecutives = 3;
-
-        var totalDesignations = useGlobalCounts
-            ? await _db.Designations.IgnoreQueryFilters().CountAsync(cancellationToken)
-            : await _db.Designations.CountAsync(d => d.TenantId == tenantId, cancellationToken);
+        // Admin – BMS metrics for tenant (or global for demo Admin)
+        var totalBudgets = useGlobalCounts
+            ? await _db.Budgets.IgnoreQueryFilters().CountAsync(cancellationToken)
+            : await _db.Budgets.CountAsync(b => b.TenantId == tenantId, cancellationToken);
+        var totalDepartments = useGlobalCounts
+            ? await _db.Departments.IgnoreQueryFilters().CountAsync(cancellationToken)
+            : await _db.Departments.CountAsync(d => d.TenantId == tenantId, cancellationToken);
+        var totalBudgetRequests = useGlobalCounts
+            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(cancellationToken)
+            : await _db.BudgetRequests.CountAsync(r => r.TenantId == tenantId, cancellationToken);
+        var pendingApprovals = useGlobalCounts
+            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(r => r.Status == BudgetRequestStatus.PendingApproval, cancellationToken)
+            : await _db.BudgetRequests.CountAsync(r => r.TenantId == tenantId && r.Status == BudgetRequestStatus.PendingApproval, cancellationToken);
+        var totalMemos = useGlobalCounts
+            ? await _db.Memos.IgnoreQueryFilters().CountAsync(cancellationToken)
+            : await _db.Memos.CountAsync(m => m.TenantId == tenantId, cancellationToken);
+        var approvalConfigsCount = useGlobalCounts
+            ? await _db.ApprovalConfigs.IgnoreQueryFilters().CountAsync(cancellationToken)
+            : await _db.ApprovalConfigs.CountAsync(c => c.TenantId == tenantId, cancellationToken);
 
         var dashboard = new TenantAdminDashboardDto(
-            totalBranches,
-            totalQuotations,
-            totalLeads,
-            totalMarketingExecutives,
-            totalDesignations
+            totalBudgets,
+            totalDepartments,
+            totalBudgetRequests,
+            pendingApprovals,
+            totalMemos,
+            approvalConfigsCount
         );
 
         return Result<TenantAdminDashboardDto>.Success(dashboard);

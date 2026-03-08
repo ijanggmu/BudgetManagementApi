@@ -1,21 +1,22 @@
 namespace Models.WebApi.Dashboard;
 
-// SuperAdmin Dashboard
+// SuperAdmin Dashboard – BMS overview across tenants
 public record SuperAdminDashboardDto(
     int TotalTenants,
-    int TotalRoles,
-    int TotalLeads,
     int TotalAdmins,
-    int TotalMarketingExecutives
+    int TotalRoles,
+    int TotalBudgets,
+    int TotalBudgetRequests
 );
 
-// TenantAdmin / Admin Dashboard
+// TenantAdmin / Admin Dashboard – BMS overview for tenant
 public record TenantAdminDashboardDto(
-    int TotalBranches,
-    int TotalQuotations,
-    int TotalLeads,
-    int TotalMarketingExecutives,
-    int TotalDesignations
+    int TotalBudgets,
+    int TotalDepartments,
+    int TotalBudgetRequests,
+    int PendingApprovalsCount,
+    int TotalMemos,
+    int ApprovalConfigsCount
 );
 
 // CEO Dashboard – high-level overview
