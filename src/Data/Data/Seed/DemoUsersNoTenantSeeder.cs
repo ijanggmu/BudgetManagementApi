@@ -15,12 +15,13 @@ public static class DemoUsersNoTenantSeeder
 {
     public const string DefaultPassword = "Admin@123";
 
+    // Use globally unique usernames (demo_*) so we don't clash with Identity's UserNameIndex or DummyTenantSeeder's ceo/cfo/hod
     private static readonly (string UserName, string Email, string FullName, string RoleName)[] Users = new[]
     {
-        ("admin", "admin@demo.local", "Demo Admin", SystemRoles.Admin),
-        ("ceo", "ceo@demo.local", "Demo CEO", SystemRoles.CEO),
-        ("cfo", "cfo@demo.local", "Demo CFO", SystemRoles.CFO),
-        ("hod", "hod@demo.local", "Demo HOD", SystemRoles.HOD)
+        ("demo_admin", "admin@demo.local", "Demo Admin", SystemRoles.Admin),
+        ("demo_ceo", "ceo@demo.local", "Demo CEO", SystemRoles.CEO),
+        ("demo_cfo", "cfo@demo.local", "Demo CFO", SystemRoles.CFO),
+        ("demo_hod", "hod@demo.local", "Demo HOD", SystemRoles.HOD)
     };
 
     public static async Task SeedAsync(
@@ -37,9 +38,10 @@ public static class DemoUsersNoTenantSeeder
             if (!globalRoleIds.TryGetValue(u.RoleName, out var roleId))
                 continue;
 
+            // UserNameIndex is globally unique (NormalizedUserName); skip if any user has this username
             var existing = await context.Users
                 .IgnoreQueryFilters()
-                .AnyAsync(usr => usr.TenantId == null && usr.UserName == u.UserName);
+                .AnyAsync(usr => usr.UserName == u.UserName);
             if (existing)
                 continue;
 
