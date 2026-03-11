@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Data.Context;
+using Data.Entities.Identity;
 using Data.Entities.Tenant;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;
@@ -224,6 +225,23 @@ public class ApprovalConfigService(
 
         await db.SaveChangesAsync(cancellationToken);
         return Result<ApprovalConfigImportResultDto>.Success(result);
+    }
+
+    public async Task<Result<List<ApproverRoleItemDto>>> GetApproverRolesAsync(CancellationToken cancellationToken = default)
+    {
+        var roleId = userProfileService.GetRoleId();
+        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        IQueryable<ApplicationRole> query = db.Roles.Where(r => !r.IsDeleted);
+        if (!isSuperAdmin && !string.IsNullOrEmpty(db.CurrentTenantId))
+            query = query.Where(r => r.TenantId == db.CurrentTenantId || r.TenantId == null);
+        else if (isSuperAdmin)
+            query = query.IgnoreQueryFilters().Where(r => !r.IsDeleted);
+
+        var list = await query
+            .OrderBy(r => r.Name)
+            .Select(r => new ApproverRoleItemDto { RoleId = r.Id, RoleName = r.Name ?? r.NormalizedName ?? "" })
+            .ToListAsync(cancellationToken);
+        return Result<List<ApproverRoleItemDto>>.Success(list);
     }
 
     private static List<string> ParseCsvLine(string line)

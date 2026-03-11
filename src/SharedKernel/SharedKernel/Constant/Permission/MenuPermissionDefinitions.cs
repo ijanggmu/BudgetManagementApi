@@ -17,7 +17,7 @@ public static class MenuPermissionDefinitions
     public static readonly MenuPermissionSet Tenants = PermissionHelper.GeneratePermissions("18-12", "Tenants");
     public static readonly MenuPermissionSet Roles = PermissionHelper.GeneratePermissions("18-2", "Roles");
     public static readonly MenuPermissionSet Menu = PermissionHelper.GeneratePermissions("18-3", "Menu", includeCreate: false, includeDelete: false, includeExport: false);
-    public static readonly MenuPermissionSet AdminManagement = PermissionHelper.GeneratePermissions("18-4", "Admin Management");
+    public static readonly MenuPermissionSet AdminManagement = PermissionHelper.GeneratePermissions("18-4", "User Management");
 
     // Operations Section
     public static readonly MenuPermissionSet Operations = PermissionHelper.GeneratePermissions(

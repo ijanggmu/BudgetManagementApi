@@ -12,4 +12,5 @@ public interface IApprovalConfigService
     Task<Result<ApprovalConfigResponseDto>> UpdateAsync(string id, UpdateApprovalConfigDto dto, CancellationToken cancellationToken = default);
     Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default);
     Task<Result<ApprovalConfigImportResultDto>> ImportFromCsvAsync(Stream csvStream, CancellationToken cancellationToken = default);
+    Task<Result<List<ApproverRoleItemDto>>> GetApproverRolesAsync(CancellationToken cancellationToken = default);
 }

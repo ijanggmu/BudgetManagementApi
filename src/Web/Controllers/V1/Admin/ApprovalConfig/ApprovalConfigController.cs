@@ -20,6 +20,11 @@ public class ApprovalConfigController(IApprovalConfigService service) : BaseAdmi
     public async Task<IActionResult> ListAsync([FromBody] ApprovalConfigListRequestModel requestModel, CancellationToken cancellationToken = default)
         => HandleResult(await service.GetAllAsync(requestModel ?? new ApprovalConfigListRequestModel(), cancellationToken));
 
+    [HttpGet("approver-roles")]
+    [Permission(MenuPermissionConstant.ApprovalConfigView)]
+    public async Task<IActionResult> GetApproverRolesAsync(CancellationToken cancellationToken = default)
+        => HandleResult(await service.GetApproverRolesAsync(cancellationToken));
+
     [HttpGet("{id}")]
     [Permission(MenuPermissionConstant.ApprovalConfigView)]
     public async Task<IActionResult> GetAsync(string id, CancellationToken cancellationToken = default)

@@ -42,7 +42,7 @@ public static class MenuPermissionConstant
     public const string SystemName = "System";
     public const string RolesName = "Roles";
     public const string MenuName = "Menu";
-    public const string AdminManagementName = "Admin Management";
+    public const string AdminManagementName = "User Management";
     public const string TenantsName = "Tenants";
     public const string NotificationsName = "Notifications";
     public const string LogsName = "Logs";
@@ -77,7 +77,7 @@ public static class MenuPermissionConstant
     public const string MenuUpdate = "18-3-3";
 
     public const string AdminManagementView = "18-4-1";
-    public const string AdminManagementViewName = "Admin Management";
+    public const string AdminManagementViewName = "User Management";
     public const string AdminManagementCreate = "18-4-2";
     public const string AdminManagementUpdate = "18-4-3";
     public const string AdminManagementDelete = "18-4-4";

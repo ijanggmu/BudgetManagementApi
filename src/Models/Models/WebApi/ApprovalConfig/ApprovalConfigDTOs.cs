@@ -56,3 +56,10 @@ public class ApprovalConfigImportResultDto
     public int UpdatedCount { get; set; }
     public List<string> Errors { get; set; } = new();
 }
+
+/// <summary>Minimal role info for approval config approver dropdown.</summary>
+public class ApproverRoleItemDto
+{
+    public string RoleId { get; set; } = string.Empty;
+    public string RoleName { get; set; } = string.Empty;
+}

@@ -148,7 +148,7 @@ public static partial class MenuPermissionsList
                         ],
                         Children = null
                     },
-                    // 18-4. Administration > Admin Management
+                    // 18-4. Administration > User Management
                     new MenuItem
                     {
                         MenuId = 4,
