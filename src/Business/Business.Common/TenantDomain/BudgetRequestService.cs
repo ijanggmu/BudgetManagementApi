@@ -40,8 +40,8 @@ public class BudgetRequestService(
                 query = query.IgnoreQueryFilters();
             if (!string.IsNullOrEmpty(requestModel.DepartmentId))
                 query = query.Where(b => b.DepartmentId == requestModel.DepartmentId);
-            if (!string.IsNullOrEmpty(requestModel.Status))
-                query = query.Where(b => b.Status.ToString() == requestModel.Status);
+            if (!string.IsNullOrEmpty(requestModel.Status) && Enum.TryParse<BudgetRequestStatus>(requestModel.Status, true, out var statusFilter))
+                query = query.Where(b => b.Status == statusFilter);
             if (!string.IsNullOrEmpty(requestModel.UserId))
                 query = query.Where(b => b.UserId == requestModel.UserId);
 
@@ -362,8 +362,8 @@ public class BudgetRequestService(
             query = query.IgnoreQueryFilters();
         if (!string.IsNullOrEmpty(requestModel.DepartmentId))
             query = query.Where(b => b.DepartmentId == requestModel.DepartmentId);
-        if (!string.IsNullOrEmpty(requestModel.Status))
-            query = query.Where(b => b.Status.ToString() == requestModel.Status);
+        if (!string.IsNullOrEmpty(requestModel.Status) && Enum.TryParse<BudgetRequestStatus>(requestModel.Status, true, out var exportStatusFilter))
+            query = query.Where(b => b.Status == exportStatusFilter);
         if (!string.IsNullOrEmpty(requestModel.UserId))
             query = query.Where(b => b.UserId == requestModel.UserId);
         var list = await query.Take(10000).ToListAsync(cancellationToken);
