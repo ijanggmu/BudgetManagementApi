@@ -8,8 +8,14 @@ public class Tenant : ApplicationBaseEntity
     public string Name { get; set; } = default!;
     public bool IsActive { get; set; } = true;
     public CompanyBranding Branding { get; set; } = default!;
-    public string? UnderwriterDigitalSignatureUrl { get; set; }
-    public string? UnderwriterName { get; set; }
+    /// <summary>PAN number of the organization.</summary>
+    public string PanNumber { get; set; }
+    /// <summary>Organization phone number.</summary>
+    public string PhoneNumber { get; set; }
+    /// <summary>Organization address.</summary>
+    public string Address { get; set; }
+    /// <summary>Company stamp image URL (used instead of signature).</summary>
+    public string CompanyStampUrl { get; set; }
 }
 
 

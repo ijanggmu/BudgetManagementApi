@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Business.Common.File;
 using Data.Context;
 using Data.Entities.Tenant;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
@@ -34,7 +35,8 @@ public class MemoService(
     IUserProfileService userProfileService,
     ISieveExtension sieveExtension,
     IBudgetMemoAuditService auditService,
-    IHttpClientFactory httpClientFactory)
+    IHttpClientFactory httpClientFactory,
+    IFileService fileService)
     : IMemoService
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -213,12 +215,34 @@ public class MemoService(
         try
         {
             var approvalRows = await GetApprovalRowsWithSignaturesAsync(entity, cancellationToken);
-            var pdfBytes = BuildMemoPdf(entity, approvalRows);
+            var logoBytes = await GetTenantLogoBytesAsync(entity.TenantId, cancellationToken);
+            var pdfBytes = BuildMemoPdf(entity, approvalRows, logoBytes);
             return Result<byte[]>.Success(pdfBytes);
         }
         catch (Exception ex)
         {
             return Result<byte[]>.Failed("Failed to generate PDF: " + ex.Message);
+        }
+    }
+
+    /// <summary>Get tenant logo image bytes for memo PDF/DOCX (from CompanyBranding).</summary>
+    private async Task<byte[]?> GetTenantLogoBytesAsync(string? tenantId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(tenantId)) return null;
+        var branding = await db.CompanyBrandings.AsNoTracking()
+            .FirstOrDefaultAsync(b => b.TenantId == tenantId && !string.IsNullOrEmpty(b.LogoUrl), cancellationToken);
+        if (branding == null) return null;
+        try
+        {
+            var url = await fileService.GetFilePresignedUrlAsync(branding.LogoUrl);
+            if (string.IsNullOrEmpty(url)) return null;
+            var http = httpClientFactory.CreateClient();
+            http.Timeout = TimeSpan.FromSeconds(10);
+            return await http.GetByteArrayAsync(url, cancellationToken);
+        }
+        catch
+        {
+            return null;
         }
     }
 
@@ -275,12 +299,14 @@ public class MemoService(
         return list;
     }
 
-    private static byte[] BuildMemoPdf(Memo entity, List<ApprovalRowWithSignature> approvalRows)
+    private static readonly string[] ApprovalBlockLabels = { "Prepared by:", "Recommended by:", "Supported by:", "Approved by:" };
+
+    private static byte[] BuildMemoPdf(Memo entity, List<ApprovalRowWithSignature> approvalRows, byte[]? logoBytes)
     {
         var document = new Document();
-        document.Info.Title = "Budget Memo";
+        document.Info.Title = "Memo";
         document.Info.Author = "Budget360";
-        document.Info.Subject = "Approved Budget Request Memo";
+        document.Info.Subject = "Budget Request Memo";
 
         var style = document.Styles["Normal"];
         style.Font.Size = 10;
@@ -294,95 +320,97 @@ public class MemoService(
         section.PageSetup.LeftMargin = Unit.FromCentimeter(2);
         section.PageSetup.RightMargin = Unit.FromCentimeter(2);
 
-        var title = section.AddParagraph();
-        title.Format.SpaceBefore = Unit.FromCentimeter(0.5);
-        title.Format.SpaceAfter = Unit.FromCentimeter(0.5);
-        var titleText = title.AddFormattedText("BUDGET MEMO", TextFormat.Bold);
-        titleText.Size = 18;
-        titleText.Color = Colors.DarkBlue;
-
-        section.AddParagraph().Format.Borders.Bottom.Width = 1;
-        section.AddParagraph().Format.Borders.Bottom.Color = Colors.DarkBlue;
-        section.AddParagraph().Format.SpaceAfter = Unit.FromCentimeter(0.5);
-
-        var info = section.AddParagraph();
-        info.Format.SpaceAfter = Unit.FromCentimeter(0.3);
-        info.AddFormattedText("Memo ID: ", TextFormat.Bold).Size = 10;
-        info.AddFormattedText(entity.Id).Size = 10;
-        info.AddLineBreak();
-        info.AddFormattedText("Budget Request ID: ", TextFormat.Bold).Size = 10;
-        info.AddFormattedText(entity.BudgetRequestId).Size = 10;
-        info.AddLineBreak();
-        info.AddFormattedText("Date: ", TextFormat.Bold).Size = 10;
-        info.AddFormattedText(entity.CreatedOn.ToString("dd MMMM yyyy")).Size = 10;
-        info.AddLineBreak();
-        info.AddFormattedText("Status: ", TextFormat.Bold).Size = 10;
-        info.AddFormattedText(entity.Status.ToString()).Size = 10;
-
-        section.AddParagraph().Format.SpaceAfter = Unit.FromCentimeter(0.5);
-        var reqHeading = section.AddParagraph();
-        reqHeading.AddFormattedText("Request Details", TextFormat.Bold).Size = 12;
-        reqHeading.Format.SpaceAfter = Unit.FromCentimeter(0.3);
-
-        var req = section.AddParagraph();
-        req.AddFormattedText("Requested by: ", TextFormat.Bold).Size = 10;
-        req.AddFormattedText(entity.RequestedBy).Size = 10;
-        req.AddLineBreak();
-        req.AddFormattedText("Department: ", TextFormat.Bold).Size = 10;
-        req.AddFormattedText(entity.RequestedByDepartment).Size = 10;
-        req.AddLineBreak();
-        req.AddFormattedText("Amount: ", TextFormat.Bold).Size = 10;
-        req.AddFormattedText(entity.Amount.ToString("N2")).Size = 10;
-        req.AddLineBreak();
-        req.AddFormattedText("Purpose: ", TextFormat.Bold).Size = 10;
-        req.AddFormattedText(entity.Purpose ?? "").Size = 10;
-
-        section.AddParagraph().Format.SpaceAfter = Unit.FromCentimeter(0.5);
-        var appHeading = section.AddParagraph();
-        appHeading.AddFormattedText("Approval Chain", TextFormat.Bold).Size = 12;
-        appHeading.Format.SpaceAfter = Unit.FromCentimeter(0.3);
-
-        var table = section.AddTable();
-        table.Borders.Width = 0.5;
-        table.Borders.Color = Colors.Black;
-        table.AddColumn(Unit.FromCentimeter(2.5)); // Order
-        table.AddColumn(Unit.FromCentimeter(3));  // Role
-        table.AddColumn(Unit.FromCentimeter(3));  // User
-        table.AddColumn(Unit.FromCentimeter(2.5)); // Date
-        table.AddColumn(Unit.FromCentimeter(3));  // Signature
-        var headerRow = table.AddRow();
-        headerRow.HeadingFormat = true;
-        headerRow.Shading.Color = Colors.LightGray;
-        headerRow.Cells[0].AddParagraph("Step");
-        headerRow.Cells[1].AddParagraph("Role");
-        headerRow.Cells[2].AddParagraph("Approver");
-        headerRow.Cells[3].AddParagraph("Date");
-        headerRow.Cells[4].AddParagraph("Signature");
-        for (var i = 0; i < approvalRows.Count; i++)
+        // Logo on top (centered)
+        if (logoBytes != null && logoBytes.Length > 0)
         {
-            var row = table.AddRow();
-            var ar = approvalRows[i];
-            row.Cells[0].AddParagraph((i + 1).ToString());
-            row.Cells[1].AddParagraph(ar.RoleName);
-            row.Cells[2].AddParagraph(ar.UserName ?? "-");
-            row.Cells[3].AddParagraph(ar.ApprovedAt?.ToString("dd MMM yyyy") ?? "-");
-            if (ar.SignatureImage != null && ar.SignatureImage.Length > 0)
+            var logoPath = Path.Combine(Path.GetTempPath(), $"logo_{Guid.NewGuid():N}.png");
+            try
             {
-                var tempPath = Path.Combine(Path.GetTempPath(), $"sig_{Guid.NewGuid():N}.png");
+                System.IO.File.WriteAllBytes(logoPath, logoBytes);
+                var logoPara = section.AddParagraph();
+                logoPara.Format.Alignment = ParagraphAlignment.Center;
+                logoPara.Format.SpaceAfter = Unit.FromCentimeter(0.5);
+                var img = logoPara.AddImage(logoPath);
+                img.LockAspectRatio = true;
+                img.Width = Unit.FromCentimeter(4);
+            }
+            finally
+            {
+                try { if (System.IO.File.Exists(logoPath)) System.IO.File.Delete(logoPath); } catch { }
+            }
+        }
+
+        // Title: Memo
+        var title = section.AddParagraph();
+        title.Format.SpaceBefore = Unit.FromCentimeter(0.3);
+        title.Format.SpaceAfter = Unit.FromCentimeter(0.5);
+        title.Format.Alignment = ParagraphAlignment.Center;
+        var titleText = title.AddFormattedText("Memo", TextFormat.Bold);
+        titleText.Size = 16;
+        titleText.Color = Colors.Black;
+
+        // From / Through / To / Date / Subject (sample format)
+        AddMemoLine(section, "From", entity.RequestedByDepartment, "Department");
+        AddMemoLine(section, "Through", entity.RequestedByDepartment, "Department");
+        AddMemoLine(section, "To", "CEO or any approving authority", null);
+        AddMemoLine(section, "Date", entity.CreatedOn.ToString("yyyy/MM/dd") + " (" + entity.CreatedOn.ToString("dd MMMM yyyy") + ")", null);
+        AddMemoLine(section, "Subject", "Budget Request – " + entity.BudgetRequestId, null);
+
+        section.AddParagraph().Format.SpaceAfter = Unit.FromCentimeter(0.3);
+
+        // Content Part (Font 12)
+        var contentHeading = section.AddParagraph();
+        contentHeading.AddFormattedText("Content Part (Font Size: 12)", TextFormat.Bold).Size = 10;
+        contentHeading.Format.SpaceAfter = Unit.FromCentimeter(0.2);
+
+        var content = section.AddParagraph();
+        content.Format.SpaceAfter = Unit.FromCentimeter(0.5);
+        content.AddFormattedText("Requested by: ", TextFormat.Bold).Size = 12;
+        content.AddFormattedText(entity.RequestedBy).Size = 12;
+        content.AddLineBreak();
+        content.AddFormattedText("Department: ", TextFormat.Bold).Size = 12;
+        content.AddFormattedText(entity.RequestedByDepartment).Size = 12;
+        content.AddLineBreak();
+        content.AddFormattedText("Amount: ", TextFormat.Bold).Size = 12;
+        content.AddFormattedText(entity.Amount.ToString("N2")).Size = 12;
+        content.AddLineBreak();
+        content.AddFormattedText("Purpose: ", TextFormat.Bold).Size = 12;
+        content.AddFormattedText(entity.Purpose ?? "").Size = 12;
+
+        // Approval blocks: Prepared by / Recommended by / Supported by / Approved by
+        for (var i = 0; i < ApprovalBlockLabels.Length; i++)
+        {
+            var label = ApprovalBlockLabels[i];
+            var ar = i < approvalRows.Count ? approvalRows[i] : null;
+            var blockPara = section.AddParagraph();
+            blockPara.Format.SpaceBefore = Unit.FromCentimeter(0.4);
+            blockPara.AddFormattedText(label, TextFormat.Bold).Size = 10;
+            blockPara.AddLineBreak();
+            blockPara.AddFormattedText("……………………………").Size = 10;  // signature line
+            if (ar != null && ar.SignatureImage != null && ar.SignatureImage.Length > 0)
+            {
+                var sigPath = Path.Combine(Path.GetTempPath(), $"sig_{Guid.NewGuid():N}.png");
                 try
                 {
-                    System.IO.File.WriteAllBytes(tempPath, ar.SignatureImage);
-                    row.Cells[4].AddImage(tempPath);
+                    System.IO.File.WriteAllBytes(sigPath, ar.SignatureImage);
+                    var sigImg = blockPara.AddImage(sigPath);
+                    sigImg.Width = Unit.FromCentimeter(2.5);
+                    sigImg.LockAspectRatio = true;
                 }
                 finally
                 {
-                    try { if (System.IO.File.Exists(tempPath)) System.IO.File.Delete(tempPath); } catch { }
+                    try { if (System.IO.File.Exists(sigPath)) System.IO.File.Delete(sigPath); } catch { }
                 }
             }
-            else
-            {
-                row.Cells[4].AddParagraph(ar.ApprovedAt.HasValue ? "Signed" : "-");
-            }
+            blockPara.AddLineBreak();
+            blockPara.AddFormattedText("Name: ").Size = 10;
+            blockPara.AddFormattedText(ar?.UserName ?? "–").Size = 10;
+            blockPara.AddLineBreak();
+            blockPara.AddFormattedText("Designation: ").Size = 10;
+            blockPara.AddFormattedText(ar?.RoleName ?? "–").Size = 10;
+            blockPara.AddLineBreak();
+            blockPara.AddFormattedText("Date: ").Size = 10;
+            blockPara.AddFormattedText(ar?.ApprovedAt?.ToString("dd MMM yyyy") ?? "–").Size = 10;
         }
 
         var renderer = new PdfDocumentRenderer(true);
@@ -391,6 +419,18 @@ public class MemoService(
         using var stream = new MemoryStream();
         renderer.PdfDocument.Save(stream, false);
         return stream.ToArray();
+    }
+
+    private static void AddMemoLine(Section section, string label, string value, string? suffix)
+    {
+        var p = section.AddParagraph();
+        p.Format.SpaceAfter = Unit.FromCentimeter(0.15);
+        p.AddFormattedText(label + "  ", TextFormat.Bold).Size = 10;
+        p.AddFormattedText(value).Size = 10;
+        if (!string.IsNullOrEmpty(suffix))
+        {
+            p.AddFormattedText("  " + suffix).Size = 10;
+        }
     }
 
     public async Task<Result<byte[]>> GenerateDocxAsync(string id, CancellationToken cancellationToken = default)
@@ -404,7 +444,8 @@ public class MemoService(
         try
         {
             var approvalRows = await GetApprovalRowsWithSignaturesAsync(entity, cancellationToken);
-            var docxBytes = BuildMemoDocx(entity, approvalRows);
+            var logoBytes = await GetTenantLogoBytesAsync(entity.TenantId, cancellationToken);
+            var docxBytes = BuildMemoDocx(entity, approvalRows, logoBytes);
             return Result<byte[]>.Success(docxBytes);
         }
         catch (Exception ex)
@@ -413,7 +454,7 @@ public class MemoService(
         }
     }
 
-    private static byte[] BuildMemoDocx(Memo entity, List<ApprovalRowWithSignature> approvalRows)
+    private static byte[] BuildMemoDocx(Memo entity, List<ApprovalRowWithSignature> approvalRows, byte[]? logoBytes)
     {
         using var stream = new MemoryStream();
         using (var doc = WordprocessingDocument.Create(stream, WordprocessingDocumentType.Document))
@@ -422,7 +463,21 @@ public class MemoService(
             mainPart.Document = new W.Document();
             var body = mainPart.Document.AppendChild(new W.Body());
 
-            body.AppendChild(new W.Paragraph(new W.Run(new W.Text("BUDGET MEMO")))
+            // Logo on top
+            if (logoBytes != null && logoBytes.Length > 0)
+            {
+                var logoPart = mainPart.AddImagePart(ImagePartType.Png);
+                using (var ms = new MemoryStream(logoBytes))
+                    logoPart.FeedData(ms);
+                var logoRelId = mainPart.GetIdOfPart(logoPart);
+                body.AppendChild(new W.Paragraph(NewDocxRunWithImage(logoRelId, 120, 60))
+                {
+                    ParagraphProperties = new W.ParagraphProperties(new W.Justification { Val = W.JustificationValues.Center })
+                });
+                body.AppendChild(new W.Paragraph());
+            }
+
+            body.AppendChild(new W.Paragraph(new W.Run(new W.Text("Memo")))
             {
                 ParagraphProperties = new W.ParagraphProperties(
                     new W.ParagraphStyleId { Val = "Title" },
@@ -430,94 +485,87 @@ public class MemoService(
             });
             body.AppendChild(new W.Paragraph());
 
-            var infoPara = new W.Paragraph();
-            infoPara.AppendChild(new W.Run(new W.Text($"Memo ID: {entity.Id}")));
-            infoPara.AppendChild(new W.Break());
-            infoPara.AppendChild(new W.Run(new W.Text($"Budget Request ID: {entity.BudgetRequestId}")));
-            infoPara.AppendChild(new W.Break());
-            infoPara.AppendChild(new W.Run(new W.Text($"Date: {entity.CreatedOn:dd MMMM yyyy}")));
-            infoPara.AppendChild(new W.Break());
-            infoPara.AppendChild(new W.Run(new W.Text($"Status: {entity.Status}")));
-            body.AppendChild(infoPara);
+            AddDocxMemoLine(body, "From", entity.RequestedByDepartment, "Department");
+            AddDocxMemoLine(body, "Through", entity.RequestedByDepartment, "Department");
+            AddDocxMemoLine(body, "To", "CEO or any approving authority", null);
+            AddDocxMemoLine(body, "Date", entity.CreatedOn.ToString("yyyy/MM/dd") + " (" + entity.CreatedOn.ToString("dd MMMM yyyy") + ")", null);
+            AddDocxMemoLine(body, "Subject", "Budget Request – " + entity.BudgetRequestId, null);
             body.AppendChild(new W.Paragraph());
 
-            body.AppendChild(new W.Paragraph(new W.Run(new W.Text("Request Details"))));
+            body.AppendChild(new W.Paragraph(new W.Run(new W.Text("Content Part (Font Size: 12)")) { RunProperties = new W.RunProperties(new W.Bold()) }));
             var reqPara = new W.Paragraph();
-            reqPara.AppendChild(new W.Run(new W.Text($"Requested by: {entity.RequestedBy}")));
+            reqPara.AppendChild(new W.Run(new W.Text("Requested by: ")) { RunProperties = new W.RunProperties(new W.Bold()) });
+            reqPara.AppendChild(new W.Run(new W.Text(entity.RequestedBy)));
             reqPara.AppendChild(new W.Break());
-            reqPara.AppendChild(new W.Run(new W.Text($"Department: {entity.RequestedByDepartment}")));
+            reqPara.AppendChild(new W.Run(new W.Text("Department: ")) { RunProperties = new W.RunProperties(new W.Bold()) });
+            reqPara.AppendChild(new W.Run(new W.Text(entity.RequestedByDepartment)));
             reqPara.AppendChild(new W.Break());
-            reqPara.AppendChild(new W.Run(new W.Text($"Amount: {entity.Amount:N2}")));
+            reqPara.AppendChild(new W.Run(new W.Text("Amount: ")) { RunProperties = new W.RunProperties(new W.Bold()) });
+            reqPara.AppendChild(new W.Run(new W.Text(entity.Amount.ToString("N2"))));
             reqPara.AppendChild(new W.Break());
-            reqPara.AppendChild(new W.Run(new W.Text($"Purpose: {entity.Purpose ?? ""}")));
+            reqPara.AppendChild(new W.Run(new W.Text("Purpose: ")) { RunProperties = new W.RunProperties(new W.Bold()) });
+            reqPara.AppendChild(new W.Run(new W.Text(entity.Purpose ?? "")));
             body.AppendChild(reqPara);
             body.AppendChild(new W.Paragraph());
 
-            body.AppendChild(new W.Paragraph(new W.Run(new W.Text("Approval Chain"))));
-            var table = new W.Table(
-                new W.TableProperties(
-                    new W.TableBorders(
-                        new W.TopBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 },
-                        new W.BottomBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 },
-                        new W.LeftBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 },
-                        new W.RightBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 },
-                        new W.InsideHorizontalBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 },
-                        new W.InsideVerticalBorder { Val = new EnumValue<W.BorderValues>(W.BorderValues.Single), Size = 4 })));
-
-            var headerRow = new W.TableRow();
-            foreach (var header in new[] { "Step", "Role", "Approver", "Date", "Signature" })
-                headerRow.AppendChild(new W.TableCell(new W.Paragraph(new W.Run(new W.Text(header)) { RunProperties = new W.RunProperties(new W.Bold()) })));
-            table.AppendChild(headerRow);
-
-            for (var i = 0; i < approvalRows.Count; i++)
+            for (var i = 0; i < ApprovalBlockLabels.Length; i++)
             {
-                var ar = approvalRows[i];
-                var row = new W.TableRow();
-                row.AppendChild(NewDocxTableCell((i + 1).ToString()));
-                row.AppendChild(NewDocxTableCell(ar.RoleName));
-                row.AppendChild(NewDocxTableCell(ar.UserName ?? "-"));
-                row.AppendChild(NewDocxTableCell(ar.ApprovedAt?.ToString("dd MMM yyyy") ?? "-"));
-                if (ar.SignatureImage != null && ar.SignatureImage.Length > 0)
+                var label = ApprovalBlockLabels[i];
+                var ar = i < approvalRows.Count ? approvalRows[i] : null;
+                body.AppendChild(new W.Paragraph(new W.Run(new W.Text(label)) { RunProperties = new W.RunProperties(new W.Bold()) }));
+                var blockPara = new W.Paragraph();
+                blockPara.AppendChild(new W.Run(new W.Text("……………………………")));
+                blockPara.AppendChild(new W.Break());
+                if (ar?.SignatureImage != null && ar.SignatureImage.Length > 0)
                 {
-                    var imageCell = new W.TableCell();
                     var imagePart = mainPart.AddImagePart(ImagePartType.Png);
                     using (var ms = new MemoryStream(ar.SignatureImage))
                         imagePart.FeedData(ms);
-                    var relId = mainPart.GetIdOfPart(imagePart);
-                    imageCell.AppendChild(NewDocxParagraphWithImage(relId));
-                    row.AppendChild(imageCell);
+                    blockPara.AppendChild(new W.Run(NewDocxDrawing(mainPart.GetIdOfPart(imagePart), 80, 40)));
                 }
-                else
-                    row.AppendChild(NewDocxTableCell(ar.ApprovedAt.HasValue ? "Signed" : "-"));
-                table.AppendChild(row);
+                blockPara.AppendChild(new W.Break());
+                blockPara.AppendChild(new W.Run(new W.Text("Name: ")));
+                blockPara.AppendChild(new W.Run(new W.Text(ar?.UserName ?? "–")));
+                blockPara.AppendChild(new W.Break());
+                blockPara.AppendChild(new W.Run(new W.Text("Designation: ")));
+                blockPara.AppendChild(new W.Run(new W.Text(ar?.RoleName ?? "–")));
+                blockPara.AppendChild(new W.Break());
+                blockPara.AppendChild(new W.Run(new W.Text("Date: ")));
+                blockPara.AppendChild(new W.Run(new W.Text(ar?.ApprovedAt?.ToString("dd MMM yyyy") ?? "–")));
+                body.AppendChild(blockPara);
             }
-            body.AppendChild(table);
+
             mainPart.Document.Save();
         }
         return stream.ToArray();
     }
 
-    private static W.TableCell NewDocxTableCell(string text)
+    private static void AddDocxMemoLine(W.Body body, string label, string value, string? suffix)
     {
-        return new W.TableCell(new W.Paragraph(new W.Run(new W.Text(text))));
+        var p = new W.Paragraph();
+        p.AppendChild(new W.Run(new W.Text(label + "  ")) { RunProperties = new W.RunProperties(new W.Bold()) });
+        p.AppendChild(new W.Run(new W.Text(value)));
+        if (!string.IsNullOrEmpty(suffix))
+            p.AppendChild(new W.Run(new W.Text("  " + suffix)));
+        body.AppendChild(p);
     }
 
-    private static W.Paragraph NewDocxParagraphWithImage(string relationshipId)
+    private static W.Drawing NewDocxDrawing(string relationshipId, int widthPx, int heightPx)
     {
         const int emuPerPixel = 9525;
-        var width = (long)(80 * emuPerPixel);
-        var height = (long)(40 * emuPerPixel);
-        var drawing = new W.Drawing(
+        var width = (long)(widthPx * emuPerPixel);
+        var height = (long)(heightPx * emuPerPixel);
+        return new W.Drawing(
             new DW.Inline(
                 new DW.Extent { Cx = width, Cy = height },
                 new DW.EffectExtent { LeftEdge = 0, TopEdge = 0, RightEdge = 0, BottomEdge = 0 },
-                new DW.DocProperties { Id = 1U, Name = "Signature" },
+                new DW.DocProperties { Id = 1U, Name = "Image" },
                 new DW.NonVisualGraphicFrameDrawingProperties(new A.GraphicFrameLocks { NoChangeAspect = true }),
                 new A.Graphic(
                     new A.GraphicData(
                         new PIC.Picture(
                             new PIC.NonVisualPictureProperties(
-                                new PIC.NonVisualDrawingProperties { Id = 0U, Name = "Signature.png" },
+                                new PIC.NonVisualDrawingProperties { Id = 0U, Name = "Image.png" },
                                 new PIC.NonVisualPictureDrawingProperties()),
                             new PIC.BlipFill(
                                 new A.Blip { Embed = relationshipId },
@@ -528,9 +576,17 @@ public class MemoService(
                                     new A.Extents { Cx = width, Cy = height }),
                                 new A.PresetGeometry(new A.AdjustValueList()) { Preset = A.ShapeTypeValues.Rectangle })))
                     { Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture" })
-            ) { DistanceFromTop = 0, DistanceFromBottom = 0, DistanceFromLeft = 0, DistanceFromRight = 0 });
-        return new W.Paragraph(new W.Run(drawing));
+            ));
     }
+
+    private static W.Run NewDocxRunWithImage(string relationshipId, int widthPx, int heightPx) => new W.Run(NewDocxDrawing(relationshipId, widthPx, heightPx));
+
+    private static W.TableCell NewDocxTableCell(string text)
+    {
+        return new W.TableCell(new W.Paragraph(new W.Run(new W.Text(text))));
+    }
+
+    private static W.Paragraph NewDocxParagraphWithImage(string relationshipId) => new W.Paragraph(new W.Run(NewDocxDrawing(relationshipId, 80, 40)));
 
     private static List<(string RoleName, string UserName, DateTime? ApprovedAt)> ParseApproversFromJson(string approversJson)
     {

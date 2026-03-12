@@ -49,6 +49,19 @@ public static class DummyTenantSeeder
                 };
                 await context.CompanyBrandings.AddAsync(branding);
                 await context.SaveChangesAsync();
+
+                var defaultMemoTemplate = new MemoTemplate
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "Default Memo",
+                    Description = "Standard memo format with logo on top, From/Through/To/Date/Subject, content part, and approval blocks (Prepared by, Recommended by, Supported by, Approved by).",
+                    BodyTemplate = null,
+                    TenantId = tenant.Id,
+                    CreatedBy = "seed",
+                    CreatedOn = DateTime.UtcNow
+                };
+                await context.MemoTemplates.AddAsync(defaultMemoTemplate);
+                await context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
             catch

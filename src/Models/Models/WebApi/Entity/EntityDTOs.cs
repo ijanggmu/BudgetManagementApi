@@ -6,15 +6,20 @@ public class EntitySettingsResponseDto
     public string PaletteJson { get; set; } = string.Empty;
     public string LogoUrl { get; set; } = string.Empty;
     public string LogoSignedUrl { get; set; } = string.Empty;
-    public string UnderwriterDigitalSignatureUrl { get; set; }
-    public string UnderwriterDigitalSignatureSignedUrl { get; set; }
     public string UnderwriterName { get; set; }
+    public string PanNumber { get; set; }
+    public string PhoneNumber { get; set; }
+    public string Address { get; set; }
+    public string CompanyStampUrl { get; set; }
+    public string CompanyStampSignedUrl { get; set; }
 }
 
 public class UpdateEntitySettingsDto
 {
-    public string UnderwriterDigitalSignatureUrl { get; set; }
-    public string UnderwriterName { get; set; }
+    public string PanNumber { get; set; }
+    public string PhoneNumber { get; set; }
+    public string Address { get; set; }
+    public string CompanyStampUrl { get; set; }
 }
 
 

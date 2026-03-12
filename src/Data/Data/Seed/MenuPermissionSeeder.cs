@@ -253,15 +253,15 @@ public static class MenuPermissionSeeder
 
     private static List<string> GetHODPermissions()
     {
+        // HOD is department-scoped; they should not manage departments or budget headings from the menu.
+        // Exclude DepartmentView and BudgetHeadingsView so those modules are hidden in the UI for HOD.
         return new List<string>
         {
             MenuPermissionConstant.DashboardView,
             MenuPermissionConstant.BudgetManagementView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
-            MenuPermissionConstant.DepartmentView,
             MenuPermissionConstant.BudgetReportView,
-            MenuPermissionConstant.BudgetHeadingsView,
             MenuPermissionConstant.BudgetRequestView,
             MenuPermissionConstant.BudgetRequestCreate,
             MenuPermissionConstant.MemoView,

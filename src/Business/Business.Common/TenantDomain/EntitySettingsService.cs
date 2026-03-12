@@ -40,24 +40,26 @@ public class EntitySettingsService(
                 TenantId = x.Id,
                 PaletteJson = x.Branding != null ? x.Branding.PaletteJson : string.Empty,
                 LogoUrl = x.Branding != null ? x.Branding.LogoUrl : string.Empty,
-                UnderwriterDigitalSignatureUrl = x.UnderwriterDigitalSignatureUrl,
-                UnderwriterName = x.UnderwriterName
+                PanNumber = x.PanNumber ?? string.Empty,
+                PhoneNumber = x.PhoneNumber ?? string.Empty,
+                Address = x.Address ?? string.Empty,
+                CompanyStampUrl = x.CompanyStampUrl ?? string.Empty
             })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (tenant == null)
             return Result<EntitySettingsResponseDto>.Failed("Tenant not found.");
 
-        var underwriterDigitalSignatureSignedUrl = string.IsNullOrEmpty(tenant.UnderwriterDigitalSignatureUrl)
-            ? string.Empty
-            : await fileService.GetFilePresignedUrlAsync(tenant.UnderwriterDigitalSignatureUrl);
-
         var logoSignedUrl = string.IsNullOrEmpty(tenant.LogoUrl)
             ? string.Empty
             : await fileService.GetFilePresignedUrlAsync(tenant.LogoUrl);
 
-        tenant.UnderwriterDigitalSignatureSignedUrl = underwriterDigitalSignatureSignedUrl;
+        var companyStampSignedUrl = string.IsNullOrEmpty(tenant.CompanyStampUrl)
+            ? string.Empty
+            : await fileService.GetFilePresignedUrlAsync(tenant.CompanyStampUrl);
+
         tenant.LogoUrl = logoSignedUrl;
+        tenant.CompanyStampSignedUrl = companyStampSignedUrl;
 
         return Result<EntitySettingsResponseDto>.Success(tenant);
     }
@@ -80,12 +82,19 @@ public class EntitySettingsService(
         if (tenant == null)
             return Result<MessageResponseModel>.Failed("Tenant not found.");
 
-        // Update underwriter fields
-        if (!string.IsNullOrWhiteSpace(dto.UnderwriterDigitalSignatureUrl))
-            tenant.UnderwriterDigitalSignatureUrl = dto.UnderwriterDigitalSignatureUrl;
+        // Update underwriter and organization fields
 
-        if (!string.IsNullOrWhiteSpace(dto.UnderwriterName))
-            tenant.UnderwriterName = dto.UnderwriterName;
+        if (dto.PanNumber != null)
+            tenant.PanNumber = dto.PanNumber;
+
+        if (dto.PhoneNumber != null)
+            tenant.PhoneNumber = dto.PhoneNumber;
+
+        if (dto.Address != null)
+            tenant.Address = dto.Address;
+
+        if (!string.IsNullOrWhiteSpace(dto.CompanyStampUrl))
+            tenant.CompanyStampUrl = dto.CompanyStampUrl;
 
         db.Tenants.Update(tenant);
         await db.SaveChangesAsync(cancellationToken);
