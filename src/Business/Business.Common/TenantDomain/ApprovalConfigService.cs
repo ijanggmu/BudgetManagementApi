@@ -37,10 +37,22 @@ public class ApprovalConfigService(
 
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
         var list = await result.ToListAsync(cancellationToken);
-        var deptIds = list.Select(a => a.DepartmentId).Distinct().ToList();
-        var departments = await db.Departments.Where(d => deptIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, d => d.Name, cancellationToken);
+        var deptIds = list
+            .Where(a => a.DepartmentId != null)
+            .Select(a => a.DepartmentId!)
+            .Distinct()
+            .ToList();
+        var departments = await db.Departments
+            .Where(d => deptIds.Contains(d.Id))
+            .ToDictionaryAsync(d => d.Id, d => d.Name, cancellationToken);
 
-        var dtos = list.Select(a => MapToDto(a, departments.GetValueOrDefault(a.DepartmentId))).ToList();
+        var dtos = list.Select(a =>
+        {
+            var deptName = a.DepartmentId != null && departments.TryGetValue(a.DepartmentId, out var name)
+                ? name
+                : "Default (All Departments)";
+            return MapToDto(a, deptName);
+        }).ToList();
         return Result<List<ApprovalConfigResponseDto>>.Success(dtos, new Pagination
         {
             TotalItems = totalCount,
@@ -58,7 +70,9 @@ public class ApprovalConfigService(
         if (isSuperAdmin) query = query.IgnoreQueryFilters();
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<ApprovalConfigResponseDto>.Failed("Approval config not found.");
-        var deptName = await db.Departments.Where(d => d.Id == entity.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
+        var deptName = entity.DepartmentId == null
+            ? "Default (All Departments)"
+            : await db.Departments.Where(d => d.Id == entity.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
         return Result<ApprovalConfigResponseDto>.Success(MapToDto(entity, deptName));
     }
 
@@ -69,8 +83,29 @@ public class ApprovalConfigService(
         var query = db.ApprovalConfigs.Where(a => a.DepartmentId == departmentId);
         if (isSuperAdmin) query = query.IgnoreQueryFilters();
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
+
+        if (entity == null)
+        {
+            // Fallback to default (tenant-wide) config when no department-specific config exists
+            var deptTenantId = await db.Departments
+                .Where(d => d.Id == departmentId)
+                .Select(d => d.TenantId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (!string.IsNullOrEmpty(deptTenantId))
+            {
+                var defaultQuery = db.ApprovalConfigs
+                    .Where(a => a.TenantId == deptTenantId && a.DepartmentId == null);
+                if (isSuperAdmin) defaultQuery = defaultQuery.IgnoreQueryFilters();
+                entity = await defaultQuery.FirstOrDefaultAsync(cancellationToken);
+            }
+        }
+
         if (entity == null) return Result<ApprovalConfigResponseDto>.Failed("Approval config not found for this department.");
-        var deptName = await db.Departments.Where(d => d.Id == entity.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
+
+        var deptName = entity.DepartmentId == null
+            ? "Default (All Departments)"
+            : await db.Departments.Where(d => d.Id == entity.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
         return Result<ApprovalConfigResponseDto>.Success(MapToDto(entity, deptName));
     }
 
@@ -81,16 +116,31 @@ public class ApprovalConfigService(
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
         var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
-        var dept = await db.Departments.FirstOrDefaultAsync(d => d.Id == dto.DepartmentId && d.TenantId == tenantId, cancellationToken);
-        if (dept == null) return Result<ApprovalConfigResponseDto>.Failed("Department not found.");
-        var exists = await db.ApprovalConfigs.AnyAsync(a => a.DepartmentId == dto.DepartmentId && a.TenantId == tenantId, cancellationToken);
-        if (exists) return Result<ApprovalConfigResponseDto>.Failed("Approval config for this department already exists.");
+        Department? dept = null;
+        if (!string.IsNullOrWhiteSpace(dto.DepartmentId))
+        {
+            dept = await db.Departments.FirstOrDefaultAsync(d => d.Id == dto.DepartmentId && d.TenantId == tenantId, cancellationToken);
+            if (dept == null) return Result<ApprovalConfigResponseDto>.Failed("Department not found.");
+        }
+
+        var exists = await db.ApprovalConfigs.AnyAsync(
+            a => a.DepartmentId == dto.DepartmentId && a.TenantId == tenantId,
+            cancellationToken);
+        if (exists) return Result<ApprovalConfigResponseDto>.Failed("Approval config for this department (or default) already exists.");
 
         var roleIds = dto.Steps.Select(s => s.ApproverRoleId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
         var roleNames = roleIds.Count > 0
             ? await db.Roles.Where(r => roleIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.Name ?? r.NormalizedName ?? "", cancellationToken)
             : new Dictionary<string, string>();
-        var stepsWithNames = dto.Steps.Select(s => new { s.StepOrder, s.MinAmount, s.MaxAmount, s.ApproverRoleId, ApproverRoleName = roleNames.GetValueOrDefault(s.ApproverRoleId, ""), s.IsMandatory }).ToList();
+        var stepsWithNames = dto.Steps.Select(s => new
+        {
+            s.StepOrder,
+            s.MinAmount,
+            s.MaxAmount,
+            s.ApproverRoleId,
+            ApproverRoleName = roleNames.GetValueOrDefault(s.ApproverRoleId, ""),
+            s.IsMandatory
+        }).ToList();
         var stepsJson = JsonSerializer.Serialize(stepsWithNames, JsonOptions);
         var entity = new ApprovalConfig
         {

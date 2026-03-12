@@ -13,7 +13,8 @@ public class ApprovalConfigConfiguration : IEntityTypeConfiguration<ApprovalConf
         builder.HasOne<Department>()
             .WithMany()
             .HasForeignKey(x => x.DepartmentId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
         builder.Property(x => x.StepsJson)
             .HasColumnType("jsonb");
     }
@@ -22,7 +23,7 @@ public class ApprovalConfigConfiguration : IEntityTypeConfiguration<ApprovalConf
 [EntityTypeConfiguration(typeof(ApprovalConfigConfiguration))]
 public class ApprovalConfig : TenantEntity
 {
-    public string DepartmentId { get; set; } = default!;
+    public string DepartmentId { get; set; }
     /// <summary>
     /// JSON array of approval steps: [{ "stepOrder": 1, "minAmount": 0, "maxAmount": 1000000, "approverRoleId": "...", "approverRoleName": "...", "isMandatory": true }]
     /// </summary>

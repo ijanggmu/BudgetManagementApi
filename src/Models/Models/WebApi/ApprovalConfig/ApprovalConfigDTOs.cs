@@ -17,7 +17,7 @@ public class ApprovalConfigResponseDto
 {
     public string Id { get; set; } = string.Empty;
     public string TenantId { get; set; } = string.Empty;
-    public string DepartmentId { get; set; } = string.Empty;
+    public string? DepartmentId { get; set; }
     public string? DepartmentName { get; set; }
     public List<ApprovalConfigStepDto> Steps { get; set; } = new();
     public DateTime CreatedOn { get; set; }
@@ -31,7 +31,12 @@ public class ApprovalConfigListRequestModel : CommonPaginationRequestModel
 
 public class CreateApprovalConfigDto
 {
-    public string DepartmentId { get; set; } = string.Empty;
+    /// <summary>
+    /// Optional. When null or empty, the config is treated as a default
+    /// tenant-wide approval configuration (applies to all departments
+    /// that don't have an explicit override).
+    /// </summary>
+    public string? DepartmentId { get; set; }
     public List<ApprovalConfigStepInputDto> Steps { get; set; } = new();
 }
 
