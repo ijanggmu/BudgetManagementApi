@@ -103,8 +103,16 @@ public class BudgetRequestService(
         }
         var dept = await db.Departments.FirstOrDefaultAsync(d => d.Id == dto.DepartmentId && d.TenantId == tenantId, cancellationToken);
         if (dept == null) return Result<BudgetRequestResponseDto>.Failed("Department not found.");
-        var config = await db.ApprovalConfigs.FirstOrDefaultAsync(c => c.DepartmentId == dto.DepartmentId && c.TenantId == tenantId, cancellationToken);
-        if (config == null) return Result<BudgetRequestResponseDto>.Failed("No approval config for this department.");
+
+        // Prefer department-specific approval config; fall back to tenant-wide default when none exists.
+        var config = await db.ApprovalConfigs
+            .FirstOrDefaultAsync(c => c.DepartmentId == dto.DepartmentId && c.TenantId == tenantId, cancellationToken);
+        if (config == null)
+        {
+            config = await db.ApprovalConfigs
+                .FirstOrDefaultAsync(c => c.TenantId == tenantId && c.DepartmentId == null, cancellationToken);
+        }
+        if (config == null) return Result<BudgetRequestResponseDto>.Failed("No approval config for this department or default tenant config.");
         var applicableSteps = GetApplicableStepsForAmount(config.StepsJson, dto.Amount);
         if (applicableSteps.Count == 0) return Result<BudgetRequestResponseDto>.Failed("No approval step applies to this amount. Check approval config min/max amount ranges.");
         var first = applicableSteps[0];
@@ -169,8 +177,19 @@ public class BudgetRequestService(
         var role = await db.Roles.FindAsync(request.NextApproverRoleId);
         var history = AppendApprovalHistory(request.ApprovalHistoryJson, request.NextApproverRoleId, role?.Name ?? role?.NormalizedName ?? "", userId, approver?.UserName ?? approver?.Email ?? "", dto.SignatureUrl);
         request.ApprovalHistoryJson = history;
-        var config = await db.ApprovalConfigs.FirstOrDefaultAsync(c => c.DepartmentId == request.DepartmentId && c.TenantId == request.TenantId, cancellationToken);
-        var applicableSteps = config != null ? GetApplicableStepsForAmount(config.StepsJson, request.Amount) : new List<(int Order, string RoleId, string RoleName)>();
+        // Reload approval config (department-specific, or fall back to default) to determine next approver.
+        var config = await db.ApprovalConfigs.FirstOrDefaultAsync(
+            c => c.DepartmentId == request.DepartmentId && c.TenantId == request.TenantId,
+            cancellationToken);
+        if (config == null)
+        {
+            config = await db.ApprovalConfigs.FirstOrDefaultAsync(
+                c => c.TenantId == request.TenantId && c.DepartmentId == null,
+                cancellationToken);
+        }
+        var applicableSteps = config != null
+            ? GetApplicableStepsForAmount(config.StepsJson, request.Amount)
+            : new List<(int Order, string RoleId, string RoleName)>();
         var currentIndex = applicableSteps.FindIndex(s => s.RoleId == request.NextApproverRoleId);
         if (currentIndex >= 0 && currentIndex < applicableSteps.Count - 1)
         {
