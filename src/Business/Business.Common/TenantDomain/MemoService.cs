@@ -118,10 +118,10 @@ public class MemoService(
     {
         var roleId = userProfileService.GetRoleId();
         var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
-        var tenantId = db.CurrentTenantId;
-        var request = await db.BudgetRequests.FirstOrDefaultAsync(r => r.Id == budgetRequestId && r.TenantId == tenantId, cancellationToken);
-        if (request == null && isSuperAdmin)
-            request = await db.BudgetRequests.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Id == budgetRequestId, cancellationToken);
+        IQueryable<BudgetRequest> query = db.BudgetRequests.Where(r => r.Id == budgetRequestId);
+        if (isSuperAdmin)
+            query = query.IgnoreQueryFilters();
+        var request = await query.FirstOrDefaultAsync(cancellationToken);
         if (request == null) return Result<MemoResponseDto>.Failed("Budget request not found.");
         var existing = await db.Memos.AnyAsync(m => m.BudgetRequestId == budgetRequestId && m.TenantId == (request.TenantId ?? tenantId), cancellationToken);
         if (existing) return Result<MemoResponseDto>.Failed("Memo already exists for this budget request.");
