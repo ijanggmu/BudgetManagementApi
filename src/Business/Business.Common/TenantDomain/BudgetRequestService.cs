@@ -127,7 +127,7 @@ public class BudgetRequestService(
             NextApproverRoleId = first.RoleId,
             CurrentApprovalStep = 1,
             RequestedDate = DateTime.UtcNow,
-            TenantId = tenantId ?? "",
+            TenantId = tenantId,
             CreatedBy = userId,
             CreatedOn = DateTime.UtcNow
         };

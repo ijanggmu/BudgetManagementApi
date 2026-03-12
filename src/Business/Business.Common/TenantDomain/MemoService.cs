@@ -123,7 +123,7 @@ public class MemoService(
             query = query.IgnoreQueryFilters();
         var request = await query.FirstOrDefaultAsync(cancellationToken);
         if (request == null) return Result<MemoResponseDto>.Failed("Budget request not found.");
-        var existing = await db.Memos.AnyAsync(m => m.BudgetRequestId == budgetRequestId && m.TenantId == (request.TenantId ?? tenantId), cancellationToken);
+        var existing = await db.Memos.AnyAsync(m => m.BudgetRequestId == budgetRequestId && m.TenantId == (request.TenantId), cancellationToken);
         if (existing) return Result<MemoResponseDto>.Failed("Memo already exists for this budget request.");
         var dtoWithRequestId = new CreateMemoDto
         {
