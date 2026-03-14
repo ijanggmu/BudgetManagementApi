@@ -12,10 +12,10 @@ namespace BeemaEdgeApi.Controllers.V1.Admin.BudgetHeading;
 [AdminOrSuperAdmin]
 public class BudgetHeadingController(IBudgetHeadingService service) : BaseAdminApiController
 {
-    [HttpGet]
+    [HttpPost]
     [Permission(MenuPermissionConstant.BudgetView)]
-    public async Task<IActionResult> ListAsync(CancellationToken cancellationToken = default)
-        => HandleResult(await service.GetAllAsync(cancellationToken));
+    public async Task<IActionResult> ListAsync([FromBody] BudgetHeadingListRequestModel? requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await service.GetAllAsync(requestModel, cancellationToken));
 
     [HttpGet("{id}")]
     [Permission(MenuPermissionConstant.BudgetView)]

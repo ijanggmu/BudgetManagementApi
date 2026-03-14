@@ -38,15 +38,19 @@ public class BudgetService(
             query = query.Where(b => b.Year == requestModel.Year.Value);
         if (requestModel.Quarter.HasValue)
             query = query.Where(b => b.Quarter == requestModel.Quarter.Value);
+        if (!string.IsNullOrEmpty(requestModel.FiscalYearId))
+            query = query.Where(b => b.FiscalYearId == requestModel.FiscalYearId);
 
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
         var list = await result.ToListAsync(cancellationToken);
         var deptIds = list.Select(b => b.DepartmentId).Distinct().ToList();
         var headingIds = list.Select(b => b.BudgetHeadingId).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToList();
         var subheadingIds = list.Select(b => b.BudgetSubheadingId).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToList();
+        var fiscalYearIds = list.Select(b => b.FiscalYearId).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToList();
         var departments = await db.Departments.Where(d => deptIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, d => d.Name, cancellationToken);
         var headings = headingIds.Count > 0 ? await db.BudgetHeadings.Where(h => headingIds.Contains(h.Id)).ToDictionaryAsync(h => h.Id, h => h.Name, cancellationToken) : new Dictionary<string, string>();
         var subheadings = subheadingIds.Count > 0 ? await db.BudgetSubheadings.Where(s => subheadingIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, cancellationToken) : new Dictionary<string, string>();
+        var fiscalYears = fiscalYearIds.Count > 0 ? await db.NepaliFiscalYears.Where(f => fiscalYearIds.Contains(f.Id)).ToDictionaryAsync(f => f.Id, f => f.Code, cancellationToken) : new Dictionary<string, string>();
 
         var dtos = list.Select(b => new BudgetResponseDto
         {
@@ -58,8 +62,12 @@ public class BudgetService(
             BudgetHeadingName = b.BudgetHeadingId != null ? headings.GetValueOrDefault(b.BudgetHeadingId) : null,
             BudgetSubheadingId = b.BudgetSubheadingId,
             BudgetSubheadingName = b.BudgetSubheadingId != null ? subheadings.GetValueOrDefault(b.BudgetSubheadingId) : null,
+            FiscalYearId = b.FiscalYearId,
+            FiscalYearCode = b.FiscalYearId != null ? fiscalYears.GetValueOrDefault(b.FiscalYearId) : null,
             Year = b.Year,
             Quarter = b.Quarter,
+            Unit = b.Unit,
+            UnitAmount = b.UnitAmount,
             TotalAmount = b.TotalAmount,
             AllocatedAmount = b.AllocatedAmount,
             RemainingAmount = b.RemainingAmount,
@@ -89,6 +97,7 @@ public class BudgetService(
         var deptName = await db.Departments.Where(d => d.Id == entity.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
         var headingName = entity.BudgetHeadingId != null ? await db.BudgetHeadings.Where(h => h.Id == entity.BudgetHeadingId).Select(h => h.Name).FirstOrDefaultAsync(cancellationToken) : null;
         var subheadingName = entity.BudgetSubheadingId != null ? await db.BudgetSubheadings.Where(s => s.Id == entity.BudgetSubheadingId).Select(s => s.Name).FirstOrDefaultAsync(cancellationToken) : null;
+        var fiscalYearCode = entity.FiscalYearId != null ? await db.NepaliFiscalYears.Where(f => f.Id == entity.FiscalYearId).Select(f => f.Code).FirstOrDefaultAsync(cancellationToken) : null;
         return Result<BudgetResponseDto>.Success(new BudgetResponseDto
         {
             Id = entity.Id,
@@ -99,8 +108,12 @@ public class BudgetService(
             BudgetHeadingName = headingName,
             BudgetSubheadingId = entity.BudgetSubheadingId,
             BudgetSubheadingName = subheadingName,
+            FiscalYearId = entity.FiscalYearId,
+            FiscalYearCode = fiscalYearCode,
             Year = entity.Year,
             Quarter = entity.Quarter,
+            Unit = entity.Unit,
+            UnitAmount = entity.UnitAmount,
             TotalAmount = entity.TotalAmount,
             AllocatedAmount = entity.AllocatedAmount,
             RemainingAmount = entity.RemainingAmount,
@@ -122,17 +135,21 @@ public class BudgetService(
         if (dept == null) return Result<BudgetResponseDto>.Failed("Department not found.");
         var exists = await db.Budgets.AnyAsync(b => b.DepartmentId == dto.DepartmentId && b.Year == dto.Year && b.Quarter == dto.Quarter && b.TenantId == tenantId, cancellationToken);
         if (exists) return Result<BudgetResponseDto>.Failed("Budget for this department, year and quarter already exists.");
+        var totalAmount = dto.Unit * dto.UnitAmount;
         var entity = new Budget
         {
             Id = Guid.NewGuid().ToString(),
             DepartmentId = dto.DepartmentId,
             BudgetHeadingId = dto.BudgetHeadingId,
             BudgetSubheadingId = dto.BudgetSubheadingId,
+            FiscalYearId = dto.FiscalYearId,
             Year = dto.Year,
             Quarter = dto.Quarter,
-            TotalAmount = dto.TotalAmount,
+            Unit = dto.Unit,
+            UnitAmount = dto.UnitAmount,
+            TotalAmount = totalAmount,
             AllocatedAmount = 0,
-            RemainingAmount = dto.TotalAmount,
+            RemainingAmount = totalAmount,
             IsLocked = false,
             Version = 1,
             TenantId = tenantId,
@@ -150,8 +167,12 @@ public class BudgetService(
             DepartmentName = dept.Name,
             BudgetHeadingId = entity.BudgetHeadingId,
             BudgetSubheadingId = entity.BudgetSubheadingId,
+            FiscalYearId = entity.FiscalYearId,
+            FiscalYearCode = null,
             Year = entity.Year,
             Quarter = entity.Quarter,
+            Unit = entity.Unit,
+            UnitAmount = entity.UnitAmount,
             TotalAmount = entity.TotalAmount,
             AllocatedAmount = entity.AllocatedAmount,
             RemainingAmount = entity.RemainingAmount,
@@ -171,12 +192,15 @@ public class BudgetService(
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<BudgetResponseDto>.Failed("Budget not found.");
         if (entity.IsLocked) return Result<BudgetResponseDto>.Failed("Budget is locked. Unlock it first to modify.");
-        if (dto.TotalAmount.HasValue) entity.TotalAmount = dto.TotalAmount.Value;
         if (dto.DepartmentId != null) entity.DepartmentId = dto.DepartmentId;
         if (dto.BudgetHeadingId != null) entity.BudgetHeadingId = dto.BudgetHeadingId;
         if (dto.BudgetSubheadingId != null) entity.BudgetSubheadingId = dto.BudgetSubheadingId;
+        if (dto.FiscalYearId != null) entity.FiscalYearId = dto.FiscalYearId;
         if (dto.Year.HasValue) entity.Year = dto.Year.Value;
         if (dto.Quarter.HasValue) entity.Quarter = dto.Quarter.Value;
+        if (dto.Unit.HasValue) entity.Unit = dto.Unit.Value;
+        if (dto.UnitAmount.HasValue) entity.UnitAmount = dto.UnitAmount.Value;
+        entity.TotalAmount = entity.Unit * entity.UnitAmount;
         entity.RemainingAmount = entity.TotalAmount - entity.AllocatedAmount;
         entity.Version++;
         entity.LastModifiedBy = userProfileService.GetUserId();
@@ -187,6 +211,7 @@ public class BudgetService(
         var deptName = await db.Departments.Where(d => d.Id == entity.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
         var headingName = entity.BudgetHeadingId != null ? await db.BudgetHeadings.Where(h => h.Id == entity.BudgetHeadingId).Select(h => h.Name).FirstOrDefaultAsync(cancellationToken) : null;
         var subheadingName = entity.BudgetSubheadingId != null ? await db.BudgetSubheadings.Where(s => s.Id == entity.BudgetSubheadingId).Select(s => s.Name).FirstOrDefaultAsync(cancellationToken) : null;
+        var fiscalYearCode = entity.FiscalYearId != null ? await db.NepaliFiscalYears.Where(f => f.Id == entity.FiscalYearId).Select(f => f.Code).FirstOrDefaultAsync(cancellationToken) : null;
         return Result<BudgetResponseDto>.Success(new BudgetResponseDto
         {
             Id = entity.Id,
@@ -197,8 +222,12 @@ public class BudgetService(
             BudgetHeadingName = headingName,
             BudgetSubheadingId = entity.BudgetSubheadingId,
             BudgetSubheadingName = subheadingName,
+            FiscalYearId = entity.FiscalYearId,
+            FiscalYearCode = fiscalYearCode,
             Year = entity.Year,
             Quarter = entity.Quarter,
+            Unit = entity.Unit,
+            UnitAmount = entity.UnitAmount,
             TotalAmount = entity.TotalAmount,
             AllocatedAmount = entity.AllocatedAmount,
             RemainingAmount = entity.RemainingAmount,

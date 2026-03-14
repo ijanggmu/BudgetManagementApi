@@ -377,7 +377,7 @@ public class MemoService(
         content.AddFormattedText("Purpose: ", TextFormat.Bold).Size = 12;
         content.AddFormattedText(entity.Purpose ?? "").Size = 12;
 
-        // Approval blocks: Prepared by / Recommended by / Supported by / Approved by
+        // Approval blocks: Prepared by / Recommended by / Supported by / Approved by — name/designation/date first, then signature below
         for (var i = 0; i < ApprovalBlockLabels.Length; i++)
         {
             var label = ApprovalBlockLabels[i];
@@ -386,9 +386,17 @@ public class MemoService(
             blockPara.Format.SpaceBefore = Unit.FromCentimeter(0.4);
             blockPara.AddFormattedText(label, TextFormat.Bold).Size = 10;
             blockPara.AddLineBreak();
-            blockPara.AddFormattedText("……………………………").Size = 10;  // signature line
+            blockPara.AddFormattedText("Name: ").Size = 10;
+            blockPara.AddFormattedText(ar?.UserName ?? "–").Size = 10;
+            blockPara.AddLineBreak();
+            blockPara.AddFormattedText("Designation: ").Size = 10;
+            blockPara.AddFormattedText(ar?.RoleName ?? "–").Size = 10;
+            blockPara.AddLineBreak();
+            blockPara.AddFormattedText("Date: ").Size = 10;
+            blockPara.AddFormattedText(ar?.ApprovedAt?.ToString("dd MMM yyyy") ?? "–").Size = 10;
             if (ar != null && ar.SignatureImage != null && ar.SignatureImage.Length > 0)
             {
+                blockPara.AddLineBreak();
                 var sigPath = Path.Combine(Path.GetTempPath(), $"sig_{Guid.NewGuid():N}.png");
                 try
                 {
@@ -402,15 +410,6 @@ public class MemoService(
                     try { if (System.IO.File.Exists(sigPath)) System.IO.File.Delete(sigPath); } catch { }
                 }
             }
-            blockPara.AddLineBreak();
-            blockPara.AddFormattedText("Name: ").Size = 10;
-            blockPara.AddFormattedText(ar?.UserName ?? "–").Size = 10;
-            blockPara.AddLineBreak();
-            blockPara.AddFormattedText("Designation: ").Size = 10;
-            blockPara.AddFormattedText(ar?.RoleName ?? "–").Size = 10;
-            blockPara.AddLineBreak();
-            blockPara.AddFormattedText("Date: ").Size = 10;
-            blockPara.AddFormattedText(ar?.ApprovedAt?.ToString("dd MMM yyyy") ?? "–").Size = 10;
         }
 
         var renderer = new PdfDocumentRenderer(true);
@@ -514,16 +513,6 @@ public class MemoService(
                 var ar = i < approvalRows.Count ? approvalRows[i] : null;
                 body.AppendChild(new W.Paragraph(new W.Run(new W.Text(label)) { RunProperties = new W.RunProperties(new W.Bold()) }));
                 var blockPara = new W.Paragraph();
-                blockPara.AppendChild(new W.Run(new W.Text("……………………………")));
-                blockPara.AppendChild(new W.Break());
-                if (ar?.SignatureImage != null && ar.SignatureImage.Length > 0)
-                {
-                    var imagePart = mainPart.AddImagePart(ImagePartType.Png);
-                    using (var ms = new MemoryStream(ar.SignatureImage))
-                        imagePart.FeedData(ms);
-                    blockPara.AppendChild(new W.Run(NewDocxDrawing(mainPart.GetIdOfPart(imagePart), 80, 40)));
-                }
-                blockPara.AppendChild(new W.Break());
                 blockPara.AppendChild(new W.Run(new W.Text("Name: ")));
                 blockPara.AppendChild(new W.Run(new W.Text(ar?.UserName ?? "–")));
                 blockPara.AppendChild(new W.Break());
@@ -532,6 +521,14 @@ public class MemoService(
                 blockPara.AppendChild(new W.Break());
                 blockPara.AppendChild(new W.Run(new W.Text("Date: ")));
                 blockPara.AppendChild(new W.Run(new W.Text(ar?.ApprovedAt?.ToString("dd MMM yyyy") ?? "–")));
+                if (ar?.SignatureImage != null && ar.SignatureImage.Length > 0)
+                {
+                    blockPara.AppendChild(new W.Break());
+                    var imagePart = mainPart.AddImagePart(ImagePartType.Png);
+                    using (var ms = new MemoryStream(ar.SignatureImage))
+                        imagePart.FeedData(ms);
+                    blockPara.AppendChild(new W.Run(NewDocxDrawing(mainPart.GetIdOfPart(imagePart), 80, 40)));
+                }
                 body.AppendChild(blockPara);
             }
 

@@ -30,6 +30,8 @@ public class BudgetRequestListRequestModel : CommonPaginationRequestModel
     public string? DepartmentId { get; set; }
     public string? Status { get; set; }
     public string? UserId { get; set; }
+    /// <summary>Filter by Nepali fiscal year (requested date within fiscal year's start/end year).</summary>
+    public string? FiscalYearId { get; set; }
 }
 
 public class CreateBudgetRequestDto

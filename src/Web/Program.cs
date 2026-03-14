@@ -218,6 +218,7 @@ static async Task RunDatabaseMigrationAsync(WebApplication app)
         await DemoUsersNoTenantSeeder.SeedAsync(context, userManager);
         await DummyTenantSeeder.SeedAsync(context, roleManager, userManager);
         await DepartmentSeeder.SeedAsync(context);
+        await NepaliFiscalYearSeeder.SeedAsync(context);
         await MenuPermissionSeeder.SeedPermissionsForRole(context);
         await CountriesSeeder.SeedData(context);
     }

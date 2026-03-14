@@ -7,14 +7,14 @@ using Microsoft.AspNetCore.Mvc;
 using Models.BeemaEdgeApi.Budget;
 using SharedKernel.Constant.Permission;
 
-namespace BeemaEdgeApi.Controllers.V1.Admin.BudgetSubheading;
+namespace BeemaEdgeApi.Controllers.V1.Admin.NepaliFiscalYear;
 
 [AdminOrSuperAdmin]
-public class BudgetSubheadingController(IBudgetSubheadingService service) : BaseAdminApiController
+public class NepaliFiscalYearController(INepaliFiscalYearService service) : BaseAdminApiController
 {
     [HttpPost]
     [Permission(MenuPermissionConstant.BudgetView)]
-    public async Task<IActionResult> ListAsync([FromBody] BudgetSubheadingListRequestModel? requestModel, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ListAsync([FromBody] NepaliFiscalYearListRequestModel? requestModel, CancellationToken cancellationToken = default)
         => HandleResult(await service.GetAllAsync(requestModel, cancellationToken));
 
     [HttpGet("{id}")]
@@ -24,12 +24,12 @@ public class BudgetSubheadingController(IBudgetSubheadingService service) : Base
 
     [HttpPost("create")]
     [Permission(MenuPermissionConstant.BudgetCreate)]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateBudgetSubheadingDto dto, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> CreateAsync([FromBody] CreateNepaliFiscalYearDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await service.CreateAsync(dto, cancellationToken));
 
     [HttpPut("{id}")]
     [Permission(MenuPermissionConstant.BudgetUpdate)]
-    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateBudgetSubheadingDto dto, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateNepaliFiscalYearDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await service.UpdateAsync(id, dto, cancellationToken));
 
     [HttpDelete("{id}")]

@@ -6,7 +6,7 @@ namespace Business.Common.TenantDomain;
 public interface IBudgetSubheadingService
 {
     Task<Result<List<BudgetSubheadingResponseDto>>> GetAllAsync(
-        string? budgetHeadingId = null,
+        BudgetSubheadingListRequestModel? requestModel = null,
         CancellationToken cancellationToken = default);
 
     Task<Result<BudgetSubheadingResponseDto>> GetByIdAsync(

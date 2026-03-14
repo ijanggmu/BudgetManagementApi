@@ -22,10 +22,15 @@ public class BudgetReportService(ApplicationDataContext db, IUserProfileService 
             budgetQuery = budgetQuery.IgnoreQueryFilters();
         if (!string.IsNullOrEmpty(requestModel.DepartmentId))
             budgetQuery = budgetQuery.Where(b => b.DepartmentId == requestModel.DepartmentId);
-        if (requestModel.Year.HasValue)
-            budgetQuery = budgetQuery.Where(b => b.Year == requestModel.Year.Value);
-        if (requestModel.Quarter.HasValue)
-            budgetQuery = budgetQuery.Where(b => b.Quarter == requestModel.Quarter.Value);
+        if (!string.IsNullOrEmpty(requestModel.FiscalYearId))
+            budgetQuery = budgetQuery.Where(b => b.FiscalYearId == requestModel.FiscalYearId);
+        else
+        {
+            if (requestModel.Year.HasValue)
+                budgetQuery = budgetQuery.Where(b => b.Year == requestModel.Year.Value);
+            if (requestModel.Quarter.HasValue)
+                budgetQuery = budgetQuery.Where(b => b.Quarter == requestModel.Quarter.Value);
+        }
 
         var budgetSums = await budgetQuery
             .GroupBy(_ => 1)
@@ -44,7 +49,17 @@ public class BudgetReportService(ApplicationDataContext db, IUserProfileService 
             requestQuery = requestQuery.IgnoreQueryFilters();
         if (!string.IsNullOrEmpty(requestModel.DepartmentId))
             requestQuery = requestQuery.Where(r => r.DepartmentId == requestModel.DepartmentId);
-        if (requestModel.Year.HasValue)
+        if (!string.IsNullOrEmpty(requestModel.FiscalYearId))
+        {
+            var fy = await db.NepaliFiscalYears
+                .AsQueryable()
+                .Where(f => f.Id == requestModel.FiscalYearId)
+                .Select(f => new { f.StartYear, f.EndYear })
+                .FirstOrDefaultAsync(cancellationToken);
+            if (fy != null)
+                requestQuery = requestQuery.Where(r => r.RequestedDate.Year >= fy.StartYear && r.RequestedDate.Year <= fy.EndYear);
+        }
+        else if (requestModel.Year.HasValue)
             requestQuery = requestQuery.Where(r => r.RequestedDate.Year == requestModel.Year.Value);
 
         var requestCounts = await requestQuery

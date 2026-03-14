@@ -1,5 +1,6 @@
 using Data.Context;
 using Data.Entities.Tenant;
+using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;
 using Microsoft.EntityFrameworkCore;
 using Models.BeemaEdgeApi.Budget;
@@ -10,18 +11,25 @@ namespace Business.Common.TenantDomain;
 
 public class BudgetSubheadingService(
     ApplicationDataContext db,
-    IUserProfileService userProfileService)
+    IUserProfileService userProfileService,
+    ISieveExtension sieveExtension)
     : IBudgetSubheadingService
 {
-    public async Task<Result<List<BudgetSubheadingResponseDto>>> GetAllAsync(string? budgetHeadingId = null, CancellationToken cancellationToken = default)
+    public async Task<Result<List<BudgetSubheadingResponseDto>>> GetAllAsync(BudgetSubheadingListRequestModel? requestModel = null, CancellationToken cancellationToken = default)
     {
+        requestModel ??= new BudgetSubheadingListRequestModel();
         var roleId = userProfileService.GetRoleId();
         var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
         var query = db.BudgetSubheadings.AsQueryable();
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
-        if (!string.IsNullOrEmpty(budgetHeadingId))
-            query = query.Where(s => s.BudgetHeadingId == budgetHeadingId);
-        var list = await query.OrderBy(s => s.Code).ToListAsync(cancellationToken);
+        if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
+            query = query.IgnoreQueryFilters().Where(s => s.TenantId == requestModel.TenantId);
+        else if (isSuperAdmin)
+            query = query.IgnoreQueryFilters();
+        if (!string.IsNullOrEmpty(requestModel.BudgetHeadingId))
+            query = query.Where(s => s.BudgetHeadingId == requestModel.BudgetHeadingId);
+
+        var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
+        var list = await result.OrderBy(s => s.Code).ToListAsync(cancellationToken);
         var dtos = list.Select(s => new BudgetSubheadingResponseDto
         {
             Id = s.Id,
@@ -30,7 +38,13 @@ public class BudgetSubheadingService(
             Code = s.Code,
             Description = s.Description
         }).ToList();
-        return Result<List<BudgetSubheadingResponseDto>>.Success(dtos);
+        return Result<List<BudgetSubheadingResponseDto>>.Success(dtos, new Pagination
+        {
+            TotalItems = totalCount,
+            TotalPages = totalPage,
+            PageSize = requestModel.PageSize,
+            CurrentPage = requestModel.PageNumber
+        });
     }
 
     public async Task<Result<BudgetSubheadingResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)

@@ -4,6 +4,8 @@ public class BudgetReportRequestModel
 {
     public string? TenantId { get; set; }
     public string? DepartmentId { get; set; }
+    /// <summary>Nepali fiscal year id. When set, budgets and requests are filtered by this fiscal year.</summary>
+    public string? FiscalYearId { get; set; }
     public int? Year { get; set; }
     public int? Quarter { get; set; }
 }

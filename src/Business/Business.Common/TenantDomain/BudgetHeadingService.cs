@@ -1,5 +1,6 @@
 using Data.Context;
 using Data.Entities.Tenant;
+using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;
 using Microsoft.EntityFrameworkCore;
 using Models.BeemaEdgeApi.Budget;
@@ -8,17 +9,32 @@ using SharedKernel.Operation;
 
 namespace Business.Common.TenantDomain;
 
-public class BudgetHeadingService(ApplicationDataContext db, IUserProfileService userProfileService) : IBudgetHeadingService
+public class BudgetHeadingService(
+    ApplicationDataContext db,
+    IUserProfileService userProfileService,
+    ISieveExtension sieveExtension) : IBudgetHeadingService
 {
-    public async Task<Result<List<BudgetHeadingResponseDto>>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<List<BudgetHeadingResponseDto>>> GetAllAsync(BudgetHeadingListRequestModel? requestModel = null, CancellationToken cancellationToken = default)
     {
+        requestModel ??= new BudgetHeadingListRequestModel();
         var roleId = userProfileService.GetRoleId();
         var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
         var query = db.BudgetHeadings.AsQueryable();
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
-        var list = await query.OrderBy(h => h.Code).ToListAsync(cancellationToken);
+        if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
+            query = query.IgnoreQueryFilters().Where(h => h.TenantId == requestModel.TenantId);
+        else if (isSuperAdmin)
+            query = query.IgnoreQueryFilters();
+
+        var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
+        var list = await result.OrderBy(h => h.Code).ToListAsync(cancellationToken);
         var dtos = list.Select(h => new BudgetHeadingResponseDto { Id = h.Id, Name = h.Name, Code = h.Code, Description = h.Description }).ToList();
-        return Result<List<BudgetHeadingResponseDto>>.Success(dtos);
+        return Result<List<BudgetHeadingResponseDto>>.Success(dtos, new Pagination
+        {
+            TotalItems = totalCount,
+            TotalPages = totalPage,
+            PageSize = requestModel.PageSize,
+            CurrentPage = requestModel.PageNumber
+        });
     }
 
     public async Task<Result<BudgetHeadingResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)

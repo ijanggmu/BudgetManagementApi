@@ -65,6 +65,7 @@ public class ApplicationDataContext(DbContextOptions<ApplicationDataContext> opt
 
     // Budget Management
     public DbSet<Department> Departments { get; set; }
+    public DbSet<NepaliFiscalYear> NepaliFiscalYears { get; set; }
     public DbSet<BudgetHeading> BudgetHeadings { get; set; }
     public DbSet<BudgetSubheading> BudgetSubheadings { get; set; }
     public DbSet<Budget> Budgets { get; set; }

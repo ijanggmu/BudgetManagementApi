@@ -5,7 +5,7 @@ namespace Business.Common.TenantDomain;
 
 public interface IBudgetHeadingService
 {
-    Task<Result<List<BudgetHeadingResponseDto>>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<Result<List<BudgetHeadingResponseDto>>> GetAllAsync(BudgetHeadingListRequestModel? requestModel = null, CancellationToken cancellationToken = default);
     Task<Result<BudgetHeadingResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<Result<BudgetHeadingResponseDto>> CreateAsync(CreateBudgetHeadingDto dto, CancellationToken cancellationToken = default);
     Task<Result<BudgetHeadingResponseDto>> UpdateAsync(string id, UpdateBudgetHeadingDto dto, CancellationToken cancellationToken = default);

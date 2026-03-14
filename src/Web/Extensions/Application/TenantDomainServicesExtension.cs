@@ -29,6 +29,7 @@ public static class TenantDomainServicesExtension
         services.AddScoped<IDesignationService, DesignationService>();
         services.AddScoped<IEntitySettingsService, EntitySettingsService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
+        services.AddScoped<INepaliFiscalYearService, NepaliFiscalYearService>();
         services.AddScoped<IBudgetService, BudgetService>();
         services.AddScoped<IBudgetHeadingService, BudgetHeadingService>();
         services.AddScoped<IBudgetSubheadingService, BudgetSubheadingService>();
