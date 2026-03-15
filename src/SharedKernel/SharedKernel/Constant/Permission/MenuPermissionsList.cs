@@ -529,6 +529,22 @@ public static partial class MenuPermissionsList
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.BudgetHeadings, false),
                         Children = null
                     },
+                    new MenuItem
+                    {
+                        MenuId = 10,
+                        MenuName = "Fiscal Years",
+                        MenuSlug = "/nepali-fiscal-years",
+                        Icon = "CalendarOutlined",
+                        Rank = 10,
+                        Level = 2,
+                        IsDisabled = false,
+                        IsMenu = true,
+                        ToHide = false,
+                        HideChildren = false,
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.NepaliFiscalYear, false),
+                        Children = null
+                    },
                 }
             }
         });

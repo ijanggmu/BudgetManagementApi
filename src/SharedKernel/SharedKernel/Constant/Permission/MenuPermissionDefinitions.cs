@@ -77,6 +77,7 @@ public static class MenuPermissionDefinitions
     public static readonly MenuPermissionSet BudgetReport = PermissionHelper.GeneratePermissions(
         "23-7", "Budget Report", includeCreate: false, includeUpdate: false, includeDelete: false);
     public static readonly MenuPermissionSet BudgetHeadings = PermissionHelper.GeneratePermissions("23-9", "Budget Headings");
+    public static readonly MenuPermissionSet NepaliFiscalYear = PermissionHelper.GeneratePermissions("23-10", "Fiscal Years");
 
     /// <summary>
     /// Gets a permission set by name (for backward compatibility and easy access)
@@ -114,6 +115,7 @@ public static class MenuPermissionDefinitions
             nameof(ApprovalConfig) => ApprovalConfig,
             nameof(BudgetReport) => BudgetReport,
             nameof(BudgetHeadings) => BudgetHeadings,
+            nameof(NepaliFiscalYear) => NepaliFiscalYear,
             _ => null
         };
     }

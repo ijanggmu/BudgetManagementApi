@@ -85,6 +85,7 @@ public static class MenuPermissionSeeder
         tenantAdminPermissions.Add(MenuPermissionConstant.SignatureView);
         tenantAdminPermissions.Add(MenuPermissionConstant.SignatureUpload);
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.BudgetHeadings.GetAllValues());
+        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.NepaliFiscalYear.GetAllValues());
 
         tenantAdminPermissions = tenantAdminPermissions.Distinct().ToList();
 
@@ -199,6 +200,7 @@ public static class MenuPermissionSeeder
         p.Add(MenuPermissionConstant.SignatureView);
         p.Add(MenuPermissionConstant.SignatureUpload);
         p.AddRange(MenuPermissionDefinitions.BudgetHeadings.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.NepaliFiscalYear.GetAllValues());
         return p.Distinct().ToList();
     }
 

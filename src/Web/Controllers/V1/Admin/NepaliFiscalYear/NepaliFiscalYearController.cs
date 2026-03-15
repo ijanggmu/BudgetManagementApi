@@ -13,27 +13,27 @@ namespace BeemaEdgeApi.Controllers.V1.Admin.NepaliFiscalYear;
 public class NepaliFiscalYearController(INepaliFiscalYearService service) : BaseAdminApiController
 {
     [HttpPost]
-    [Permission(MenuPermissionConstant.BudgetView)]
+    [Permission(MenuPermissionConstant.NepaliFiscalYearView)]
     public async Task<IActionResult> ListAsync([FromBody] NepaliFiscalYearListRequestModel? requestModel, CancellationToken cancellationToken = default)
         => HandleResult(await service.GetAllAsync(requestModel, cancellationToken));
 
     [HttpGet("{id}")]
-    [Permission(MenuPermissionConstant.BudgetView)]
+    [Permission(MenuPermissionConstant.NepaliFiscalYearView)]
     public async Task<IActionResult> GetAsync(string id, CancellationToken cancellationToken = default)
         => HandleResult(await service.GetByIdAsync(id, cancellationToken));
 
     [HttpPost("create")]
-    [Permission(MenuPermissionConstant.BudgetCreate)]
+    [Permission(MenuPermissionConstant.NepaliFiscalYearCreate)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateNepaliFiscalYearDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await service.CreateAsync(dto, cancellationToken));
 
     [HttpPut("{id}")]
-    [Permission(MenuPermissionConstant.BudgetUpdate)]
+    [Permission(MenuPermissionConstant.NepaliFiscalYearUpdate)]
     public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateNepaliFiscalYearDto dto, CancellationToken cancellationToken = default)
         => HandleResult(await service.UpdateAsync(id, dto, cancellationToken));
 
     [HttpDelete("{id}")]
-    [Permission(MenuPermissionConstant.BudgetDelete)]
+    [Permission(MenuPermissionConstant.NepaliFiscalYearDelete)]
     public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
         => HandleResult(await service.DeleteAsync(id, cancellationToken));
 }

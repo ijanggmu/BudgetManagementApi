@@ -234,6 +234,12 @@ public static class MenuPermissionConstant
     public const string BudgetHeadingsUpdate = "23-9-3";
     public const string BudgetHeadingsDelete = "23-9-4";
     public const string BudgetHeadingsExport = "23-9-5";
+    public const string NepaliFiscalYearView = "23-10-1";
+    public const string NepaliFiscalYearViewName = "Fiscal Year View";
+    public const string NepaliFiscalYearCreate = "23-10-2";
+    public const string NepaliFiscalYearUpdate = "23-10-3";
+    public const string NepaliFiscalYearDelete = "23-10-4";
+    public const string NepaliFiscalYearExport = "23-10-5";
 }
 public static class CmsMenuConstant
 {
