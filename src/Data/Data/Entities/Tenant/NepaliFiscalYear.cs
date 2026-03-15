@@ -18,9 +18,9 @@ public class NepaliFiscalYear : TenantEntity
 {
     /// <summary>Display code e.g. "23/24", "24/25", "25/26".</summary>
     public string Code { get; set; } = default!;
-    /// <summary>Start year (e.g. 2023 for 23/24).</summary>
-    public int StartYear { get; set; }
-    /// <summary>End year (e.g. 2024 for 23/24).</summary>
-    public int EndYear { get; set; }
+    /// <summary>Start date and time of the fiscal year, stored in UTC.</summary>
+    public DateTime StartDateUtc { get; set; }
+    /// <summary>End date and time of the fiscal year, stored in UTC.</summary>
+    public DateTime EndDateUtc { get; set; }
     public string? Description { get; set; }
 }

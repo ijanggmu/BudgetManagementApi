@@ -2,13 +2,15 @@ using Models.Common;
 
 namespace Models.BeemaEdgeApi.Budget;
 
-// Nepali Fiscal Year
+// Fiscal Year (dates stored in UTC; API accepts/returns ISO 8601 with timezone)
 public class NepaliFiscalYearResponseDto
 {
     public string Id { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
-    public int StartYear { get; set; }
-    public int EndYear { get; set; }
+    /// <summary>Start date in UTC (ISO 8601).</summary>
+    public DateTime StartDateUtc { get; set; }
+    /// <summary>End date in UTC (ISO 8601).</summary>
+    public DateTime EndDateUtc { get; set; }
     public string? Description { get; set; }
 }
 
@@ -20,16 +22,18 @@ public class NepaliFiscalYearListRequestModel : CommonPaginationRequestModel
 public class CreateNepaliFiscalYearDto
 {
     public string Code { get; set; } = string.Empty;
-    public int StartYear { get; set; }
-    public int EndYear { get; set; }
+    /// <summary>Start date-time (ISO 8601 with timezone); will be stored as UTC.</summary>
+    public DateTime StartDateUtc { get; set; }
+    /// <summary>End date-time (ISO 8601 with timezone); will be stored as UTC.</summary>
+    public DateTime EndDateUtc { get; set; }
     public string? Description { get; set; }
 }
 
 public class UpdateNepaliFiscalYearDto
 {
     public string? Code { get; set; }
-    public int? StartYear { get; set; }
-    public int? EndYear { get; set; }
+    public DateTime? StartDateUtc { get; set; }
+    public DateTime? EndDateUtc { get; set; }
     public string? Description { get; set; }
 }
 

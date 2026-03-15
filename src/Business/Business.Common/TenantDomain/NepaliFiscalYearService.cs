@@ -29,13 +29,13 @@ public class NepaliFiscalYearService(
             query = query.IgnoreQueryFilters();
 
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
-        var list = await result.OrderBy(f => f.StartYear).ToListAsync(cancellationToken);
+        var list = await result.OrderBy(f => f.StartDateUtc).ToListAsync(cancellationToken);
         var dtos = list.Select(f => new NepaliFiscalYearResponseDto
         {
             Id = f.Id,
             Code = f.Code,
-            StartYear = f.StartYear,
-            EndYear = f.EndYear,
+            StartDateUtc = f.StartDateUtc,
+            EndDateUtc = f.EndDateUtc,
             Description = f.Description
         }).ToList();
 
@@ -60,8 +60,8 @@ public class NepaliFiscalYearService(
         {
             Id = entity.Id,
             Code = entity.Code,
-            StartYear = entity.StartYear,
-            EndYear = entity.EndYear,
+            StartDateUtc = entity.StartDateUtc,
+            EndDateUtc = entity.EndDateUtc,
             Description = entity.Description
         });
     }
@@ -77,12 +77,20 @@ public class NepaliFiscalYearService(
         var exists = await db.NepaliFiscalYears.AnyAsync(f => f.Code == dto.Code && f.TenantId == tenantId, cancellationToken);
         if (exists) return Result<NepaliFiscalYearResponseDto>.Failed("A fiscal year with this code already exists.");
 
+        var startUtc = dto.StartDateUtc.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(dto.StartDateUtc, DateTimeKind.Utc) : dto.StartDateUtc.ToUniversalTime();
+        var endUtc = dto.EndDateUtc.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(dto.EndDateUtc, DateTimeKind.Utc) : dto.EndDateUtc.ToUniversalTime();
+        if (startUtc >= endUtc) return Result<NepaliFiscalYearResponseDto>.Failed("Start date must be before end date.");
+
+        var othersQuery = db.NepaliFiscalYears.Where(f => f.TenantId == tenantId);
+        var overlapping = await othersQuery.AnyAsync(f => startUtc < f.EndDateUtc && f.StartDateUtc < endUtc, cancellationToken);
+        if (overlapping) return Result<NepaliFiscalYearResponseDto>.Failed("This fiscal year overlaps with an existing one. Dates cannot overlap.");
+
         var entity = new NepaliFiscalYear
         {
             Id = Guid.NewGuid().ToString(),
             Code = dto.Code,
-            StartYear = dto.StartYear,
-            EndYear = dto.EndYear,
+            StartDateUtc = startUtc,
+            EndDateUtc = endUtc,
             Description = dto.Description,
             TenantId = tenantId,
             CreatedBy = userId,
@@ -94,8 +102,8 @@ public class NepaliFiscalYearService(
         {
             Id = entity.Id,
             Code = entity.Code,
-            StartYear = entity.StartYear,
-            EndYear = entity.EndYear,
+            StartDateUtc = entity.StartDateUtc,
+            EndDateUtc = entity.EndDateUtc,
             Description = entity.Description
         });
     }
@@ -109,8 +117,18 @@ public class NepaliFiscalYearService(
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<NepaliFiscalYearResponseDto>.Failed("Fiscal year not found.");
         if (dto.Code != null) entity.Code = dto.Code;
-        if (dto.StartYear.HasValue) entity.StartYear = dto.StartYear.Value;
-        if (dto.EndYear.HasValue) entity.EndYear = dto.EndYear.Value;
+        var startUtc = entity.StartDateUtc;
+        var endUtc = entity.EndDateUtc;
+        if (dto.StartDateUtc.HasValue)
+            startUtc = dto.StartDateUtc.Value.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(dto.StartDateUtc.Value, DateTimeKind.Utc) : dto.StartDateUtc.Value.ToUniversalTime();
+        if (dto.EndDateUtc.HasValue)
+            endUtc = dto.EndDateUtc.Value.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(dto.EndDateUtc.Value, DateTimeKind.Utc) : dto.EndDateUtc.Value.ToUniversalTime();
+        if (startUtc >= endUtc) return Result<NepaliFiscalYearResponseDto>.Failed("Start date must be before end date.");
+        var tenantId = entity.TenantId;
+        var overlapping = await db.NepaliFiscalYears.AnyAsync(f => f.TenantId == tenantId && f.Id != id && startUtc < f.EndDateUtc && f.StartDateUtc < endUtc, cancellationToken);
+        if (overlapping) return Result<NepaliFiscalYearResponseDto>.Failed("This fiscal year overlaps with an existing one. Dates cannot overlap.");
+        entity.StartDateUtc = startUtc;
+        entity.EndDateUtc = endUtc;
         if (dto.Description != null) entity.Description = dto.Description;
         entity.LastModifiedBy = userProfileService.GetUserId();
         entity.LastModifiedOn = DateTime.UtcNow;
@@ -120,8 +138,8 @@ public class NepaliFiscalYearService(
         {
             Id = entity.Id,
             Code = entity.Code,
-            StartYear = entity.StartYear,
-            EndYear = entity.EndYear,
+            StartDateUtc = entity.StartDateUtc,
+            EndDateUtc = entity.EndDateUtc,
             Description = entity.Description
         });
     }

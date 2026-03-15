@@ -49,10 +49,10 @@ public class BudgetRequestService(
                 var fy = await db.NepaliFiscalYears
                     .AsQueryable()
                     .Where(f => f.Id == requestModel.FiscalYearId)
-                    .Select(f => new { f.StartYear, f.EndYear })
+                    .Select(f => new { f.StartDateUtc, f.EndDateUtc })
                     .FirstOrDefaultAsync(cancellationToken);
                 if (fy != null)
-                    query = query.Where(b => b.RequestedDate.Year >= fy.StartYear && b.RequestedDate.Year <= fy.EndYear);
+                    query = query.Where(b => b.RequestedDate >= fy.StartDateUtc && b.RequestedDate <= fy.EndDateUtc);
             }
 
             var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);

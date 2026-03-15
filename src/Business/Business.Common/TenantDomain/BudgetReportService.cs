@@ -54,10 +54,10 @@ public class BudgetReportService(ApplicationDataContext db, IUserProfileService 
             var fy = await db.NepaliFiscalYears
                 .AsQueryable()
                 .Where(f => f.Id == requestModel.FiscalYearId)
-                .Select(f => new { f.StartYear, f.EndYear })
+                .Select(f => new { f.StartDateUtc, f.EndDateUtc })
                 .FirstOrDefaultAsync(cancellationToken);
             if (fy != null)
-                requestQuery = requestQuery.Where(r => r.RequestedDate.Year >= fy.StartYear && r.RequestedDate.Year <= fy.EndYear);
+                requestQuery = requestQuery.Where(r => r.RequestedDate >= fy.StartDateUtc && r.RequestedDate <= fy.EndDateUtc);
         }
         else if (requestModel.Year.HasValue)
             requestQuery = requestQuery.Where(r => r.RequestedDate.Year == requestModel.Year.Value);
