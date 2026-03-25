@@ -183,7 +183,7 @@ public class TenantAdminService : ITenantAdminService
             }
 
             var rolesName = await SeedTenantRolesAsync(tenant.Id, tenant.Slug);
-            await SeedTenantDefaultRolesAsync(tenant.Id);
+            await SeedTenantDefaultRolesAsync(tenant.Id,tenant.Slug);
             await SeedTenantAdminPermissions(rolesName.AdminRoleName, tenant.Id);
             // Add Admin role
             var addRoleResult = await _userManager.AddToRoleAsync(adminUser, SystemRoles.Admin);
@@ -457,7 +457,7 @@ public class TenantAdminService : ITenantAdminService
     /// <summary>
     /// Seeds default tenant roles (CEO, CFO, HOD) for a newly created tenant.
     /// </summary>
-    private async Task SeedTenantDefaultRolesAsync(string tenantId)
+    private async Task SeedTenantDefaultRolesAsync(string tenantId, string tenantName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
 
@@ -465,7 +465,9 @@ public class TenantAdminService : ITenantAdminService
 
         foreach (var roleName in tenantRoles)
         {
-            var normalizedName = _roleManager.NormalizeKey(roleName);
+            var roleNameStored = $"{roleName}-{tenantName}";
+
+            var normalizedName = _roleManager.NormalizeKey(roleNameStored);
             var exists = await _db.Roles
                 .AnyAsync(r => r.TenantId == tenantId && r.NormalizedName == normalizedName);
 
@@ -475,7 +477,7 @@ public class TenantAdminService : ITenantAdminService
             var role = new ApplicationRole
             {
                 Id = Guid.NewGuid().ToString(),
-                Name = roleName,
+                Name = roleNameStored,
                 NormalizedName = normalizedName,
                 RoleDisplayName = GetTenantRoleDisplayName(roleName),
                 Description = roleName,
