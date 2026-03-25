@@ -15,6 +15,7 @@ public static class MinioFileFolderConstant
     private const string UserDigitalSignature = "userDigitalSignature";
     private const string BlueBook = "blueBook";
     private const string TeantLogo = "tenantLogo";
+    private const string Signature = "signature";
 
     public static string[] GetAllFileFolderConstant()
     {
@@ -31,7 +32,8 @@ public static class MinioFileFolderConstant
                 AdditionalDocumentImage,
                 UserDigitalSignature,
                 BlueBook,
-                TeantLogo
+                TeantLogo,
+                Signature
             ];
     }
 }
