@@ -151,25 +151,36 @@ public static class MenuPermissionSeeder
         await dbContext.SaveChangesAsync();
     }
 
-    private static async Task SetRolePermissionsAsync(ApplicationDataContext dbContext, string roleId, List<string> permissions)
+    /// <summary>Insert or update <see cref="ApplicationRoleClaim.Permissions"/> for a role (no SaveChanges).</summary>
+    public static async Task UpsertRoleMenuPermissionsAsync(
+        ApplicationDataContext dbContext,
+        string roleId,
+        IReadOnlyList<string> permissions,
+        CancellationToken cancellationToken = default)
     {
-        var roleClaim = await dbContext.RoleClaims.FirstOrDefaultAsync(x => x.RoleId == roleId);
+        if (string.IsNullOrEmpty(roleId))
+            return;
+
+        var distinct = permissions.Distinct().ToList();
+        var roleClaim = await dbContext.RoleClaims.FirstOrDefaultAsync(x => x.RoleId == roleId, cancellationToken);
         if (roleClaim == null)
         {
-            await dbContext.RoleClaims.AddAsync(new ApplicationRoleClaim
-            {
-                RoleId = roleId,
-                Permissions = permissions
-            });
+            await dbContext.RoleClaims.AddAsync(
+                new ApplicationRoleClaim { RoleId = roleId, Permissions = distinct },
+                cancellationToken);
         }
         else
         {
-            roleClaim.Permissions = permissions.Distinct().ToList();
+            roleClaim.Permissions = distinct;
             dbContext.RoleClaims.Update(roleClaim);
         }
     }
 
-    private static List<string> GetAdminPermissions()
+    private static Task SetRolePermissionsAsync(ApplicationDataContext dbContext, string roleId, List<string> permissions) =>
+        UpsertRoleMenuPermissionsAsync(dbContext, roleId, permissions);
+
+    /// <summary>Full tenant-admin style menu permissions (aligned with global Admin demo role).</summary>
+    public static List<string> GetAdminPermissions()
     {
         var p = new List<string>
         {
@@ -204,7 +215,7 @@ public static class MenuPermissionSeeder
         return p.Distinct().ToList();
     }
 
-    private static List<string> GetCEOPermissions()
+    public static List<string> GetCEOPermissions()
     {
         return new List<string>
         {
@@ -222,7 +233,7 @@ public static class MenuPermissionSeeder
         }.Distinct().ToList();
     }
 
-    private static List<string> GetCFOPermissions()
+    public static List<string> GetCFOPermissions()
     {
         var p = new List<string>
         {
@@ -253,7 +264,7 @@ public static class MenuPermissionSeeder
         return p.Distinct().ToList();
     }
 
-    private static List<string> GetHODPermissions()
+    public static List<string> GetHODPermissions()
     {
         // HOD is department-scoped; they should not manage departments or budget headings from the menu.
         // Exclude DepartmentView and BudgetHeadingsView so those modules are hidden in the UI for HOD.

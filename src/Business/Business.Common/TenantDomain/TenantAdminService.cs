@@ -3,6 +3,7 @@ using Business.Common.File;
 using Business.Common.Mail;
 using Common.Mail;
 using Data.Context;
+using Data.Seed;
 using Data.Entities.AdminEntity;
 using Data.Entities.Identity;
 using Data.Entities.Tenant;
@@ -13,7 +14,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Models.Common;
 using Models.WebApi.TenantDTOs;
-using SharedKernel.Constant.Permission;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 using Tenant = Data.Entities.Tenant.Tenant;
@@ -184,15 +184,41 @@ public class TenantAdminService : ITenantAdminService
 
             var rolesName = await SeedTenantRolesAsync(tenant.Id, tenant.Slug);
             await SeedTenantDefaultRolesAsync(tenant.Id,tenant.Slug);
-            await SeedTenantAdminPermissions(rolesName.AdminRoleName, tenant.Id);
-            // Add Admin role
-            var addRoleResult = await _userManager.AddToRoleAsync(adminUser, SystemRoles.Admin);
-            if (!addRoleResult.Succeeded)
+            await SeedTenantAdminPermissions(rolesName.AdminRoleName, tenant.Id, cancellationToken);
+            await SeedTenantCeoCfoHodMenuPermissionsAsync(tenant.Id, tenant.Slug, cancellationToken);
+            // Must link to this tenant's seeded role Admin-{slug}, not the global "Admin" role.
+            // AddToRoleAsync uses RoleManager.FindByNameAsync under global query filters (SuperAdmin has no
+            // tenant context), so only TenantId == null roles are visible — wrongly matching "Admin".
+            var tenantAdminRole = await _db.Roles
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    r => r.TenantId == tenant.Id && r.Name == rolesName.AdminRoleName && !r.IsDeleted,
+                    cancellationToken);
+
+            if (tenantAdminRole == null)
             {
-                // Rollback user creation if role assignment fails
                 await _userManager.DeleteAsync(adminUser);
                 return Result<TenantsResponseDto>.Failed(
-                    $"Failed to assign Admin role: {string.Join(", ", addRoleResult.Errors.Select(e => e.Description))}");
+                    $"Could not resolve tenant admin role '{rolesName.AdminRoleName}' for this tenant.");
+            }
+
+            await _db.UserRoles.AddAsync(
+                new ApplicationUserRoles
+                {
+                    UserId = adminUser.Id,
+                    RoleId = tenantAdminRole.Id,
+                    CreatedOn = DateTime.UtcNow,
+                    IsDeleted = false
+                },
+                cancellationToken);
+
+            var stampResult = await _userManager.UpdateSecurityStampAsync(adminUser);
+            if (!stampResult.Succeeded)
+            {
+                await _userManager.DeleteAsync(adminUser);
+                return Result<TenantsResponseDto>.Failed(
+                    $"Failed to update user after role assignment: {string.Join(", ", stampResult.Errors.Select(e => e.Description))}");
             }
 
             // Create Admin entity
@@ -415,8 +441,6 @@ public class TenantAdminService : ITenantAdminService
         var exists = await _db.Roles
             .AnyAsync(r => r.TenantId == tenantId && r.Name == adminRoleName);
 
-        string? createdAdminRole = null;
-
         if (!exists)
         {
             var adminRole = new ApplicationRole
@@ -443,15 +467,14 @@ public class TenantAdminService : ITenantAdminService
                     $"Admin role creation failed for tenant {tenantId}");
             }
 
-            createdAdminRole = adminRoleName;
-
             _logger.LogInformation(
                 "Created Admin role {RoleName} for tenant {TenantId}",
                 adminRoleName,
                 tenantId);
         }
 
-        return new SeedRoleResponseModel(AdminRoleName: createdAdminRole);
+        // Always return the canonical name so permissions + user assignment work even if the role already existed.
+        return new SeedRoleResponseModel(AdminRoleName: adminRoleName);
     }
 
     /// <summary>
@@ -517,52 +540,64 @@ public class TenantAdminService : ITenantAdminService
         };
     }
 
-    private async Task SeedTenantAdminPermissions(string roleName, string tenantId)
+    private async Task SeedTenantAdminPermissions(string roleName, string tenantId, CancellationToken cancellationToken = default)
     {
-        var roleId = await _db.Roles.Where(userRole => userRole.Name == roleName && userRole.TenantId == tenantId)
-                                          .Select(y => y.Id).FirstOrDefaultAsync();
+        var roleId = await _db.Roles
+            .IgnoreQueryFilters()
+            .Where(r => r.Name == roleName && r.TenantId == tenantId && !r.IsDeleted)
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (string.IsNullOrEmpty(roleId))
             return;
 
-        var roleClaim = await _db.RoleClaims.FirstOrDefaultAsync(x => x.RoleId == roleId);
+        await MenuPermissionSeeder.UpsertRoleMenuPermissionsAsync(
+            _db,
+            roleId,
+            MenuPermissionSeeder.GetAdminPermissions(),
+            cancellationToken);
 
-        // Tenant Admin permissions: Operations, System sections with full CRUD+Export
-        var tenantAdminPermissions = new List<string>();
-
-        // Operations section
-        tenantAdminPermissions.Add(MenuPermissionConstant.OperationsView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.NotificationsView);
-
-        // System section
-        tenantAdminPermissions.Add(MenuPermissionConstant.SystemView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.LogsView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.SystemLogView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.ConfigView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.DashboardView);
-
-        tenantAdminPermissions = tenantAdminPermissions.Distinct().ToList();
-
-        if (roleClaim == null)
-        {
-            await _db.RoleClaims.AddAsync(new ApplicationRoleClaim
-            {
-                RoleId = roleId,
-                Permissions = tenantAdminPermissions
-            });
-        }
-        else
-        {
-            // Merge with existing permissions, avoiding duplicates
-            var existingPermissions = roleClaim.Permissions ?? new List<string>();
-            var mergedPermissions = existingPermissions.Union(tenantAdminPermissions).Distinct().ToList();
-            roleClaim.Permissions = mergedPermissions;
-            _db.RoleClaims.Update(roleClaim);
-        }
-
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
-    public record SeedRoleResponseModel(string? AdminRoleName);
+    /// <summary>Seeds menu permissions for tenant-scoped CEO, CFO, and HOD roles (same sets as global demo roles).</summary>
+    private async Task SeedTenantCeoCfoHodMenuPermissionsAsync(string tenantId, string tenantSlug, CancellationToken cancellationToken)
+    {
+        foreach (var roleType in SystemRoles.GetTenantDefaultRoles())
+        {
+            var storedName = $"{roleType}-{tenantSlug}";
+            var roleId = await _db.Roles
+                .IgnoreQueryFilters()
+                .Where(r => r.TenantId == tenantId && r.Name == storedName && !r.IsDeleted)
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (string.IsNullOrEmpty(roleId))
+            {
+                _logger.LogWarning(
+                    "Skipping menu permissions: role {RoleName} not found for tenant {TenantId}",
+                    storedName,
+                    tenantId);
+                continue;
+            }
+
+            var permissions = roleType switch
+            {
+                SystemRoles.CEO => MenuPermissionSeeder.GetCEOPermissions(),
+                SystemRoles.CFO => MenuPermissionSeeder.GetCFOPermissions(),
+                SystemRoles.HOD => MenuPermissionSeeder.GetHODPermissions(),
+                _ => (IReadOnlyList<string>)Array.Empty<string>()
+            };
+
+            if (permissions.Count == 0)
+                continue;
+
+            await MenuPermissionSeeder.UpsertRoleMenuPermissionsAsync(_db, roleId, permissions, cancellationToken);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public record SeedRoleResponseModel(string AdminRoleName);
 
 }
