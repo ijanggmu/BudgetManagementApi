@@ -56,7 +56,7 @@ public class UserSignatureService(
                 UserId = userId,
                 SignatureUrl = signatureUrl,
                 UploadedAt = DateTime.UtcNow,
-                TenantId = tenantId ?? "",
+                TenantId = tenantId,
                 CreatedBy = userId,
                 CreatedOn = DateTime.UtcNow
             };

@@ -35,4 +35,17 @@ public class UserSignatureController(IUserSignatureService signatureService, IFi
             return BadRequest(SharedKernel.Operation.ErrorApiResponse.WrapError(uploadResult.Error, uploadResult.ErrorCode));
         return HandleResult(await signatureService.SetSignatureUrlAsync(uploadResult.Data.FilePath, cancellationToken));
     }
+
+    public record SetSignatureUrlRequest(string SignatureUrl);
+
+    [HttpPost("set")]
+    [Permission(MenuPermissionConstant.SignatureUpload)]
+    [Consumes("application/json")]
+    public async Task<IActionResult> SetAsync([FromBody] SetSignatureUrlRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.SignatureUrl))
+            return BadRequest("No signatureUrl provided.");
+
+        return HandleResult(await signatureService.SetSignatureUrlAsync(request.SignatureUrl, cancellationToken));
+    }
 }
