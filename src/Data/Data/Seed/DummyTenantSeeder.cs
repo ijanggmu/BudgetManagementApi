@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Data.Context;
 using Data.Entities.AdminEntity;
 using Data.Entities.Identity;
@@ -72,15 +73,21 @@ public static class DummyTenantSeeder
         }
 
         var adminRoleName = $"{SystemRoles.Admin}-{DummyTenantSlug}";
-        // Suffix required: Identity treats role Name as globally unique; SeedGlobalDemoRoles already creates HodAssistance (no tenant).
+        // Identity RoleManager enforces globally unique role Name; SeedGlobalDemoRoles already creates CEO/CFO/HOD/HodAssistance (no tenant).
+        var ceoRoleName = $"{SystemRoles.CEO}-{DummyTenantSlug}";
+        var cfoRoleName = $"{SystemRoles.CFO}-{DummyTenantSlug}";
+        var hodRoleName = $"{SystemRoles.HOD}-{DummyTenantSlug}";
         var hodAssistRoleName = $"{SystemRoles.HodAssistance}-{DummyTenantSlug}";
 
         await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, adminRoleName, SystemRoles.Admin, SystemRoles.AdminLevel, "Tenant Administrator");
-        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.CEO, SystemRoles.CEO, SystemRoles.CEOCFOHODLevel, "Chief Executive Officer");
-        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.CFO, SystemRoles.CFO, SystemRoles.CEOCFOHODLevel, "Chief Financial Officer");
-        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.HOD, SystemRoles.HOD, SystemRoles.CEOCFOHODLevel, "Head of Department");
+        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, ceoRoleName, SystemRoles.CEO, SystemRoles.CEOCFOHODLevel, "Chief Executive Officer");
+        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, cfoRoleName, SystemRoles.CFO, SystemRoles.CEOCFOHODLevel, "Chief Financial Officer");
+        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, hodRoleName, SystemRoles.HOD, SystemRoles.CEOCFOHODLevel, "Head of Department");
         await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, hodAssistRoleName, SystemRoles.HodAssistance, SystemRoles.CEOCFOHODLevel, "HOD Assistant");
         await context.SaveChangesAsync();
+
+        await UpsertDummyTenantBusinessRoleMenuClaimsAsync(
+            context, tenant.Id, ceoRoleName, cfoRoleName, hodRoleName, hodAssistRoleName);
 
         await SeedAdminRolePermissionsAsync(context, tenant.Id, adminRoleName);
 
@@ -92,9 +99,9 @@ public static class DummyTenantSeeder
         var usersToSeed = new[]
         {
             (UserName: "tenantadmin", Email: "tenantadmin@dummy.com", FullName: "Tenant Admin", RoleName: adminRoleName, IsAdminEntity: true),
-            (UserName: "ceo", Email: "ceo@dummy.com", FullName: "CEO User", RoleName: SystemRoles.CEO, IsAdminEntity: false),
-            (UserName: "cfo", Email: "cfo@dummy.com", FullName: "CFO User", RoleName: SystemRoles.CFO, IsAdminEntity: false),
-            (UserName: "hod", Email: "hod@dummy.com", FullName: "HOD User", RoleName: SystemRoles.HOD, IsAdminEntity: false),
+            (UserName: "ceo", Email: "ceo@dummy.com", FullName: "CEO User", RoleName: ceoRoleName, IsAdminEntity: false),
+            (UserName: "cfo", Email: "cfo@dummy.com", FullName: "CFO User", RoleName: cfoRoleName, IsAdminEntity: false),
+            (UserName: "hod", Email: "hod@dummy.com", FullName: "HOD User", RoleName: hodRoleName, IsAdminEntity: false),
             (UserName: "hodassistant", Email: "hodassistant@dummy.com", FullName: "HOD Assistant User", RoleName: hodAssistRoleName, IsAdminEntity: false)
         };
 
@@ -138,6 +145,33 @@ public static class DummyTenantSeeder
             }
             await context.SaveChangesAsync();
         }
+    }
+
+    private static async Task UpsertDummyTenantBusinessRoleMenuClaimsAsync(
+        ApplicationDataContext context,
+        string tenantId,
+        string ceoRoleName,
+        string cfoRoleName,
+        string hodRoleName,
+        string hodAssistRoleName)
+    {
+        async Task UpsertAsync(string roleName, IReadOnlyList<string> permissions)
+        {
+            var roleId = await context.Roles
+                .IgnoreQueryFilters()
+                .Where(r => r.TenantId == tenantId && r.Name == roleName && !r.IsDeleted)
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync();
+            if (string.IsNullOrEmpty(roleId))
+                return;
+            await MenuPermissionSeeder.UpsertRoleMenuPermissionsAsync(context, roleId, permissions);
+        }
+
+        await UpsertAsync(ceoRoleName, MenuPermissionSeeder.GetCEOPermissions());
+        await UpsertAsync(cfoRoleName, MenuPermissionSeeder.GetCFOPermissions());
+        await UpsertAsync(hodRoleName, MenuPermissionSeeder.GetHODPermissions());
+        await UpsertAsync(hodAssistRoleName, MenuPermissionSeeder.GetHodAssistancePermissions());
+        await context.SaveChangesAsync();
     }
 
     private static async Task CreateRoleIfNotExistsAsync(
