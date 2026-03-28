@@ -8,6 +8,15 @@ public class Tenant : ApplicationBaseEntity
     public string Name { get; set; } = default!;
     public bool IsActive { get; set; } = true;
     public CompanyBranding Branding { get; set; } = default!;
+    /// <summary>
+    /// ISO 4217 currency code used for UI formatting (e.g. NPR, USD).
+    /// </summary>
+    public string CurrencyCode { get; set; } = "NPR";
+
+    /// <summary>
+    /// IANA time zone id used for tenant-local date/time interpretation (e.g. Asia/Kathmandu).
+    /// </summary>
+    public string TimeZoneId { get; set; } = "Asia/Kathmandu";
     /// <summary>PAN number of the organization.</summary>
     public string PanNumber { get; set; }
     /// <summary>Organization phone number.</summary>

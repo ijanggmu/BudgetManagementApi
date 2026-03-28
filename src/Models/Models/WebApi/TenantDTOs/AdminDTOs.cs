@@ -22,7 +22,8 @@ public record CreateAdminDto(
     string PhoneNumber,
     string Password,
     string ConfirmPassword,
-    List<string> Roles
+    List<string> Roles,
+    string? TenantId
 );
 
 public record UpdateAdminDto(

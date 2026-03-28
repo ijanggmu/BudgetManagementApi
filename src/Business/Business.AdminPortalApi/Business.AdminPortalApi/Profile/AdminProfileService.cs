@@ -48,23 +48,38 @@ public class AdminProfileService(
 
         var profile = await
              (from user in dbContext.Users.AsNoTracking()
-             join userRole in dbContext.UserRoles.AsNoTracking()
-                 on user.Id equals userRole.UserId into urGroup
-             from ur in urGroup.DefaultIfEmpty()
-             join role in dbContext.Roles.AsNoTracking()
-                 on ur.RoleId equals role.Id into rGroup
-             from r in rGroup.DefaultIfEmpty()
-             where user.Id == userId && !user.IsDeleted
-             group r by new { user.UserName, user.Email, user.PhoneNumber, user.DepartmentId } into grp
-             select new AdminUserProfileResponseModel
-             {
-                 FullName = grp.Key.UserName,
-                 Email = grp.Key.Email,
-                 PhoneNumber = grp.Key.PhoneNumber,
-                 DepartmentId = grp.Key.DepartmentId ?? "",
-                 Roles = grp.Where(x => x != null).Select(x => x.Name).ToList(),
-                 RoleType = grp.Where(x => x != null).Select(x => x.RoleType ?? x.Name).FirstOrDefault() ?? ""
-             })
+              join userRole in dbContext.UserRoles.AsNoTracking()
+                  on user.Id equals userRole.UserId into urGroup
+              from ur in urGroup.DefaultIfEmpty()
+              join role in dbContext.Roles.AsNoTracking()
+                  on ur.RoleId equals role.Id into rGroup
+              from r in rGroup.DefaultIfEmpty()
+              join tenant in dbContext.Tenants.AsNoTracking()
+                  on user.TenantId equals tenant.Id into tenantGroup
+              from tenant in tenantGroup.DefaultIfEmpty()
+              where user.Id == userId && !user.IsDeleted
+              group r by new
+              {
+                  user.UserName,
+                  user.Email,
+                  user.PhoneNumber,
+                  user.DepartmentId,
+                  user.TenantId,
+                  tenant.CurrencyCode,
+                  tenant.TimeZoneId
+              } into grp
+              select new AdminUserProfileResponseModel
+              {
+                  FullName = grp.Key.UserName,
+                  Email = grp.Key.Email,
+                  PhoneNumber = grp.Key.PhoneNumber,
+                  DepartmentId = grp.Key.DepartmentId ?? "",
+                  Roles = grp.Where(x => x != null).Select(x => x.Name).ToList(),
+                  RoleType = grp.Where(x => x != null).Select(x => x.RoleType ?? x.Name).FirstOrDefault() ?? "",
+                  TenantId = grp.Key.TenantId ?? "",
+                  CurrencyCode = grp.Key.CurrencyCode ?? "NPR",
+                  TimeZoneId = grp.Key.TimeZoneId ?? "Asia/Kathmandu"
+              })
             .FirstOrDefaultAsync(ct);
 
         if (profile == null)

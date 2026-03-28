@@ -15,15 +15,37 @@ public record QuotationItemDto(Guid CoverageId, decimal SumInsured);
 public record ComputeQuotationDto(DateOnly AsOf, IDictionary<string, object> Inputs);
 
 // Tenant DTOs
-public record CreateTenantDto(string Name, string Slug, CreateCompanyBrandingDto CompanyBranding, CreateTenantAdminDto AdminUser, bool IsActive = true);
+public record CreateTenantDto(
+    string Name,
+    string Slug,
+    CreateCompanyBrandingDto CompanyBranding,
+    CreateTenantAdminDto AdminUser,
+    bool IsActive = true,
+    string CurrencyCode = "NPR",
+    string TimeZoneId = "Asia/Kathmandu");
 public record CreateTenantAdminDto(string Email, string Username, string FullName, string Password);
 public record CreateCompanyBrandingDto(string LogoUrl = default!,    // CDN/blob URL
      string PaletteJson = "{}",    // AA contrast enforced
      string TypographyJson = "{}",
      int Version = 1);
 
-public record UpdateTenantDto(string? Name, string? Slug, bool? IsActive, CreateCompanyBrandingDto CompanyBranding);
-public record TenantsResponseDto(string Id, string Name, string Slug, bool IsActive, int ThemeVersion, DateTime CreatedOn);
+public record UpdateTenantDto(
+    string? Name,
+    string? Slug,
+    bool? IsActive,
+    CreateCompanyBrandingDto CompanyBranding,
+    string? CurrencyCode,
+    string? TimeZoneId);
+
+public record TenantsResponseDto(
+    string Id,
+    string Name,
+    string Slug,
+    bool IsActive,
+    int ThemeVersion,
+    DateTime CreatedOn,
+    string CurrencyCode = "NPR",
+    string TimeZoneId = "Asia/Kathmandu");
 public record TenantResponseDto(
     string Id,
     string Name,
@@ -31,6 +53,8 @@ public record TenantResponseDto(
     bool IsActive,
     int ThemeVersion,
     DateTime CreatedOn,
+    string CurrencyCode = "NPR",
+    string TimeZoneId = "Asia/Kathmandu",
     BrandingResponseDto? Branding = null);
 
 // Tenant Login DTOs

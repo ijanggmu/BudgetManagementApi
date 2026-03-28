@@ -24,6 +24,9 @@ public class CommonPaginationRequestModel : PaginationRequestModel
     public string Query { get; set; }
     public string Filters { get; set; }
     public string Sorts { get; set; }
+
+    /// <summary>Optional tenant scope (e.g. SuperAdmin user-management / roles list). Sent in POST body as tenantId.</summary>
+    public string TenantId { get; set; }
 }
 public class RejectKycRequest
 {

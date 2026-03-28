@@ -38,13 +38,20 @@ public class RoleService(
 
         Expression<Func<ApplicationRole, bool>> predicate = c => !c.IsDeleted;
 
-        var query = dataContext.Roles
-                                 .Where(predicate)
-                                 .AsNoTracking();
+        // SuperAdmin: optional tenant scope from body (roles / user-management). Include global roles (TenantId null).
+        if (isSuperAdmin && !string.IsNullOrWhiteSpace(requestModel.TenantId))
+        {
+            var tid = requestModel.TenantId;
+            predicate = c => !c.IsDeleted && (c.TenantId == tid || c.TenantId == null);
+        }
+
+        IQueryable<ApplicationRole> query = dataContext.Roles.AsNoTracking();
         if (isSuperAdmin)
         {
             query = query.IgnoreQueryFilters();
         }
+
+        query = query.Where(predicate);
         var (result, totalCount, totalPage) = await sieveExtenstion.ApplySieve(query, requestModel);
 
         var roles = await result.Select(x => new RoleResponseModel
@@ -52,8 +59,10 @@ public class RoleService(
             CreatedOn = x.CreatedOn,
             RoleId = x.Id,
             RoleName = x.Name,
+            RoleDisplayName = x.RoleDisplayName ?? x.Name,
             RoleDescription = x.Description,
             RoleType = x.RoleType,
+            TenantId = x.TenantId,
             TotalUserAssignedWithRole = dataContext.UserRoles.Where(y => y.RoleId == x.Id).Count(),
 
         }).ToListAsync(cancellationToken);

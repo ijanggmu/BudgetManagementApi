@@ -11,6 +11,18 @@ public class CreateTenantDtoValidator : AbstractValidator<CreateTenantDto>
         RuleFor(x => x.Slug).NotEmpty().MaximumLength(100).Matches("^[a-z0-9-]+$").WithMessage("Slug must contain only lowercase letters, numbers, and hyphens");
         RuleFor(x => x.CompanyBranding.Version).GreaterThan(0);
 
+        RuleFor(x => x.CurrencyCode)
+            .NotEmpty()
+            .MaximumLength(10)
+            .Matches("^[A-Z]{3}$")
+            .WithMessage("CurrencyCode must be a valid 3-letter ISO 4217 currency code (e.g. NPR, USD).");
+
+        RuleFor(x => x.TimeZoneId)
+            .NotEmpty()
+            .MaximumLength(100)
+            .Matches("^[A-Za-z0-9_\\/+-]+$")
+            .WithMessage("TimeZoneId must be a valid IANA/Windows time zone id (e.g. Asia/Kathmandu).");
+
         // Validate AdminUser
         RuleFor(x => x.AdminUser).NotNull().WithMessage("Admin user information is required.");
         RuleFor(x => x.AdminUser.Email)
@@ -39,6 +51,16 @@ public class UpdateTenantDtoValidator : AbstractValidator<UpdateTenantDto>
         RuleFor(x => x.Slug).MaximumLength(100).Matches("^[a-z0-9-]+$").When(x => !string.IsNullOrEmpty(x.Slug))
             .WithMessage("Slug must contain only lowercase letters, numbers, and hyphens");
         RuleFor(x => x.CompanyBranding.Version).GreaterThan(0);
+
+        RuleFor(x => x.CurrencyCode)
+            .MaximumLength(10)
+            .Matches("^[A-Z]{3}$")
+            .When(x => !string.IsNullOrEmpty(x.CurrencyCode));
+
+        RuleFor(x => x.TimeZoneId)
+            .MaximumLength(100)
+            .Matches("^[A-Za-z0-9_\\/+-]+$")
+            .When(x => !string.IsNullOrEmpty(x.TimeZoneId));
     }
 }
 

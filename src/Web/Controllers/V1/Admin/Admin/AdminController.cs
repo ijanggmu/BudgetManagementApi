@@ -17,12 +17,12 @@ public class AdminController(IAdminService adminService) : BaseAdminApiControlle
     /// <summary>
     /// Get all admins (for tenant admin: their tenant's admins, for superadmin: all admins or filtered by tenantId)
     /// </summary>
-    /// <param name="tenantId">Optional tenant ID filter (SuperAdmin only)</param>
+    /// <param name="requestModel">Pagination, Sieve filters/sorts, optional tenantId (SuperAdmin)</param>
     /// <returns>List of admins</returns>
     [HttpPost]
     [Permission(MenuPermissionConstant.AdminManagementView)]
-    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel, [FromQuery] string? tenantId = null, CancellationToken cancellationToken = default)
-        => HandleResult(await adminService.GetAdminsForAdminAsync(requestModel, tenantId, cancellationToken));
+    public async Task<IActionResult> ListAsync([FromBody] CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
+        => HandleResult(await adminService.GetAdminsForAdminAsync(requestModel, cancellationToken));
 
     /// <summary>
     /// Get admin by ID

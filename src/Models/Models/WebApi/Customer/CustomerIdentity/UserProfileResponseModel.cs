@@ -55,6 +55,15 @@ public class AdminUserProfileResponseModel
     public string RoleType { get; set; }
     /// <summary>Optional department ID when user is restricted to one department (e.g. HOD).</summary>
     public string DepartmentId { get; set; }
+
+    /// <summary>Tenant id for multi-tenant UI configuration.</summary>
+    public string TenantId { get; set; }
+
+    /// <summary>Tenant currency code for UI formatting (e.g. NPR, USD).</summary>
+    public string CurrencyCode { get; set; }
+
+    /// <summary>Tenant time zone id for UI date/time interpretation.</summary>
+    public string TimeZoneId { get; set; }
 }
 
 public class GetKycResponseModel

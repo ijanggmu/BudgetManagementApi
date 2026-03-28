@@ -18,5 +18,9 @@ public class SieveConfigurationForRole : ISieveConfiguration
         mapper.Property<ApplicationRole>(p => p.Description)
            .CanFilter()
            .CanSort();
+
+        mapper.Property<ApplicationRole>(p => p.TenantId)
+           .CanFilter()
+           .CanSort();
     }
 }

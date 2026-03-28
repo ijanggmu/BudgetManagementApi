@@ -26,5 +26,9 @@ public class SieveConfigurationForAdmin : ISieveConfiguration
         mapper.Property<Admin>(p => p.User.PhoneNumber)
            .CanFilter()
            .CanSort();
+
+        mapper.Property<Admin>(p => p.TenantId)
+           .CanFilter()
+           .CanSort();
     }
 }

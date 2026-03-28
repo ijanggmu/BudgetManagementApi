@@ -68,7 +68,9 @@ public class TenantAdminService : ITenantAdminService
             t.Slug,
             t.IsActive,
             t.Branding.Version,
-            t.CreatedOn
+            t.CreatedOn,
+            t.CurrencyCode,
+            t.TimeZoneId
         )).ToListAsync(cancellationToken: cancellationToken);
 
         var pagination = new Pagination
@@ -118,6 +120,8 @@ public class TenantAdminService : ITenantAdminService
             tenant.IsActive,
             tenant.Branding?.Version ?? 1,
             tenant.CreatedOn,
+            tenant.CurrencyCode,
+            tenant.TimeZoneId,
             branding
         );
 
@@ -144,6 +148,8 @@ public class TenantAdminService : ITenantAdminService
                 Name = dto.Name,
                 Slug = dto.Slug,
                 IsActive = dto.IsActive,
+                CurrencyCode = dto.CurrencyCode,
+                TimeZoneId = dto.TimeZoneId
             };
 
             await _db.Tenants.AddAsync(tenant, cancellationToken);
@@ -286,7 +292,9 @@ public class TenantAdminService : ITenantAdminService
                 tenant.Slug,
                 tenant.IsActive,
                 tenant.Branding?.Version ?? 1,
-                tenant.CreatedOn
+                tenant.CreatedOn,
+                tenant.CurrencyCode,
+                tenant.TimeZoneId
             );
 
             return Result<TenantsResponseDto>.Success(response);
@@ -323,6 +331,12 @@ public class TenantAdminService : ITenantAdminService
             if (dto.IsActive.HasValue)
                 existing.IsActive = dto.IsActive.Value;
 
+            if (!string.IsNullOrEmpty(dto.CurrencyCode))
+                existing.CurrencyCode = dto.CurrencyCode;
+
+            if (!string.IsNullOrEmpty(dto.TimeZoneId))
+                existing.TimeZoneId = dto.TimeZoneId;
+
             existing.Branding.Version = dto.CompanyBranding.Version;
             existing.Branding.LogoUrl = dto.CompanyBranding.LogoUrl;
             existing.Branding.PaletteJson = dto.CompanyBranding.PaletteJson;
@@ -337,7 +351,9 @@ public class TenantAdminService : ITenantAdminService
                 existing.Slug,
                 existing.IsActive,
                 existing.Branding.Version,
-                existing.CreatedOn
+                existing.CreatedOn,
+                existing.CurrencyCode,
+                existing.TimeZoneId
             );
 
             return Result<TenantsResponseDto>.Success(response);

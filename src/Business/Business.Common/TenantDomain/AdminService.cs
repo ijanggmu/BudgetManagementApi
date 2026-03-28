@@ -22,13 +22,14 @@ public class AdminService(
     IExcelExportService excelExportService)
     : IAdminService
 {
-    public async Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(CommonPaginationRequestModel requestModel, string tenantId = null, CancellationToken cancellationToken = default)
+    public async Task<Result<List<AdminResponseDto>>> GetAdminsForAdminAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
         // We only need to check if user is SuperAdmin for query filtering logic
 
         var roleId = userProfileService.GetRoleId();
         var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var tenantId = requestModel.TenantId;
 
         IQueryable<Admin> query = db.Admins
             .Include(a => a.User);
@@ -39,7 +40,19 @@ public class AdminService(
         {
             if (!string.IsNullOrEmpty(tenantId))
             {
-                query = query.Where(a => a.TenantId == tenantId);
+                // TenantId on Admin can be null for older/legacy records; fall back to role tenant assignment.
+                // If the user's roles include any tenant-specific role for the requested tenant, include them.
+                var tenantUserIds = await (from ur in db.UserRoles.IgnoreQueryFilters()
+                                            join r in db.Roles.IgnoreQueryFilters() on ur.RoleId equals r.Id
+                                            where ur.UserId != null
+                                                  && !ur.IsDeleted
+                                                  && !r.IsDeleted
+                                                  && r.TenantId == tenantId
+                                            select ur.UserId)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+
+                query = query.Where(a => a.TenantId == tenantId || tenantUserIds.Contains(a.UserId));
             }
             // If tenantId is null, show all admins (global query filter will be ignored)
             query = query.IgnoreQueryFilters();
@@ -49,16 +62,57 @@ public class AdminService(
 
         var admins = await result.ToListAsync(cancellationToken);
 
-        // Get tenant names for all unique tenant IDs
-        var tenantIds = admins.Where(a => !string.IsNullOrEmpty(a.TenantId)).Select(a => a.TenantId).Distinct().ToList();
-        var tenants = await db.Tenants.Where(t => tenantIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.Name, cancellationToken);
+        // Resolve tenant names for all unique tenant IDs.
+        // If Admin.TenantId is missing, resolve it from the tenant-specific role(s) assigned to the user.
+        var adminsMissingTenantId = admins
+            .Where(a => string.IsNullOrWhiteSpace(a.TenantId))
+            .Select(a => a.UserId)
+            .Distinct()
+            .ToList();
+
+        var resolvedTenantIdByUserId = new Dictionary<string, string>();
+        if (adminsMissingTenantId.Count > 0)
+        {
+            var resolved = await (from ur in db.UserRoles.IgnoreQueryFilters()
+                                   join r in db.Roles.IgnoreQueryFilters() on ur.RoleId equals r.Id
+                                   where adminsMissingTenantId.Contains(ur.UserId)
+                                         && !ur.IsDeleted
+                                         && !r.IsDeleted
+                                         && r.TenantId != null
+                                         && r.TenantId != string.Empty
+                                   select new { ur.UserId, r.TenantId })
+                .ToListAsync(cancellationToken);
+
+            // If a user has multiple tenant-scoped roles, pick the first tenantId.
+            resolvedTenantIdByUserId = resolved
+                .GroupBy(x => x.UserId)
+                .ToDictionary(g => g.Key, g => g.First().TenantId);
+        }
+
+        var tenantIds = admins
+            .Where(a => !string.IsNullOrWhiteSpace(a.TenantId))
+            .Select(a => a.TenantId)
+            .Union(resolvedTenantIdByUserId.Values)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .ToList();
+
+        var tenants = await db.Tenants
+            .Where(t => tenantIds.Contains(t.Id))
+            .ToDictionaryAsync(t => t.Id, t => t.Name, cancellationToken);
 
         var dtos = new List<AdminResponseDto>();
         foreach (var admin in admins)
         {
             var userRoles = await userManager.GetRolesAsync(admin.User);
-            var tenantName = !string.IsNullOrEmpty(admin.TenantId) && tenants.TryGetValue(admin.TenantId, out string value)
-                ? value : string.Empty;
+            var effectiveTenantId = !string.IsNullOrWhiteSpace(admin.TenantId)
+                ? admin.TenantId
+                : (resolvedTenantIdByUserId.TryGetValue(admin.UserId, out var tid) ? tid : null);
+
+            var tenantName = !string.IsNullOrWhiteSpace(effectiveTenantId) &&
+                              tenants.TryGetValue(effectiveTenantId, out string value)
+                ? value
+                : string.Empty;
 
             dtos.Add(new AdminResponseDto(
                 admin.Id,
@@ -67,7 +121,7 @@ public class AdminService(
                 admin.User.PhoneNumber,
                 admin.User.UserName ?? string.Empty,
                 admin.UserId,
-                admin.TenantId ?? string.Empty,
+                string.IsNullOrWhiteSpace(effectiveTenantId) ? null : effectiveTenantId,
                 tenantName,
                 [.. userRoles],
                 admin.User.IsDisabled,
@@ -106,10 +160,22 @@ public class AdminService(
             return Result<AdminResponseDto>.Failed("Admin not found.");
 
         var userRoles = await userManager.GetRolesAsync(admin.User);
+        var effectiveTenantId = !string.IsNullOrWhiteSpace(admin.TenantId)
+            ? admin.TenantId
+            : await (from ur in db.UserRoles.IgnoreQueryFilters()
+                      join r in db.Roles.IgnoreQueryFilters() on ur.RoleId equals r.Id
+                      where ur.UserId == admin.UserId
+                            && !ur.IsDeleted
+                            && !r.IsDeleted
+                            && r.TenantId != null
+                            && r.TenantId != string.Empty
+                      select r.TenantId)
+                .FirstOrDefaultAsync(cancellationToken);
+
         var tenantName = string.Empty;
-        if (!string.IsNullOrEmpty(admin.TenantId))
+        if (!string.IsNullOrWhiteSpace(effectiveTenantId))
         {
-            var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == admin.TenantId, cancellationToken);
+            var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == effectiveTenantId, cancellationToken);
             tenantName = tenant?.Name ?? string.Empty;
         }
 
@@ -120,7 +186,7 @@ public class AdminService(
             admin.User.PhoneNumber,
             admin.User.UserName ?? string.Empty,
             admin.UserId,
-            admin.TenantId ?? string.Empty,
+            string.IsNullOrWhiteSpace(effectiveTenantId) ? null : effectiveTenantId,
             tenantName,
             [.. userRoles],
             admin.User.IsDisabled,
@@ -140,10 +206,12 @@ public class AdminService(
             var roleId = userProfileService.GetRoleId();
             var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
 
-            // Get tenant ID from current user (for Admin) or from context
+            // Get tenant ID from current user (for Admin) or from request body (for SuperAdmin)
             var userId = userProfileService.GetUserId();
             var user = await userManager.FindByIdAsync(userId);
-            var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
+            var tenantId = isSuperAdmin
+                ? (!string.IsNullOrWhiteSpace(dto.TenantId) ? dto.TenantId : user?.TenantId)
+                : db.CurrentTenantId;
 
             // Check if username already exists
             // Note: IsDeleted filter is now applied globally
@@ -446,16 +514,17 @@ public class AdminService(
     {
         try
         {
-            // Extract tenantId from Sieve filters if present, otherwise null (will filter based on user role)
-            string? tenantId = null;
-            if (!string.IsNullOrEmpty(requestModel.Filters) && requestModel.Filters.Contains("TenantId=="))
+            // Prefer explicit TenantId on the request body; fall back to Sieve filter for older clients
+            if (string.IsNullOrWhiteSpace(requestModel.TenantId)
+                && !string.IsNullOrEmpty(requestModel.Filters)
+                && requestModel.Filters.Contains("TenantId==", StringComparison.Ordinal))
             {
                 var tenantIdMatch = System.Text.RegularExpressions.Regex.Match(requestModel.Filters, @"TenantId==([^,|]+)");
                 if (tenantIdMatch.Success)
-                    tenantId = tenantIdMatch.Groups[1].Value.Trim();
+                    requestModel.TenantId = tenantIdMatch.Groups[1].Value.Trim();
             }
 
-            var result = await GetAdminsForAdminAsync(requestModel, tenantId, cancellationToken);
+            var result = await GetAdminsForAdminAsync(requestModel, cancellationToken);
             if (!result.IsSuccess || result.Data == null)
                 return Result<byte[]>.Failed(result.Error ?? "Failed to retrieve admin data.");
 
