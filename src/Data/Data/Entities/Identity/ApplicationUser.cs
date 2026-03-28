@@ -69,6 +69,11 @@ public class ApplicationUser : IdentityUser<string>, IBaseEntity, IAuditableEnti
     /// Optional department ID for HOD/users restricted to a single department (e.g. memo requests).
     /// </summary>
     public string DepartmentId { get; set; }
+
+    /// <summary>
+    /// When true, the user has finished or skipped the in-app onboarding tour (stored server-side).
+    /// </summary>
+    public bool HasCompletedAppOnboarding { get; set; }
 }
 
 public class UserTotpBackUpCode

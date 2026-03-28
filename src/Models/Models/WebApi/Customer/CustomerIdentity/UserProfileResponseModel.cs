@@ -47,6 +47,7 @@ public class UserProfileResponseModel
 
 public class AdminUserProfileResponseModel
 {
+    public string Id { get; set; }
     public string FullName { get; set; }
     public string Email { get; set; }
     public string PhoneNumber { get; set; }
@@ -64,6 +65,9 @@ public class AdminUserProfileResponseModel
 
     /// <summary>Tenant time zone id for UI date/time interpretation.</summary>
     public string TimeZoneId { get; set; }
+
+    /// <summary>True after the user completes or skips the app onboarding tour.</summary>
+    public bool HasCompletedAppOnboarding { get; set; }
 }
 
 public class GetKycResponseModel

@@ -60,16 +60,19 @@ public class AdminProfileService(
               where user.Id == userId && !user.IsDeleted
               group r by new
               {
+                  user.Id,
                   user.UserName,
                   user.Email,
                   user.PhoneNumber,
                   user.DepartmentId,
                   user.TenantId,
+                  user.HasCompletedAppOnboarding,
                   tenant.CurrencyCode,
                   tenant.TimeZoneId
               } into grp
               select new AdminUserProfileResponseModel
               {
+                  Id = grp.Key.Id,
                   FullName = grp.Key.UserName,
                   Email = grp.Key.Email,
                   PhoneNumber = grp.Key.PhoneNumber,
@@ -78,7 +81,8 @@ public class AdminProfileService(
                   RoleType = grp.Where(x => x != null).Select(x => x.RoleType ?? x.Name).FirstOrDefault() ?? "",
                   TenantId = grp.Key.TenantId ?? "",
                   CurrencyCode = grp.Key.CurrencyCode ?? "NPR",
-                  TimeZoneId = grp.Key.TimeZoneId ?? "Asia/Kathmandu"
+                  TimeZoneId = grp.Key.TimeZoneId ?? "Asia/Kathmandu",
+                  HasCompletedAppOnboarding = grp.Key.HasCompletedAppOnboarding
               })
             .FirstOrDefaultAsync(ct);
 
@@ -143,5 +147,26 @@ public class AdminProfileService(
             await transaction.RollbackAsync(ct);
             throw;
         }
+    }
+
+    public async Task<Result<MessageResponseModel>> SetAppOnboardingCompletedAsync(bool completed, CancellationToken ct)
+    {
+        var userId = userProfileService.GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Result<MessageResponseModel>.Failed(ResponseMessage.UserNotFound);
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null || user.IsDeleted)
+            return Result<MessageResponseModel>.Failed(ResponseMessage.UserNotFound);
+
+        user.HasCompletedAppOnboarding = completed;
+        user.LastModifiedOn = DateTime.UtcNow;
+        user.LastModifiedBy = userId;
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+            return Result<MessageResponseModel>.Failed(string.Join(", ", updateResult.Errors.Select(e => e.Description)));
+
+        return Result<MessageResponseModel>.Success(
+            new MessageResponseModel(completed ? "Onboarding marked complete." : "Onboarding reset."));
     }
 }

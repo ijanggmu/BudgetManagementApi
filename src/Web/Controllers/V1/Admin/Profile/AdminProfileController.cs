@@ -30,6 +30,16 @@ public class AdminProfileController(IAdminProfileService adminProfileService) : 
     [Permission(MenuPermissionConstant.ProfileUpdate)]
     public async Task<IActionResult> UpdateAsync([FromBody] UpdateProfileRequestModel requestModel, CancellationToken cancellationToken = default)
         => HandleResult(await adminProfileService.UpdateProfileAsync(requestModel, cancellationToken));
+
+    /// <summary>
+    /// Mark app onboarding tour complete or reset it (e.g. "Restart tour"). Returned on GET profile as <c>hasCompletedAppOnboarding</c>.
+    /// </summary>
+    [HttpPut("app-onboarding-completed")]
+    [Permission(MenuPermissionConstant.ProfileView)]
+    public async Task<IActionResult> SetAppOnboardingCompletedAsync(
+        [FromBody] SetAppOnboardingCompletedRequestModel requestModel,
+        CancellationToken cancellationToken = default)
+        => HandleResult(await adminProfileService.SetAppOnboardingCompletedAsync(requestModel.Completed, cancellationToken));
 }
 
 
