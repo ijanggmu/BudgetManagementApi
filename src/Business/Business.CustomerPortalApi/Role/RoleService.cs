@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using Data.Context;
@@ -172,38 +173,76 @@ public class RoleService(
 
     public async Task<Result<MessageResponseModel>> DeleteRoleAsync(string roleId, CancellationToken cancellationToken = default)
     {
-        var transaction = await dataContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await dataContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var role = await dataContext.Roles.FindAsync([roleId], cancellationToken);
+            var roleIdClaim = userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrWhiteSpace(roleIdClaim) &&
+                               roleIdClaim.Contains(SystemRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase);
+
+            IQueryable<ApplicationRole> roleQuery = dataContext.Roles;
+            if (isSuperAdmin)
+                roleQuery = roleQuery.IgnoreQueryFilters();
+
+            var role = await roleQuery.FirstOrDefaultAsync(r => r.Id == roleId && !r.IsDeleted, cancellationToken);
 
             if (role == null)
-                return Result<MessageResponseModel>.Failed("Invalid Role.");
+                return Result<MessageResponseModel>.Failed("Role not found. It may have already been deleted.");
+
+            if (!isSuperAdmin)
+            {
+                var tenantId = dataContext.CurrentTenantId;
+                if (string.IsNullOrWhiteSpace(tenantId))
+                    return Result<MessageResponseModel>.Failed("Tenant context is missing. Cannot delete roles.");
+
+                if (!string.Equals(role.TenantId, tenantId, StringComparison.Ordinal))
+                {
+                    return Result<MessageResponseModel>.Failed(
+                        "You cannot delete this role. It belongs to another organization or is not a tenant role you manage.");
+                }
+            }
 
             if (SystemRoles.GetNotDeletableRoleTypes().Contains(role.RoleType ?? string.Empty))
             {
-                return Result<MessageResponseModel>.Failed("Role cannot be deleted.");
+                var label = string.IsNullOrWhiteSpace(role.RoleDisplayName) ? role.Name : role.RoleDisplayName;
+                return Result<MessageResponseModel>.Failed(
+                    $"Cannot delete \"{label}\": it is a predefined system role (type: {role.RoleType}). " +
+                    "These roles are required for budgeting and approvals and cannot be removed.");
             }
 
-            var userexists = await dataContext.UserRoles.AnyAsync(x => x.RoleId == role.Id, cancellationToken);
-            if (userexists)
-                return Result<MessageResponseModel>.Failed("Role is assigned to a user.");
+            var assignedCount = await dataContext.UserRoles.CountAsync(
+                x => x.RoleId == role.Id && !x.IsDeleted, cancellationToken);
+            if (assignedCount > 0)
+            {
+                return Result<MessageResponseModel>.Failed(
+                    $"Cannot delete \"{role.Name}\": {assignedCount} user(s) still have this role. " +
+                    "Remove the role from every user first, then try deleting again.");
+            }
 
-            var roleClaims = await dataContext.RoleClaims.Where(x => x.RoleId == role.Id).ToListAsync(cancellationToken);
+            var roleClaims = await dataContext.RoleClaims
+                .IgnoreQueryFilters()
+                .Where(x => x.RoleId == role.Id)
+                .ToListAsync(cancellationToken);
 
             dataContext.RoleClaims.RemoveRange(roleClaims);
             await dataContext.SaveChangesAsync(cancellationToken);
 
-            await roleManager.DeleteAsync(role);
+            var deleteResult = await roleManager.DeleteAsync(role);
+            if (!deleteResult.Succeeded)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return Result<MessageResponseModel>.Failed(
+                    string.Join(" ", deleteResult.Errors.Select(e => e.Description)));
+            }
 
             await transaction.CommitAsync(cancellationToken);
 
             return Result<MessageResponseModel>.Success(new MessageResponseModel("Role deleted successfully."));
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
-            throw;
+            return Result<MessageResponseModel>.Failed($"Could not delete the role: {ex.Message}");
         }
     }
 }

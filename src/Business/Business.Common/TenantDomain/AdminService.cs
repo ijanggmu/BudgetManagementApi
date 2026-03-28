@@ -543,33 +543,46 @@ public class AdminService(
         try
         {
             // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-            var userId = userProfileService.GetUserId();
-            var roleId = userProfileService.GetRoleId();
-            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+            var currentUserId = userProfileService.GetUserId();
+            var roleIdClaim = userProfileService.GetRoleId();
+            var isSuperAdmin = !string.IsNullOrEmpty(roleIdClaim) && roleIdClaim.Contains(SystemRoles.SuperAdmin);
 
-            var query = db.Admins
-                .Include(a => a.User)
-                .Where(a => a.Id == id);
-            // Note: IsDeleted and TenantId filters are now applied globally via query filters
-
-            if (isSuperAdmin)
-                query = query.IgnoreQueryFilters();
-
-            var admin = await query.FirstOrDefaultAsync(cancellationToken);
+            // Ignore tenant query filters: Admin.TenantId is often null for legacy rows while User still belongs
+            // to the current tenant (resolved via roles). The global Admin filter would hide those rows and break delete.
+            var admin = await db.Admins
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted, cancellationToken);
 
             if (admin == null)
                 return Result<bool>.Failed("Admin not found.");
 
-            // Prevent deleting yourself
-            if (admin.UserId == userId)
+            var user = await db.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == admin.UserId && !u.IsDeleted, cancellationToken);
+
+            if (user == null)
+                return Result<bool>.Failed("User account not found or already removed.");
+
+            if (!isSuperAdmin)
+            {
+                var currentTenantId = db.CurrentTenantId;
+                if (string.IsNullOrWhiteSpace(currentTenantId))
+                    return Result<bool>.Failed("Tenant context is missing. Cannot delete this user.");
+
+                var effectiveTenantId = await GetEffectiveTenantIdForAdminAsync(admin, cancellationToken);
+                if (string.IsNullOrWhiteSpace(effectiveTenantId) ||
+                    !string.Equals(effectiveTenantId, currentTenantId, StringComparison.Ordinal))
+                    return Result<bool>.Failed("You do not have permission to delete this user.");
+            }
+
+            if (string.Equals(admin.UserId, currentUserId, StringComparison.Ordinal))
                 return Result<bool>.Failed("You cannot delete your own account.");
 
-            // Soft delete
             admin.IsDeleted = true;
-            admin.User.IsDeleted = true;
+            user.IsDeleted = true;
 
             db.Admins.Update(admin);
-            db.Users.Update(admin.User);
+            db.Users.Update(user);
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -578,8 +591,25 @@ public class AdminService(
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
-            return Result<bool>.Failed($"An error occurred: {ex.Message}");
+            return Result<bool>.Failed($"Could not delete the user: {ex.Message}");
         }
+    }
+
+    /// <summary>Resolves tenant for an admin row when <see cref="Admin.TenantId"/> is not set (legacy / role-only linkage).</summary>
+    private async Task<string?> GetEffectiveTenantIdForAdminAsync(Admin admin, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(admin.TenantId))
+            return admin.TenantId;
+
+        return await (from ur in db.UserRoles.IgnoreQueryFilters()
+                join r in db.Roles.IgnoreQueryFilters() on ur.RoleId equals r.Id
+                where ur.UserId == admin.UserId
+                      && !ur.IsDeleted
+                      && !r.IsDeleted
+                      && r.TenantId != null
+                      && r.TenantId != string.Empty
+                select r.TenantId)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<Result<byte[]>> ExportToExcelAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
