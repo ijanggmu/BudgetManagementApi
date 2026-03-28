@@ -83,16 +83,19 @@ public static class RoleSeeder
     {
         var tenants = await context.Tenants
             .Where(t => !t.IsDeleted)
-            .Select(t => new { t.Id, t.Name })
+            .Select(t => new { t.Id, t.Slug })
             .ToListAsync();
 
         var tenantRoles = SystemRoles.GetTenantDefaultRoles();
 
         foreach (var tenant in tenants)
         {
+            var slug = string.IsNullOrWhiteSpace(tenant.Slug) ? "tenant" : tenant.Slug.Trim();
             foreach (var roleName in tenantRoles)
             {
-                var normalizedName = roleManager.NormalizeKey(roleName);
+                // HodAssistance collides with global demo role of the same Name unless tenant-suffixed (Identity global name check).
+                var storedName = roleName == SystemRoles.HodAssistance ? $"{roleName}-{slug}" : roleName;
+                var normalizedName = roleManager.NormalizeKey(storedName);
                 var exists = await context.Roles
                     .IgnoreQueryFilters()
                     .AnyAsync(r => r.TenantId == tenant.Id && r.NormalizedName == normalizedName);
@@ -103,7 +106,7 @@ public static class RoleSeeder
                 var role = new ApplicationRole
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Name = roleName,
+                    Name = storedName,
                     NormalizedName = normalizedName,
                     RoleDisplayName = GetRoleDisplayName(roleName),
                     Description = roleName,

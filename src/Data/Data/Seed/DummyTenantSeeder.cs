@@ -72,12 +72,14 @@ public static class DummyTenantSeeder
         }
 
         var adminRoleName = $"{SystemRoles.Admin}-{DummyTenantSlug}";
+        // Suffix required: Identity treats role Name as globally unique; SeedGlobalDemoRoles already creates HodAssistance (no tenant).
+        var hodAssistRoleName = $"{SystemRoles.HodAssistance}-{DummyTenantSlug}";
 
         await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, adminRoleName, SystemRoles.Admin, SystemRoles.AdminLevel, "Tenant Administrator");
         await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.CEO, SystemRoles.CEO, SystemRoles.CEOCFOHODLevel, "Chief Executive Officer");
         await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.CFO, SystemRoles.CFO, SystemRoles.CEOCFOHODLevel, "Chief Financial Officer");
         await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.HOD, SystemRoles.HOD, SystemRoles.CEOCFOHODLevel, "Head of Department");
-        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.HodAssistance, SystemRoles.HodAssistance, SystemRoles.CEOCFOHODLevel, "HOD Assistant");
+        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, hodAssistRoleName, SystemRoles.HodAssistance, SystemRoles.CEOCFOHODLevel, "HOD Assistant");
         await context.SaveChangesAsync();
 
         await SeedAdminRolePermissionsAsync(context, tenant.Id, adminRoleName);
@@ -93,7 +95,7 @@ public static class DummyTenantSeeder
             (UserName: "ceo", Email: "ceo@dummy.com", FullName: "CEO User", RoleName: SystemRoles.CEO, IsAdminEntity: false),
             (UserName: "cfo", Email: "cfo@dummy.com", FullName: "CFO User", RoleName: SystemRoles.CFO, IsAdminEntity: false),
             (UserName: "hod", Email: "hod@dummy.com", FullName: "HOD User", RoleName: SystemRoles.HOD, IsAdminEntity: false),
-            (UserName: "hodassistant", Email: "hodassistant@dummy.com", FullName: "HOD Assistant User", RoleName: SystemRoles.HodAssistance, IsAdminEntity: false)
+            (UserName: "hodassistant", Email: "hodassistant@dummy.com", FullName: "HOD Assistant User", RoleName: hodAssistRoleName, IsAdminEntity: false)
         };
 
         foreach (var u in usersToSeed)
