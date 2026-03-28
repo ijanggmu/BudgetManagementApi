@@ -232,21 +232,49 @@ public class AdminService(
                     return Result<AdminResponseDto>.Failed("Email already exists.");
             }
 
+            var tenantAssignableTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                SystemRoles.Admin,
+                SystemRoles.CEO,
+                SystemRoles.CFO,
+                SystemRoles.HOD,
+                SystemRoles.HodAssistance
+            };
+
             // Validate roles if provided
             if (dto.Roles != null && dto.Roles.Count != 0)
             {
-                // Note: IsDeleted filter is now applied globally
-                var validRoles = await roleManager.Roles
-                    .Where(r => dto.Roles.Contains(r.Name))
-                    .Select(r => r.Name)
-                    .ToListAsync(cancellationToken);
+                if (!isSuperAdmin && dto.Roles.Any(r => string.Equals(r, SystemRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase)))
+                    return Result<AdminResponseDto>.Failed("You cannot assign SuperAdmin role.");
 
-                if (validRoles.Count != dto.Roles.Count)
+                List<ApplicationRole> resolvedRoles;
+                if (isSuperAdmin)
+                {
+                    resolvedRoles = await db.Roles.IgnoreQueryFilters()
+                        .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
+                        .ToListAsync(cancellationToken);
+                }
+                else
+                {
+                    resolvedRoles = await db.Roles
+                        .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
+                        .ToListAsync(cancellationToken);
+                }
+
+                if (resolvedRoles.Count != dto.Roles.Count)
                     return Result<AdminResponseDto>.Failed("One or more roles are invalid.");
 
-                // Tenant admins can only assign Admin role, not SuperAdmin
-                if (!isSuperAdmin && dto.Roles.Any(r => r == SystemRoles.SuperAdmin))
-                    return Result<AdminResponseDto>.Failed("You cannot assign SuperAdmin role.");
+                if (!isSuperAdmin && !string.IsNullOrEmpty(tenantId))
+                {
+                    foreach (var r in resolvedRoles)
+                    {
+                        if (r.TenantId != tenantId)
+                            return Result<AdminResponseDto>.Failed("Role does not belong to this tenant.");
+                        if (!tenantAssignableTypes.Contains(r.RoleType ?? string.Empty))
+                            return Result<AdminResponseDto>.Failed(
+                                "You may only assign predefined tenant roles (Tenant Admin, CEO, CFO, HOD, HOD Assistant).");
+                    }
+                }
             }
 
             // Create ApplicationUser
@@ -267,10 +295,26 @@ public class AdminService(
             if (!createUserResult.Succeeded)
                 return Result<AdminResponseDto>.Failed(createUserResult.Errors.FirstOrDefault()?.Description ?? "Failed to create user.");
 
-            // Assign roles - default to Admin if no roles specified
-            var rolesToAssign = dto.Roles != null && dto.Roles.Any()
-                ? dto.Roles
-                : new List<string> { SystemRoles.Admin };
+            // Assign roles — default TenantAdmin to this tenant's Admin-{slug} role when applicable
+            List<string> rolesToAssign;
+            if (dto.Roles != null && dto.Roles.Any())
+            {
+                rolesToAssign = dto.Roles;
+            }
+            else if (!isSuperAdmin && !string.IsNullOrEmpty(tenantId))
+            {
+                var tenantAdminRoleName = await db.Roles.IgnoreQueryFilters()
+                    .Where(r => r.TenantId == tenantId && r.RoleType == SystemRoles.Admin && !r.IsDeleted)
+                    .Select(r => r.Name)
+                    .FirstOrDefaultAsync(cancellationToken);
+                rolesToAssign = string.IsNullOrEmpty(tenantAdminRoleName)
+                    ? new List<string> { SystemRoles.Admin }
+                    : new List<string> { tenantAdminRoleName };
+            }
+            else
+            {
+                rolesToAssign = new List<string> { SystemRoles.Admin };
+            }
 
             foreach (var roleName in rolesToAssign)
             {
@@ -383,19 +427,47 @@ public class AdminService(
             // Update roles if provided
             if (dto.Roles != null)
             {
-                // Validate roles
-                // Note: IsDeleted filter is now applied globally
-                var validRoles = await roleManager.Roles
-                    .Where(r => dto.Roles.Contains(r.Name))
-                    .Select(r => r.Name)
-                    .ToListAsync(cancellationToken);
+                var tenantAssignableTypesUpdate = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    SystemRoles.Admin,
+                    SystemRoles.CEO,
+                    SystemRoles.CFO,
+                    SystemRoles.HOD,
+                    SystemRoles.HodAssistance
+                };
 
-                if (validRoles.Count != dto.Roles.Count)
+                if (!isSuperAdmin && dto.Roles.Any(r => string.Equals(r, SystemRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase)))
+                    return Result<AdminResponseDto>.Failed("You cannot assign SuperAdmin role.");
+
+                List<ApplicationRole> resolvedUpdateRoles;
+                if (isSuperAdmin)
+                {
+                    resolvedUpdateRoles = await db.Roles.IgnoreQueryFilters()
+                        .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
+                        .ToListAsync(cancellationToken);
+                }
+                else
+                {
+                    resolvedUpdateRoles = await db.Roles
+                        .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
+                        .ToListAsync(cancellationToken);
+                }
+
+                if (resolvedUpdateRoles.Count != dto.Roles.Count)
                     return Result<AdminResponseDto>.Failed("One or more roles are invalid.");
 
-                // Tenant admins cannot assign SuperAdmin role
-                if (!isSuperAdmin && dto.Roles.Any(r => r == SystemRoles.SuperAdmin))
-                    return Result<AdminResponseDto>.Failed("You cannot assign SuperAdmin role.");
+                var adminTenantId = admin.TenantId ?? db.CurrentTenantId;
+                if (!isSuperAdmin && !string.IsNullOrEmpty(adminTenantId))
+                {
+                    foreach (var r in resolvedUpdateRoles)
+                    {
+                        if (r.TenantId != adminTenantId)
+                            return Result<AdminResponseDto>.Failed("Role does not belong to this tenant.");
+                        if (!tenantAssignableTypesUpdate.Contains(r.RoleType ?? string.Empty))
+                            return Result<AdminResponseDto>.Failed(
+                                "You may only assign predefined tenant roles (Tenant Admin, CEO, CFO, HOD, HOD Assistant).");
+                    }
+                }
 
                 // Get current roles
                 var currentRoles = await userManager.GetRolesAsync(admin.User);

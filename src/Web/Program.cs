@@ -220,6 +220,7 @@ static async Task RunDatabaseMigrationAsync(WebApplication app)
         await DepartmentSeeder.SeedAsync(context);
         await NepaliFiscalYearSeeder.SeedAsync(context);
         await MenuPermissionSeeder.SeedPermissionsForRole(context);
+        await MenuPermissionSeeder.EnsureTenantHodAssistanceRoleMenuClaimsAsync(context);
         await CountriesSeeder.SeedData(context);
     }
     catch (Exception ex)

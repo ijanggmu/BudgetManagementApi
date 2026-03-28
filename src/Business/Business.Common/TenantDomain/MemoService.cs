@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Business.Common.File;
 using Data.Context;
+using Data.Entities.Identity;
 using Data.Entities.Tenant;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
 using Infrastructure.Common.UserProfile;
@@ -63,6 +64,21 @@ public class MemoService(
         if (requestModel.IncludeArchived == false)
             query = query.Where(m => m.Status != MemoStatus.Archived);
 
+        if (!isSuperAdmin)
+        {
+            var uid = userProfileService.GetUserId();
+            var ctx = await GetUserMemoContextAsync(uid, roleId, cancellationToken);
+            if (!ctx.Elevated && (ctx.IsHod || ctx.IsHodAssist))
+            {
+                if (string.IsNullOrEmpty(ctx.DeptName))
+                    query = query.Where(m => false);
+                else if (ctx.IsHod)
+                    query = query.Where(m => m.Department == ctx.DeptName);
+                else
+                    query = query.Where(m => m.Department == ctx.DeptName && m.CreatedBy == uid);
+            }
+        }
+
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
         var list = await result.ToListAsync(cancellationToken);
         var dtos = list.Select(MapToDto).ToList();
@@ -83,6 +99,12 @@ public class MemoService(
         if (isSuperAdmin) query = query.IgnoreQueryFilters();
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<MemoResponseDto>.Failed("Memo not found.");
+        if (!isSuperAdmin)
+        {
+            var uid = userProfileService.GetUserId();
+            if (!await CanUserReadMemoAsync(entity, uid, roleId, cancellationToken))
+                return Result<MemoResponseDto>.Failed("Memo not found.");
+        }
         return Result<MemoResponseDto>.Success(MapToDto(entity));
     }
 
@@ -94,6 +116,12 @@ public class MemoService(
         if (isSuperAdmin) query = query.IgnoreQueryFilters();
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<MemoResponseDto>.Failed("Memo not found for this budget request.");
+        if (!isSuperAdmin)
+        {
+            var uid = userProfileService.GetUserId();
+            if (!await CanUserReadMemoAsync(entity, uid, roleId, cancellationToken))
+                return Result<MemoResponseDto>.Failed("Memo not found for this budget request.");
+        }
         return Result<MemoResponseDto>.Success(MapToDto(entity));
     }
 
@@ -139,6 +167,11 @@ public class MemoService(
 
     private async Task<Result<MemoResponseDto>> CreateMemoEntityAsync(BudgetRequest request, CreateMemoDto dto, CancellationToken cancellationToken)
     {
+        var userId = userProfileService.GetUserId();
+        var roleClaim = userProfileService.GetRoleId();
+        if (!await CanUserActOnBudgetRequestDepartmentAsync(request.DepartmentId, userId, roleClaim, cancellationToken))
+            return Result<MemoResponseDto>.Failed("You are not allowed to create a memo for this department.");
+
         var tenantId = db.CurrentTenantId;
         var dept = await db.Departments.FindAsync(request.DepartmentId);
         var requester = await db.Users.FindAsync(request.UserId);
@@ -174,6 +207,9 @@ public class MemoService(
         if (isSuperAdmin) query = query.IgnoreQueryFilters();
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<MemoResponseDto>.Failed("Memo not found.");
+        var uid = userProfileService.GetUserId();
+        if (!isSuperAdmin && !await CanUserModifyMemoAsync(entity, uid, roleId, cancellationToken))
+            return Result<MemoResponseDto>.Failed("You are not allowed to update this memo.");
         var oldStatus = entity.Status;
         if (dto.Purpose != null) entity.Purpose = dto.Purpose;
         if (!string.IsNullOrEmpty(dto.Status) && Enum.TryParse<MemoStatus>(dto.Status, true, out var parsedStatus))
@@ -195,6 +231,9 @@ public class MemoService(
         if (isSuperAdmin) query = query.IgnoreQueryFilters();
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<bool>.Failed("Memo not found.");
+        var uid = userProfileService.GetUserId();
+        if (!isSuperAdmin && !await CanUserModifyMemoAsync(entity, uid, roleId, cancellationToken))
+            return Result<bool>.Failed("You are not allowed to delete this memo.");
         entity.IsDeleted = true;
         entity.LastModifiedBy = userProfileService.GetUserId();
         entity.LastModifiedOn = DateTime.UtcNow;
@@ -212,6 +251,9 @@ public class MemoService(
         if (isSuperAdmin) query = query.IgnoreQueryFilters();
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<byte[]>.Failed("Memo not found.");
+        var uid = userProfileService.GetUserId();
+        if (!isSuperAdmin && !await CanUserReadMemoAsync(entity, uid, roleId, cancellationToken))
+            return Result<byte[]>.Failed("Memo not found.");
         try
         {
             var approvalRows = await GetApprovalRowsWithSignaturesAsync(entity, cancellationToken);
@@ -223,6 +265,81 @@ public class MemoService(
         {
             return Result<byte[]>.Failed("Failed to generate PDF: " + ex.Message);
         }
+    }
+
+    private sealed record UserMemoContext(bool Elevated, string? DeptName, bool IsHod, bool IsHodAssist);
+
+    private async Task<UserMemoContext> GetUserMemoContextAsync(string userId, string? roleIdClaim, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrEmpty(roleIdClaim) && roleIdClaim.Contains(SystemRoles.SuperAdmin))
+            return new UserMemoContext(true, null, false, false);
+
+        var roleIds = await db.Set<ApplicationUserRoles>()
+            .Where(ur => ur.UserId == userId && !ur.IsDeleted)
+            .Select(ur => ur.RoleId)
+            .ToListAsync(cancellationToken);
+        var types = await db.Roles
+            .Where(r => roleIds.Contains(r.Id) && !r.IsDeleted)
+            .Select(r => r.RoleType)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        var elevated = types.Any(t =>
+            string.Equals(t, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(t, SystemRoles.CEO, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(t, SystemRoles.CFO, StringComparison.OrdinalIgnoreCase));
+        if (elevated)
+            return new UserMemoContext(true, null, false, false);
+
+        var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        var deptName = user?.DepartmentId == null
+            ? null
+            : await db.Departments.Where(d => d.Id == user.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
+        var isHod = types.Any(t => string.Equals(t, SystemRoles.HOD, StringComparison.OrdinalIgnoreCase));
+        var isAssist = types.Any(t => string.Equals(t, SystemRoles.HodAssistance, StringComparison.OrdinalIgnoreCase));
+        return new UserMemoContext(false, deptName, isHod, isAssist);
+    }
+
+    private async Task<bool> CanUserReadMemoAsync(Memo entity, string userId, string? roleIdClaim, CancellationToken cancellationToken)
+    {
+        var ctx = await GetUserMemoContextAsync(userId, roleIdClaim, cancellationToken);
+        if (ctx.Elevated)
+            return true;
+        if (!ctx.IsHod && !ctx.IsHodAssist)
+            return true;
+        if (string.IsNullOrEmpty(ctx.DeptName))
+            return false;
+        if (entity.Department != ctx.DeptName)
+            return false;
+        if (ctx.IsHod)
+            return true;
+        return string.Equals(entity.CreatedBy, userId, StringComparison.Ordinal);
+    }
+
+    private async Task<bool> CanUserModifyMemoAsync(Memo entity, string userId, string? roleIdClaim, CancellationToken cancellationToken)
+    {
+        var ctx = await GetUserMemoContextAsync(userId, roleIdClaim, cancellationToken);
+        if (ctx.Elevated)
+            return true;
+        if (!ctx.IsHod && !ctx.IsHodAssist)
+            return true;
+        if (string.IsNullOrEmpty(ctx.DeptName) || entity.Department != ctx.DeptName)
+            return false;
+        if (ctx.IsHod)
+            return true;
+        return string.Equals(entity.CreatedBy, userId, StringComparison.Ordinal);
+    }
+
+    private async Task<bool> CanUserActOnBudgetRequestDepartmentAsync(string requestDepartmentId, string userId, string? roleIdClaim, CancellationToken cancellationToken)
+    {
+        var ctx = await GetUserMemoContextAsync(userId, roleIdClaim, cancellationToken);
+        if (ctx.Elevated)
+            return true;
+        var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+            return false;
+        if (!ctx.IsHod && !ctx.IsHodAssist)
+            return true;
+        return string.Equals(user.DepartmentId, requestDepartmentId, StringComparison.Ordinal);
     }
 
     /// <summary>Get tenant logo image bytes for memo PDF/DOCX (from CompanyBranding).</summary>
@@ -440,6 +557,9 @@ public class MemoService(
         if (isSuperAdmin) query = query.IgnoreQueryFilters();
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<byte[]>.Failed("Memo not found.");
+        var uidDocx = userProfileService.GetUserId();
+        if (!isSuperAdmin && !await CanUserReadMemoAsync(entity, uidDocx, roleId, cancellationToken))
+            return Result<byte[]>.Failed("Memo not found.");
         try
         {
             var approvalRows = await GetApprovalRowsWithSignaturesAsync(entity, cancellationToken);

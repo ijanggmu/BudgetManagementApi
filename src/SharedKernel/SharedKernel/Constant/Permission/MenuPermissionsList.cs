@@ -183,7 +183,7 @@ public static partial class MenuPermissionsList
                 IsMenu = true,
                 ToHide = false,
                 HideChildren = false,
-                AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                 Permissions = new List<Permission>
                 {
                     new Permission(MenuPermissionConstant.OperationsViewName, MenuPermissionConstant.OperationsView, false)
@@ -378,7 +378,7 @@ public static partial class MenuPermissionsList
                 IsMenu = true,
                 ToHide = false,
                 HideChildren = false,
-                AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                 Permissions = new List<Permission>
                 {
                     new Permission("Budget Management", MenuPermissionConstant.BudgetManagementView, false)
@@ -397,7 +397,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Budget, false),
                         Children = null
                     },
@@ -413,7 +413,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                         Permissions = new List<Permission>
                         {
                             new Permission(MenuPermissionConstant.MemoViewName, MenuPermissionConstant.MemoView, false),
@@ -437,7 +437,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Department, false),
                         Children = null
                     },
@@ -453,7 +453,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                         Permissions = new List<Permission>
                         {
                             new Permission("Approve", MenuPermissionConstant.BudgetRequestApprove, false),
@@ -473,7 +473,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.ApprovalConfig, false),
                         Children = null
                     },
@@ -489,7 +489,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                         Permissions = new List<Permission>
                         {
                             new Permission(MenuPermissionConstant.SignatureViewName, MenuPermissionConstant.SignatureView, false),
@@ -509,7 +509,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.BudgetReport, false),
                         Children = null
                     },
@@ -525,7 +525,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.BudgetHeadings, false),
                         Children = null
                     },
@@ -541,7 +541,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD" },
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin", "CEO", "CFO", "HOD", "HodAssistance" },
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.NepaliFiscalYear, false),
                         Children = null
                     },

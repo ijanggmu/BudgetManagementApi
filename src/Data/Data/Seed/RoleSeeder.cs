@@ -42,14 +42,15 @@ public static class RoleSeeder
         }
     }
 
-    /// <summary>Seeds global roles (CEO, CFO, HOD) with no tenant for demo login without creating a tenant.</summary>
+    /// <summary>Seeds global roles (CEO, CFO, HOD, HodAssistance) with no tenant for demo login without creating a tenant.</summary>
     public static async Task SeedGlobalDemoRoles(ApplicationDataContext context, RoleManager<ApplicationRole> roleManager)
     {
         var globalDemoRoles = new[]
         {
             (Name: SystemRoles.CEO, DisplayName: "Chief Executive Officer"),
             (Name: SystemRoles.CFO, DisplayName: "Chief Financial Officer"),
-            (Name: SystemRoles.HOD, DisplayName: "Head of Department")
+            (Name: SystemRoles.HOD, DisplayName: "Head of Department"),
+            (Name: SystemRoles.HodAssistance, DisplayName: "HOD Assistant")
         };
 
         foreach (var (name, displayName) in globalDemoRoles)
@@ -77,7 +78,7 @@ public static class RoleSeeder
         await context.SaveChangesAsync();
     }
 
-    /// <summary>Seeds tenant-specific roles (CEO, CFO, HOD) for each tenant.</summary>
+    /// <summary>Seeds tenant-specific roles (CEO, CFO, HOD, HodAssistance) for each tenant.</summary>
     public static async Task SeedTenantRoles(ApplicationDataContext context, RoleManager<ApplicationRole> roleManager)
     {
         var tenants = await context.Tenants
@@ -125,6 +126,7 @@ public static class RoleSeeder
             SystemRoles.CEO => "Chief Executive Officer",
             SystemRoles.CFO => "Chief Financial Officer",
             SystemRoles.HOD => "Head of Department",
+            SystemRoles.HodAssistance => "HOD Assistant",
             _ => roleName
         };
     }

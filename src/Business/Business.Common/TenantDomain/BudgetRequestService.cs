@@ -55,6 +55,29 @@ public class BudgetRequestService(
                     query = query.Where(b => b.RequestedDate >= fy.StartDateUtc && b.RequestedDate <= fy.EndDateUtc);
             }
 
+            if (!isSuperAdmin)
+            {
+                var uid = userProfileService.GetUserId();
+                var budgetUser = await userManager.FindByIdAsync(uid);
+                if (budgetUser != null && !string.IsNullOrEmpty(budgetUser.DepartmentId))
+                {
+                    var userRoleIds = await db.Set<ApplicationUserRoles>()
+                        .Where(ur => ur.UserId == uid && !ur.IsDeleted)
+                        .Select(ur => ur.RoleId)
+                        .ToListAsync(cancellationToken);
+                    var restrictToDept = await db.Roles.AnyAsync(
+                        r => userRoleIds.Contains(r.Id) && !r.IsDeleted &&
+                             (r.RoleType == SystemRoles.HOD || r.RoleType == SystemRoles.HodAssistance),
+                        cancellationToken);
+                    var isExecRole = await db.Roles.AnyAsync(
+                        r => userRoleIds.Contains(r.Id) && !r.IsDeleted &&
+                             (r.RoleType == SystemRoles.CEO || r.RoleType == SystemRoles.CFO),
+                        cancellationToken);
+                    if (restrictToDept && !isExecRole)
+                        query = query.Where(b => b.DepartmentId == budgetUser.DepartmentId);
+                }
+            }
+
             var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
             var list = await result.ToListAsync(cancellationToken);
             var deptIds = list.Select(b => b.DepartmentId).Distinct().ToList();
@@ -106,9 +129,19 @@ public class BudgetRequestService(
         var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
         if (user != null && !string.IsNullOrEmpty(user.DepartmentId))
         {
-            var userRoles = await db.Set<ApplicationUserRoles>().Where(ur => ur.UserId == userId).Select(ur => ur.RoleId).ToListAsync(cancellationToken);
-            var hodRoleId = await db.Roles.Where(r => r.Name == SystemRoles.HOD || r.NormalizedName == SystemRoles.HOD.ToUpperInvariant()).Select(r => r.Id).FirstOrDefaultAsync(cancellationToken);
-            if (!string.IsNullOrEmpty(hodRoleId) && userRoles.Contains(hodRoleId) && dto.DepartmentId != user.DepartmentId)
+            var userRoleIds = await db.Set<ApplicationUserRoles>()
+                .Where(ur => ur.UserId == userId && !ur.IsDeleted)
+                .Select(ur => ur.RoleId)
+                .ToListAsync(cancellationToken);
+            var restrictToDept = await db.Roles.AnyAsync(
+                r => userRoleIds.Contains(r.Id) && !r.IsDeleted &&
+                     (r.RoleType == SystemRoles.HOD || r.RoleType == SystemRoles.HodAssistance),
+                cancellationToken);
+            var isExecRole = await db.Roles.AnyAsync(
+                r => userRoleIds.Contains(r.Id) && !r.IsDeleted &&
+                     (r.RoleType == SystemRoles.CEO || r.RoleType == SystemRoles.CFO),
+                cancellationToken);
+            if (restrictToDept && !isExecRole && dto.DepartmentId != user.DepartmentId)
                 return Result<BudgetRequestResponseDto>.Failed("You can only request a memo for your assigned department.");
         }
         var dept = await db.Departments.FirstOrDefaultAsync(d => d.Id == dto.DepartmentId && d.TenantId == tenantId, cancellationToken);

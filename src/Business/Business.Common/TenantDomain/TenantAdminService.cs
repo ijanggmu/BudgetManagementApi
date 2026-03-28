@@ -494,7 +494,7 @@ public class TenantAdminService : ITenantAdminService
     }
 
     /// <summary>
-    /// Seeds default tenant roles (CEO, CFO, HOD) for a newly created tenant.
+    /// Seeds default tenant business roles (CEO, CFO, HOD, HodAssistance) for a newly created tenant.
     /// </summary>
     private async Task SeedTenantDefaultRolesAsync(string tenantId, string tenantName)
     {
@@ -552,6 +552,7 @@ public class TenantAdminService : ITenantAdminService
             SystemRoles.CEO => "Chief Executive Officer",
             SystemRoles.CFO => "Chief Financial Officer",
             SystemRoles.HOD => "Head of Department",
+            SystemRoles.HodAssistance => "HOD Assistant",
             _ => roleName
         };
     }
@@ -576,7 +577,7 @@ public class TenantAdminService : ITenantAdminService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>Seeds menu permissions for tenant-scoped CEO, CFO, and HOD roles (same sets as global demo roles).</summary>
+    /// <summary>Seeds menu permissions for tenant-scoped CEO, CFO, HOD, and HodAssistance roles.</summary>
     private async Task SeedTenantCeoCfoHodMenuPermissionsAsync(string tenantId, string tenantSlug, CancellationToken cancellationToken)
     {
         foreach (var roleType in SystemRoles.GetTenantDefaultRoles())
@@ -602,6 +603,7 @@ public class TenantAdminService : ITenantAdminService
                 SystemRoles.CEO => MenuPermissionSeeder.GetCEOPermissions(),
                 SystemRoles.CFO => MenuPermissionSeeder.GetCFOPermissions(),
                 SystemRoles.HOD => MenuPermissionSeeder.GetHODPermissions(),
+                SystemRoles.HodAssistance => MenuPermissionSeeder.GetHodAssistancePermissions(),
                 _ => (IReadOnlyList<string>)Array.Empty<string>()
             };
 

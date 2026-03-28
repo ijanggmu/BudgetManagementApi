@@ -148,7 +148,33 @@ public static class MenuPermissionSeeder
         if (!string.IsNullOrEmpty(hodRoleId))
             await SetRolePermissionsAsync(dbContext, hodRoleId, GetHODPermissions());
 
+        var hodAssistRoleId = await dbContext.Roles
+            .IgnoreQueryFilters()
+            .Where(r => r.TenantId == null && r.Name == SystemRoles.HodAssistance)
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync();
+        if (!string.IsNullOrEmpty(hodAssistRoleId))
+            await SetRolePermissionsAsync(dbContext, hodAssistRoleId, GetHodAssistancePermissions());
+
         await dbContext.SaveChangesAsync();
+    }
+
+    /// <summary>Ensures menu claims exist for every tenant-scoped HodAssistance role (for existing DBs after the role is added).</summary>
+    public static async Task EnsureTenantHodAssistanceRoleMenuClaimsAsync(ApplicationDataContext dbContext, CancellationToken cancellationToken = default)
+    {
+        var roleIds = await dbContext.Roles
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(r => !r.IsDeleted && r.TenantId != null && r.RoleType == SystemRoles.HodAssistance)
+            .Select(r => r.Id)
+            .ToListAsync(cancellationToken);
+
+        foreach (var roleId in roleIds)
+        {
+            await UpsertRoleMenuPermissionsAsync(dbContext, roleId, GetHodAssistancePermissions(), cancellationToken);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>Insert or update <see cref="ApplicationRoleClaim.Permissions"/> for a role (no SaveChanges).</summary>
@@ -229,6 +255,10 @@ public static class MenuPermissionSeeder
             MenuPermissionConstant.BudgetRequestApprove,
             MenuPermissionConstant.BudgetRequestReject,
             MenuPermissionConstant.MemoView,
+            MenuPermissionConstant.MemoCreate,
+            MenuPermissionConstant.MemoUpdate,
+            MenuPermissionConstant.MemoExport,
+            MenuPermissionConstant.MemoGeneratePdf,
             MenuPermissionConstant.ProfileView
         }.Distinct().ToList();
     }
@@ -277,8 +307,32 @@ public static class MenuPermissionSeeder
             MenuPermissionConstant.BudgetReportView,
             MenuPermissionConstant.BudgetRequestView,
             MenuPermissionConstant.BudgetRequestCreate,
+            MenuPermissionConstant.BudgetRequestApprove,
+            MenuPermissionConstant.BudgetRequestReject,
             MenuPermissionConstant.MemoView,
             MenuPermissionConstant.MemoCreate,
+            MenuPermissionConstant.MemoUpdate,
+            MenuPermissionConstant.MemoExport,
+            MenuPermissionConstant.MemoGeneratePdf,
+            MenuPermissionConstant.ProfileView
+        }.Distinct().ToList();
+    }
+
+    /// <summary>HOD assistant: prepare memos and budget requests for their department only (no approval chain).</summary>
+    public static List<string> GetHodAssistancePermissions()
+    {
+        return new List<string>
+        {
+            MenuPermissionConstant.DashboardView,
+            MenuPermissionConstant.BudgetManagementView,
+            MenuPermissionConstant.OperationsView,
+            MenuPermissionConstant.NotificationsView,
+            MenuPermissionConstant.BudgetReportView,
+            MenuPermissionConstant.BudgetRequestView,
+            MenuPermissionConstant.BudgetRequestCreate,
+            MenuPermissionConstant.MemoView,
+            MenuPermissionConstant.MemoCreate,
+            MenuPermissionConstant.MemoUpdate,
             MenuPermissionConstant.MemoGeneratePdf,
             MenuPermissionConstant.ProfileView
         }.Distinct().ToList();

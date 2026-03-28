@@ -167,9 +167,7 @@ public class RoleService(
 
         if (role != null)
         {
-            var notEditableRoles = SystemRoles.GetNotDeletableRoles();
-
-            if (notEditableRoles.Any(x => x == role.Name))
+            if (SystemRoles.GetNotDeletableRoleTypes().Contains(role.RoleType ?? string.Empty))
                 return Result<MessageResponseModel>.Failed("Role cannot be edited.");
 
             if (!checkIfRoleNameExists || nameNotChanged)
@@ -198,9 +196,7 @@ public class RoleService(
             if (role == null)
                 return Result<MessageResponseModel>.Failed("Invalid Role.");
 
-            var notDeletableRoles = SystemRoles.GetNotDeletableRoles();
-
-            if (notDeletableRoles.Any(x => x == role.Name))
+            if (SystemRoles.GetNotDeletableRoleTypes().Contains(role.RoleType ?? string.Empty))
             {
                 return Result<MessageResponseModel>.Failed("Role cannot be deleted.");
             }

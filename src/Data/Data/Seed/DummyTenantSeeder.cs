@@ -10,7 +10,7 @@ using SharedKernel.Constant.Roles;
 namespace Data.Seed;
 
 /// <summary>
-/// Seeds one dummy tenant with 4 users: Tenant Admin, CEO, CFO, HOD.
+/// Seeds one dummy tenant with users: Tenant Admin, CEO, CFO, HOD, HOD Assistant.
 /// All users share the same password: Admin@123
 /// </summary>
 public static class DummyTenantSeeder
@@ -77,6 +77,7 @@ public static class DummyTenantSeeder
         await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.CEO, SystemRoles.CEO, SystemRoles.CEOCFOHODLevel, "Chief Executive Officer");
         await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.CFO, SystemRoles.CFO, SystemRoles.CEOCFOHODLevel, "Chief Financial Officer");
         await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.HOD, SystemRoles.HOD, SystemRoles.CEOCFOHODLevel, "Head of Department");
+        await CreateRoleIfNotExistsAsync(context, roleManager, tenant.Id, SystemRoles.HodAssistance, SystemRoles.HodAssistance, SystemRoles.CEOCFOHODLevel, "HOD Assistant");
         await context.SaveChangesAsync();
 
         await SeedAdminRolePermissionsAsync(context, tenant.Id, adminRoleName);
@@ -91,7 +92,8 @@ public static class DummyTenantSeeder
             (UserName: "tenantadmin", Email: "tenantadmin@dummy.com", FullName: "Tenant Admin", RoleName: adminRoleName, IsAdminEntity: true),
             (UserName: "ceo", Email: "ceo@dummy.com", FullName: "CEO User", RoleName: SystemRoles.CEO, IsAdminEntity: false),
             (UserName: "cfo", Email: "cfo@dummy.com", FullName: "CFO User", RoleName: SystemRoles.CFO, IsAdminEntity: false),
-            (UserName: "hod", Email: "hod@dummy.com", FullName: "HOD User", RoleName: SystemRoles.HOD, IsAdminEntity: false)
+            (UserName: "hod", Email: "hod@dummy.com", FullName: "HOD User", RoleName: SystemRoles.HOD, IsAdminEntity: false),
+            (UserName: "hodassistant", Email: "hodassistant@dummy.com", FullName: "HOD Assistant User", RoleName: SystemRoles.HodAssistance, IsAdminEntity: false)
         };
 
         foreach (var u in usersToSeed)

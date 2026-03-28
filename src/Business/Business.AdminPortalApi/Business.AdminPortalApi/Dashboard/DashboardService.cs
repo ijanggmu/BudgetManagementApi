@@ -45,7 +45,7 @@ public class DashboardService : IDashboardService
                 : Result<object>.Failed(result.Error, result.ErrorCode);
         }
 
-        if (userRoles.Contains(SystemRoles.Admin) || userRoles.Contains("TenantAdmin"))
+        if (SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.Admin) || userRoles.Contains("TenantAdmin"))
         {
             var result = await GetTenantAdminDashboardAsync(cancellationToken);
             return result.IsSuccess
@@ -53,7 +53,7 @@ public class DashboardService : IDashboardService
                 : Result<object>.Failed(result.Error, result.ErrorCode);
         }
 
-        if (userRoles.Contains(SystemRoles.CEO))
+        if (SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.CEO))
         {
             var result = await GetCEODashboardAsync(cancellationToken);
             return result.IsSuccess
@@ -61,7 +61,7 @@ public class DashboardService : IDashboardService
                 : Result<object>.Failed(result.Error, result.ErrorCode);
         }
 
-        if (userRoles.Contains(SystemRoles.CFO))
+        if (SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.CFO))
         {
             var result = await GetCFODashboardAsync(cancellationToken);
             return result.IsSuccess
@@ -69,7 +69,8 @@ public class DashboardService : IDashboardService
                 : Result<object>.Failed(result.Error, result.ErrorCode);
         }
 
-        if (userRoles.Contains(SystemRoles.HOD))
+        if (SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.HOD) ||
+            SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.HodAssistance))
         {
             var result = await GetHODDashboardAsync(cancellationToken);
             return result.IsSuccess
@@ -163,7 +164,7 @@ public class DashboardService : IDashboardService
             return Result<CEODashboardDto>.Failed("User not authenticated.");
 
         var userRoles = await _tenantResolutionService.GetUserRolesAsync(userId);
-        if (!userRoles.Contains(SystemRoles.CEO))
+        if (!SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.CEO))
             return Result<CEODashboardDto>.Failed("Access denied. CEO role required.");
 
         var tenantId = _tenantContext.TenantId;
@@ -191,7 +192,7 @@ public class DashboardService : IDashboardService
             return Result<CFODashboardDto>.Failed("User not authenticated.");
 
         var userRoles = await _tenantResolutionService.GetUserRolesAsync(userId);
-        if (!userRoles.Contains(SystemRoles.CFO))
+        if (!SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.CFO))
             return Result<CFODashboardDto>.Failed("Access denied. CFO role required.");
 
         var tenantId = _tenantContext.TenantId;
@@ -219,8 +220,9 @@ public class DashboardService : IDashboardService
             return Result<HODDashboardDto>.Failed("User not authenticated.");
 
         var userRoles = await _tenantResolutionService.GetUserRolesAsync(userId);
-        if (!userRoles.Contains(SystemRoles.HOD))
-            return Result<HODDashboardDto>.Failed("Access denied. HOD role required.");
+        if (!SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.HOD) &&
+            !SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.HodAssistance))
+            return Result<HODDashboardDto>.Failed("Access denied. HOD or HOD Assistant role required.");
 
         var tenantId = _tenantContext.TenantId;
         var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -230,9 +232,21 @@ public class DashboardService : IDashboardService
             : (string.IsNullOrEmpty(tenantId)
                 ? await _db.Budgets.IgnoreQueryFilters().CountAsync(b => b.DepartmentId == departmentId, cancellationToken)
                 : await _db.Budgets.CountAsync(b => b.DepartmentId == departmentId, cancellationToken));
+        var deptName = string.IsNullOrEmpty(departmentId)
+            ? null
+            : await _db.Departments.Where(d => d.Id == departmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
+        var usesDeptWideMemoCount = SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.HOD);
         var myMemos = string.IsNullOrEmpty(tenantId)
-            ? await _db.Memos.IgnoreQueryFilters().CountAsync(m => m.CreatedBy == userId, cancellationToken)
-            : await _db.Memos.CountAsync(m => m.CreatedBy == userId, cancellationToken);
+            ? await _db.Memos.IgnoreQueryFilters().CountAsync(
+                m => usesDeptWideMemoCount
+                    ? !string.IsNullOrEmpty(deptName) && m.Department == deptName
+                    : m.CreatedBy == userId,
+                cancellationToken)
+            : await _db.Memos.CountAsync(
+                m => usesDeptWideMemoCount
+                    ? m.TenantId == tenantId && !string.IsNullOrEmpty(deptName) && m.Department == deptName
+                    : m.TenantId == tenantId && m.CreatedBy == userId,
+                cancellationToken);
         var pendingForMe = string.IsNullOrEmpty(tenantId)
             ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(r => r.Status == BudgetRequestStatus.PendingApproval, cancellationToken)
             : await _db.BudgetRequests.CountAsync(r => r.Status == BudgetRequestStatus.PendingApproval, cancellationToken);
@@ -240,7 +254,8 @@ public class DashboardService : IDashboardService
             ? await _db.Departments.IgnoreQueryFilters().CountAsync(cancellationToken)
             : await _db.Departments.CountAsync(cancellationToken);
 
-        var dashboard = new HODDashboardDto(myDeptBudgets, myMemos, pendingForMe, deptsCount, "HOD");
+        var roleLabel = SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.HodAssistance) ? "HodAssistance" : "HOD";
+        var dashboard = new HODDashboardDto(myDeptBudgets, myMemos, pendingForMe, deptsCount, roleLabel);
         return Result<HODDashboardDto>.Success(dashboard);
     }
 
