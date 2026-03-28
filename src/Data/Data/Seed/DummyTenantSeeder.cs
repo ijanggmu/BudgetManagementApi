@@ -12,6 +12,7 @@ namespace Data.Seed;
 
 /// <summary>
 /// Seeds one dummy tenant with users: Tenant Admin, CEO, CFO, HOD, HOD Assistant.
+/// Usernames are suffixed with the tenant slug (e.g. ceo-dummy) because Identity enforces a global unique <c>UserNameIndex</c>.
 /// All users share the same password: Admin@123
 /// </summary>
 public static class DummyTenantSeeder
@@ -98,19 +99,27 @@ public static class DummyTenantSeeder
 
         var usersToSeed = new[]
         {
-            (UserName: "tenantadmin", Email: "tenantadmin@dummy.com", FullName: "Tenant Admin", RoleName: adminRoleName, IsAdminEntity: true),
-            (UserName: "ceo", Email: "ceo@dummy.com", FullName: "CEO User", RoleName: ceoRoleName, IsAdminEntity: false),
-            (UserName: "cfo", Email: "cfo@dummy.com", FullName: "CFO User", RoleName: cfoRoleName, IsAdminEntity: false),
-            (UserName: "hod", Email: "hod@dummy.com", FullName: "HOD User", RoleName: hodRoleName, IsAdminEntity: false),
-            (UserName: "hodassistant", Email: "hodassistant@dummy.com", FullName: "HOD Assistant User", RoleName: hodAssistRoleName, IsAdminEntity: false)
+            (UserName: $"tenantadmin-{DummyTenantSlug}", Email: "tenantadmin@dummy.com", FullName: "Tenant Admin", RoleName: adminRoleName, IsAdminEntity: true),
+            (UserName: $"ceo-{DummyTenantSlug}", Email: "ceo@dummy.com", FullName: "CEO User", RoleName: ceoRoleName, IsAdminEntity: false),
+            (UserName: $"cfo-{DummyTenantSlug}", Email: "cfo@dummy.com", FullName: "CFO User", RoleName: cfoRoleName, IsAdminEntity: false),
+            (UserName: $"hod-{DummyTenantSlug}", Email: "hod@dummy.com", FullName: "HOD User", RoleName: hodRoleName, IsAdminEntity: false),
+            (UserName: $"hodassistant-{DummyTenantSlug}", Email: "hodassistant@dummy.com", FullName: "HOD Assistant User", RoleName: hodAssistRoleName, IsAdminEntity: false)
         };
 
         foreach (var u in usersToSeed)
         {
-            var existingForTenant = await context.Users
+            var normalizedEmail = userManager.NormalizeEmail(u.Email);
+            var normalizedUserName = userManager.NormalizeName(u.UserName);
+            var alreadySeededForTenant = await context.Users
                 .IgnoreQueryFilters()
-                .AnyAsync(usr => usr.TenantId == tenant.Id && usr.UserName == u.UserName);
-            if (existingForTenant)
+                .AnyAsync(usr => usr.TenantId == tenant.Id && usr.NormalizedEmail == normalizedEmail);
+            if (alreadySeededForTenant)
+                continue;
+
+            var userNameTakenGlobally = await context.Users
+                .IgnoreQueryFilters()
+                .AnyAsync(usr => usr.NormalizedUserName == normalizedUserName);
+            if (userNameTakenGlobally)
                 continue;
 
             var user = new ApplicationUser
