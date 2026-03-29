@@ -44,13 +44,15 @@ public class MemoService(
 
     public async Task<Result<List<MemoResponseDto>>> GetAllAsync(MemoListRequestModel requestModel, CancellationToken cancellationToken = default)
     {
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
         IQueryable<Memo> query = db.Memos.AsQueryable();
-        if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
-            query = query.IgnoreQueryFilters().Where(m => m.TenantId == requestModel.TenantId);
-        else if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+        if (isSuperAdmin)
+        {
+            query = query.IgnoreQueryFilters().Where(m => !m.IsDeleted);
+            if (!string.IsNullOrEmpty(requestModel.TenantId))
+                query = query.Where(m => m.TenantId == requestModel.TenantId);
+        }
         if (!string.IsNullOrEmpty(requestModel.DepartmentId))
         {
             var deptName = await db.Departments.Where(d => d.Id == requestModel.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
@@ -93,10 +95,10 @@ public class MemoService(
 
     public async Task<Result<MemoResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
         var query = db.Memos.Where(m => m.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<MemoResponseDto>.Failed("Memo not found.");
         if (!isSuperAdmin)
@@ -110,10 +112,10 @@ public class MemoService(
 
     public async Task<Result<MemoResponseDto>> GetByBudgetRequestIdAsync(string budgetRequestId, CancellationToken cancellationToken = default)
     {
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
         var query = db.Memos.Where(m => m.BudgetRequestId == budgetRequestId);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<MemoResponseDto>.Failed("Memo not found for this budget request.");
         if (!isSuperAdmin)
@@ -127,8 +129,7 @@ public class MemoService(
 
     public async Task<Result<MemoResponseDto>> CreateAsync(CreateMemoDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var tenantId = db.CurrentTenantId;
         var request = await db.BudgetRequests.FirstOrDefaultAsync(r => r.Id == dto.BudgetRequestId && r.TenantId == tenantId, cancellationToken);
         if (request == null && isSuperAdmin)
@@ -144,11 +145,10 @@ public class MemoService(
     /// <inheritdoc />
     public async Task<Result<MemoResponseDto>> CreateForRequestAsync(string budgetRequestId, CreateMemoDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         IQueryable<BudgetRequest> query = db.BudgetRequests.Where(r => r.Id == budgetRequestId);
         if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var request = await query.FirstOrDefaultAsync(cancellationToken);
         if (request == null) return Result<MemoResponseDto>.Failed("Budget request not found.");
         var existing = await db.Memos.AnyAsync(m => m.BudgetRequestId == budgetRequestId && m.TenantId == (request.TenantId), cancellationToken);
@@ -201,10 +201,10 @@ public class MemoService(
 
     public async Task<Result<MemoResponseDto>> UpdateAsync(string id, UpdateMemoDto dto, CancellationToken cancellationToken = default)
     {
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
         var query = db.Memos.Where(m => m.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<MemoResponseDto>.Failed("Memo not found.");
         var uid = userProfileService.GetUserId();
@@ -225,10 +225,10 @@ public class MemoService(
 
     public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
         var query = db.Memos.Where(m => m.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<bool>.Failed("Memo not found.");
         var uid = userProfileService.GetUserId();
@@ -245,10 +245,10 @@ public class MemoService(
 
     public async Task<Result<byte[]>> GeneratePdfAsync(string id, CancellationToken cancellationToken = default)
     {
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
         var query = db.Memos.Where(m => m.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<byte[]>.Failed("Memo not found.");
         var uid = userProfileService.GetUserId();
@@ -271,7 +271,7 @@ public class MemoService(
 
     private async Task<UserMemoContext> GetUserMemoContextAsync(string userId, string? roleIdClaim, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrEmpty(roleIdClaim) && roleIdClaim.Contains(SystemRoles.SuperAdmin))
+        if (userProfileService.IsSuperAdmin())
             return new UserMemoContext(true, null, false, false);
 
         var roleIds = await db.Set<ApplicationUserRoles>()
@@ -551,10 +551,10 @@ public class MemoService(
 
     public async Task<Result<byte[]>> GenerateDocxAsync(string id, CancellationToken cancellationToken = default)
     {
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
         var query = db.Memos.Where(m => m.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<byte[]>.Failed("Memo not found.");
         var uidDocx = userProfileService.GetUserId();
@@ -729,13 +729,14 @@ public class MemoService(
 
     public async Task<Result<byte[]>> ExportToExcelAsync(MemoListRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         IQueryable<Memo> query = db.Memos.AsQueryable();
-        if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
-            query = query.IgnoreQueryFilters().Where(m => m.TenantId == requestModel.TenantId);
-        else if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+        if (isSuperAdmin)
+        {
+            query = query.IgnoreQueryFilters().Where(m => !m.IsDeleted);
+            if (!string.IsNullOrEmpty(requestModel.TenantId))
+                query = query.Where(m => m.TenantId == requestModel.TenantId);
+        }
         if (!string.IsNullOrEmpty(requestModel.DepartmentId))
         {
             var deptName = await db.Departments.Where(d => d.Id == requestModel.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);

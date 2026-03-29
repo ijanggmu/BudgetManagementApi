@@ -19,14 +19,13 @@ public class DepartmentService(
 {
     public async Task<Result<List<DepartmentResponseDto>>> GetAllAsync(DepartmentListRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         IQueryable<Department> query = db.Departments;
         if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
             query = query.IgnoreQueryFilters().Where(d => d.TenantId == requestModel.TenantId);
         else if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
 
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
         var list = await result.ToListAsync(cancellationToken);
@@ -52,11 +51,10 @@ public class DepartmentService(
 
     public async Task<Result<DepartmentResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var query = db.Departments.Where(d => d.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<DepartmentResponseDto>.Failed("Department not found.");
 
@@ -73,8 +71,7 @@ public class DepartmentService(
 
     public async Task<Result<DepartmentResponseDto>> CreateAsync(CreateDepartmentDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
         var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
@@ -108,10 +105,9 @@ public class DepartmentService(
 
     public async Task<Result<DepartmentResponseDto>> UpdateAsync(string id, UpdateDepartmentDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.Departments.Where(d => d.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<DepartmentResponseDto>.Failed("Department not found.");
 
@@ -138,10 +134,9 @@ public class DepartmentService(
 
     public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.Departments.Where(d => d.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<bool>.Failed("Department not found.");
 

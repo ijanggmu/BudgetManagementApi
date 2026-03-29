@@ -27,8 +27,7 @@ public class AdminService(
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
         // We only need to check if user is SuperAdmin for query filtering logic
 
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var tenantId = requestModel.TenantId;
 
         IQueryable<Admin> query = db.Admins
@@ -148,8 +147,7 @@ public class AdminService(
     public async Task<Result<AdminResponseDto>> GetAdminByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var query = db.Admins
             .Include(a => a.User)
@@ -208,8 +206,7 @@ public class AdminService(
         try
         {
             // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-            var roleId = userProfileService.GetRoleId();
-            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+            var isSuperAdmin = userProfileService.IsSuperAdmin();
 
             // Get tenant ID from current user (for Admin) or from request body (for SuperAdmin)
             var userId = userProfileService.GetUserId();
@@ -218,20 +215,21 @@ public class AdminService(
                 ? (!string.IsNullOrWhiteSpace(dto.TenantId) ? dto.TenantId : user?.TenantId)
                 : db.CurrentTenantId;
 
-            // Check if username already exists
-            // Note: IsDeleted filter is now applied globally
-            var usernameExists = await db.Users
-                .AnyAsync(u => u.UserName == dto.Username, cancellationToken);
+            var normalizedUserName = userManager.NormalizeName(dto.Username);
+            if (string.IsNullOrEmpty(normalizedUserName))
+                return Result<AdminResponseDto>.Failed("Username is invalid.");
 
-            if (usernameExists)
+            var usernameTaken = await db.Users
+                .AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken);
+
+            if (usernameTaken)
                 return Result<AdminResponseDto>.Failed("Username already exists.");
 
-            // Check if email already exists
             if (!string.IsNullOrWhiteSpace(dto.Email))
             {
-                // Note: IsDeleted filter is now applied globally
+                var normalizedEmail = userManager.NormalizeEmail(dto.Email);
                 var emailExists = await db.Users
-                    .AnyAsync(u => u.Email == dto.Email, cancellationToken);
+                    .AnyAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken);
 
                 if (emailExists)
                     return Result<AdminResponseDto>.Failed("Email already exists.");
@@ -369,6 +367,16 @@ public class AdminService(
 
             return Result<AdminResponseDto>.Success(responseDto);
         }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            var inner = ex.InnerException?.Message ?? ex.Message;
+            if (inner.Contains("23505", StringComparison.Ordinal) ||
+                inner.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) ||
+                inner.Contains("UserNameIndex", StringComparison.OrdinalIgnoreCase))
+                return Result<AdminResponseDto>.Failed("Username or email is already in use by an active account.");
+            return Result<AdminResponseDto>.Failed($"Could not save the user: {inner}");
+        }
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
@@ -382,8 +390,7 @@ public class AdminService(
         try
         {
             // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-            var roleId = userProfileService.GetRoleId();
-            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+            var isSuperAdmin = userProfileService.IsSuperAdmin();
 
             var query = db.Admins
                 .Include(a => a.User)
@@ -549,8 +556,7 @@ public class AdminService(
         {
             // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
             var currentUserId = userProfileService.GetUserId();
-            var roleIdClaim = userProfileService.GetRoleId();
-            var isSuperAdmin = !string.IsNullOrEmpty(roleIdClaim) && roleIdClaim.Contains(SystemRoles.SuperAdmin);
+            var isSuperAdmin = userProfileService.IsSuperAdmin();
 
             // Ignore tenant query filters: Admin.TenantId is often null for legacy rows while User still belongs
             // to the current tenant (resolved via roles). The global Admin filter would hide those rows and break delete.

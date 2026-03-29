@@ -12,10 +12,9 @@ public class MemoTemplateService(ApplicationDataContext db, IUserProfileService 
 {
     public async Task<Result<List<MemoTemplateResponseDto>>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.MemoTemplates.AsQueryable();
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var list = await query.OrderBy(t => t.Name).ToListAsync(cancellationToken);
         var dtos = list.Select(t => new MemoTemplateResponseDto { Id = t.Id, Name = t.Name, Description = t.Description, BodyTemplate = t.BodyTemplate }).ToList();
         return Result<List<MemoTemplateResponseDto>>.Success(dtos);
@@ -23,10 +22,9 @@ public class MemoTemplateService(ApplicationDataContext db, IUserProfileService 
 
     public async Task<Result<MemoTemplateResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.MemoTemplates.Where(t => t.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<MemoTemplateResponseDto>.Failed("Memo template not found.");
         return Result<MemoTemplateResponseDto>.Success(new MemoTemplateResponseDto { Id = entity.Id, Name = entity.Name, Description = entity.Description, BodyTemplate = entity.BodyTemplate });
@@ -46,10 +44,9 @@ public class MemoTemplateService(ApplicationDataContext db, IUserProfileService 
 
     public async Task<Result<MemoTemplateResponseDto>> UpdateAsync(string id, UpdateMemoTemplateDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.MemoTemplates.Where(t => t.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<MemoTemplateResponseDto>.Failed("Memo template not found.");
         if (dto.Name != null) entity.Name = dto.Name;
@@ -64,10 +61,9 @@ public class MemoTemplateService(ApplicationDataContext db, IUserProfileService 
 
     public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.MemoTemplates.Where(t => t.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<bool>.Failed("Memo template not found.");
         entity.IsDeleted = true;

@@ -25,15 +25,14 @@ public class DesignationService(
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
         // Only check role for query filtering logic
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         IQueryable<Designation> query = db.Designations;
         // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
         {
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         }
 
         // Apply Sieve filtering and pagination
@@ -63,15 +62,14 @@ public class DesignationService(
     public async Task<Result<DesignationResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var query = db.Designations
             .Where(d => d.Id == id);
         // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
 
         var designation = await query.FirstOrDefaultAsync(cancellationToken);
 
@@ -93,8 +91,7 @@ public class DesignationService(
     public async Task<Result<DesignationResponseDto>> CreateAsync(CreateDesignationDto dto, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
@@ -134,15 +131,14 @@ public class DesignationService(
     public async Task<Result<DesignationResponseDto>> UpdateAsync(string id, UpdateDesignationDto dto, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var query = db.Designations
             .Where(d => d.Id == id);
         // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
 
         var designation = await query.FirstOrDefaultAsync(cancellationToken);
 
@@ -195,7 +191,7 @@ public class DesignationService(
         // Note: IsDeleted filter is now applied globally
 
         if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
 
         var designation = await query.FirstOrDefaultAsync(cancellationToken);
 
@@ -219,8 +215,7 @@ public class DesignationService(
     public async Task<Result<ImportResult>> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);

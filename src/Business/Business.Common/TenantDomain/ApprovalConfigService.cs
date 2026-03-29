@@ -25,13 +25,12 @@ public class ApprovalConfigService(
 
     public async Task<Result<List<ApprovalConfigResponseDto>>> GetAllAsync(ApprovalConfigListRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         IQueryable<ApprovalConfig> query = db.ApprovalConfigs.AsQueryable();
         if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
             query = query.IgnoreQueryFilters().Where(a => a.TenantId == requestModel.TenantId);
         else if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         if (!string.IsNullOrEmpty(requestModel.DepartmentId))
             query = query.Where(a => a.DepartmentId == requestModel.DepartmentId);
 
@@ -64,10 +63,9 @@ public class ApprovalConfigService(
 
     public async Task<Result<ApprovalConfigResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.ApprovalConfigs.Where(a => a.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<ApprovalConfigResponseDto>.Failed("Approval config not found.");
         var deptName = entity.DepartmentId == null
@@ -78,10 +76,9 @@ public class ApprovalConfigService(
 
     public async Task<Result<ApprovalConfigResponseDto>> GetByDepartmentIdAsync(string departmentId, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.ApprovalConfigs.Where(a => a.DepartmentId == departmentId);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
 
         if (entity == null)
@@ -96,7 +93,7 @@ public class ApprovalConfigService(
             {
                 var defaultQuery = db.ApprovalConfigs
                     .Where(a => a.TenantId == deptTenantId && a.DepartmentId == null);
-                if (isSuperAdmin) defaultQuery = defaultQuery.IgnoreQueryFilters();
+                if (isSuperAdmin) defaultQuery = defaultQuery.IgnoreQueryFilters().Where(x => !x.IsDeleted);
                 entity = await defaultQuery.FirstOrDefaultAsync(cancellationToken);
             }
         }
@@ -111,8 +108,7 @@ public class ApprovalConfigService(
 
     public async Task<Result<ApprovalConfigResponseDto>> CreateAsync(CreateApprovalConfigDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
         var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
@@ -158,10 +154,9 @@ public class ApprovalConfigService(
 
     public async Task<Result<ApprovalConfigResponseDto>> UpdateAsync(string id, UpdateApprovalConfigDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.ApprovalConfigs.Where(a => a.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<ApprovalConfigResponseDto>.Failed("Approval config not found.");
         if (dto.DepartmentId != null) entity.DepartmentId = dto.DepartmentId;
@@ -184,10 +179,9 @@ public class ApprovalConfigService(
 
     public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.ApprovalConfigs.Where(a => a.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<bool>.Failed("Approval config not found.");
         entity.IsDeleted = true;
@@ -200,8 +194,7 @@ public class ApprovalConfigService(
 
     public async Task<Result<ApprovalConfigImportResultDto>> ImportFromCsvAsync(Stream csvStream, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
         var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
@@ -279,8 +272,7 @@ public class ApprovalConfigService(
 
     public async Task<Result<List<ApproverRoleItemDto>>> GetApproverRolesAsync(CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         IQueryable<ApplicationRole> query = db.Roles.Where(r => !r.IsDeleted);
         if (!isSuperAdmin && !string.IsNullOrEmpty(db.CurrentTenantId))
             query = query.Where(r => r.TenantId == db.CurrentTenantId || r.TenantId == null);

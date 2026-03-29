@@ -31,13 +31,12 @@ public class BudgetRequestService(
 
         try
         {
-            var roleId = userProfileService.GetRoleId();
-            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+            var isSuperAdmin = userProfileService.IsSuperAdmin();
             IQueryable<BudgetRequest> query = db.BudgetRequests.AsQueryable();
             if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
                 query = query.IgnoreQueryFilters().Where(b => b.TenantId == requestModel.TenantId);
             else if (isSuperAdmin)
-                query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
             if (!string.IsNullOrEmpty(requestModel.DepartmentId))
                 query = query.Where(b => b.DepartmentId == requestModel.DepartmentId);
             if (!string.IsNullOrEmpty(requestModel.Status) && Enum.TryParse<BudgetRequestStatus>(requestModel.Status, true, out var statusFilter))
@@ -108,10 +107,9 @@ public class BudgetRequestService(
 
     public async Task<Result<BudgetRequestResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.BudgetRequests.Where(b => b.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<BudgetRequestResponseDto>.Failed("Budget request not found.");
         var deptName = await db.Departments.Where(d => d.Id == entity.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
@@ -122,8 +120,7 @@ public class BudgetRequestService(
 
     public async Task<Result<BudgetRequestResponseDto>> CreateAsync(CreateBudgetRequestDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
         var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
@@ -207,8 +204,7 @@ public class BudgetRequestService(
     public async Task<Result<BudgetRequestResponseDto>> ApproveAsync(string id, ApproveBudgetRequestDto dto, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var request = await db.BudgetRequests.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
         if (request == null) return Result<BudgetRequestResponseDto>.Failed("Budget request not found.");
         if (request.Status != BudgetRequestStatus.PendingApproval)
@@ -315,10 +311,9 @@ public class BudgetRequestService(
 
     public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.BudgetRequests.Where(b => b.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<bool>.Failed("Budget request not found.");
         if (entity.Status == BudgetRequestStatus.Approved)
@@ -415,13 +410,12 @@ public class BudgetRequestService(
 
     public async Task<Result<byte[]>> ExportAsync(BudgetRequestListRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         IQueryable<BudgetRequest> query = db.BudgetRequests.AsQueryable();
         if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
             query = query.IgnoreQueryFilters().Where(b => b.TenantId == requestModel.TenantId);
         else if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         if (!string.IsNullOrEmpty(requestModel.DepartmentId))
             query = query.Where(b => b.DepartmentId == requestModel.DepartmentId);
         if (!string.IsNullOrEmpty(requestModel.Status) && Enum.TryParse<BudgetRequestStatus>(requestModel.Status, true, out var exportStatusFilter))

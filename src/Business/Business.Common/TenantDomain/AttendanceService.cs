@@ -119,8 +119,7 @@ public class AttendanceService(
         {
             // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
             // Only check role for query filtering logic
-            var roleId = userProfileService.GetRoleId();
-            var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+            var isSuperAdmin = userProfileService.IsSuperAdmin();
 
             // Build query
             IQueryable<AttendanceEntry> query = db.Set<AttendanceEntry>()
@@ -129,9 +128,9 @@ public class AttendanceService(
 
             // For SuperAdmin, ignore tenant filter to see all
             if (isSuperAdmin)
-            {
-                query = query.IgnoreQueryFilters();
-            }
+        {
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
+        }
 
             // Apply Sieve filtering and pagination
             var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);

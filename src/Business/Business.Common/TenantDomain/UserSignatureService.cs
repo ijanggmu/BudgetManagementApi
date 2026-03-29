@@ -27,8 +27,7 @@ public class UserSignatureService(
     public async Task<Result<UserSignatureResponseDto>> SetSignatureUrlAsync(string signatureUrl, CancellationToken cancellationToken = default)
     {
         var userId = userProfileService.GetUserId();
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var tenantId = db.CurrentTenantId;
         if (isSuperAdmin)
         {

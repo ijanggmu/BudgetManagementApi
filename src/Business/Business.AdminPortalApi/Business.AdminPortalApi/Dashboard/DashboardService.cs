@@ -95,8 +95,8 @@ public class DashboardService : IDashboardService
         var totalTenants = await _db.Tenants.CountAsync(cancellationToken);
         var totalAdmins = await _db.Admins.CountAsync(cancellationToken);
         var totalRoles = await _db.Roles.CountAsync(cancellationToken);
-        var totalBudgets = await _db.Budgets.IgnoreQueryFilters().CountAsync(cancellationToken);
-        var totalBudgetRequests = await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(cancellationToken);
+        var totalBudgets = await _db.Budgets.IgnoreQueryFilters().CountAsync(b => !b.IsDeleted, cancellationToken);
+        var totalBudgetRequests = await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(r => !r.IsDeleted, cancellationToken);
 
         var dashboard = new SuperAdminDashboardDto(
             totalTenants,
@@ -127,22 +127,23 @@ public class DashboardService : IDashboardService
 
         // Admin – BMS metrics for tenant (or global for demo Admin)
         var totalBudgets = useGlobalCounts
-            ? await _db.Budgets.IgnoreQueryFilters().CountAsync(cancellationToken)
+            ? await _db.Budgets.IgnoreQueryFilters().CountAsync(b => !b.IsDeleted, cancellationToken)
             : await _db.Budgets.CountAsync(b => b.TenantId == tenantId, cancellationToken);
         var totalDepartments = useGlobalCounts
-            ? await _db.Departments.IgnoreQueryFilters().CountAsync(cancellationToken)
+            ? await _db.Departments.IgnoreQueryFilters().CountAsync(d => !d.IsDeleted, cancellationToken)
             : await _db.Departments.CountAsync(d => d.TenantId == tenantId, cancellationToken);
         var totalBudgetRequests = useGlobalCounts
-            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(cancellationToken)
+            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(r => !r.IsDeleted, cancellationToken)
             : await _db.BudgetRequests.CountAsync(r => r.TenantId == tenantId, cancellationToken);
         var pendingApprovals = useGlobalCounts
-            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(r => r.Status == BudgetRequestStatus.PendingApproval, cancellationToken)
+            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(
+                r => !r.IsDeleted && r.Status == BudgetRequestStatus.PendingApproval, cancellationToken)
             : await _db.BudgetRequests.CountAsync(r => r.TenantId == tenantId && r.Status == BudgetRequestStatus.PendingApproval, cancellationToken);
         var totalMemos = useGlobalCounts
-            ? await _db.Memos.IgnoreQueryFilters().CountAsync(cancellationToken)
+            ? await _db.Memos.IgnoreQueryFilters().CountAsync(m => !m.IsDeleted, cancellationToken)
             : await _db.Memos.CountAsync(m => m.TenantId == tenantId, cancellationToken);
         var approvalConfigsCount = useGlobalCounts
-            ? await _db.ApprovalConfigs.IgnoreQueryFilters().CountAsync(cancellationToken)
+            ? await _db.ApprovalConfigs.IgnoreQueryFilters().CountAsync(c => !c.IsDeleted, cancellationToken)
             : await _db.ApprovalConfigs.CountAsync(c => c.TenantId == tenantId, cancellationToken);
 
         var dashboard = new TenantAdminDashboardDto(
@@ -169,16 +170,17 @@ public class DashboardService : IDashboardService
 
         var tenantId = _tenantContext.TenantId;
         var pendingApprovals = string.IsNullOrEmpty(tenantId)
-            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(r => r.Status == BudgetRequestStatus.PendingApproval, cancellationToken)
+            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(
+                r => !r.IsDeleted && r.Status == BudgetRequestStatus.PendingApproval, cancellationToken)
             : await _db.BudgetRequests.CountAsync(r => r.Status == BudgetRequestStatus.PendingApproval, cancellationToken);
         var totalBudgets = string.IsNullOrEmpty(tenantId)
-            ? await _db.Budgets.IgnoreQueryFilters().CountAsync(cancellationToken)
+            ? await _db.Budgets.IgnoreQueryFilters().CountAsync(b => !b.IsDeleted, cancellationToken)
             : await _db.Budgets.CountAsync(cancellationToken);
         var totalDepts = string.IsNullOrEmpty(tenantId)
-            ? await _db.Departments.IgnoreQueryFilters().CountAsync(cancellationToken)
+            ? await _db.Departments.IgnoreQueryFilters().CountAsync(d => !d.IsDeleted, cancellationToken)
             : await _db.Departments.CountAsync(cancellationToken);
         var memosCount = string.IsNullOrEmpty(tenantId)
-            ? await _db.Memos.IgnoreQueryFilters().CountAsync(cancellationToken)
+            ? await _db.Memos.IgnoreQueryFilters().CountAsync(m => !m.IsDeleted, cancellationToken)
             : await _db.Memos.CountAsync(cancellationToken);
 
         var dashboard = new CEODashboardDto(pendingApprovals, totalBudgets, totalDepts, memosCount, "CEO");
@@ -197,17 +199,19 @@ public class DashboardService : IDashboardService
 
         var tenantId = _tenantContext.TenantId;
         var totalBudgets = string.IsNullOrEmpty(tenantId)
-            ? await _db.Budgets.IgnoreQueryFilters().CountAsync(cancellationToken)
+            ? await _db.Budgets.IgnoreQueryFilters().CountAsync(b => !b.IsDeleted, cancellationToken)
             : await _db.Budgets.CountAsync(cancellationToken);
         var approvedCount = string.IsNullOrEmpty(tenantId)
-            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(r => r.Status == BudgetRequestStatus.Approved, cancellationToken)
+            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(
+                r => !r.IsDeleted && r.Status == BudgetRequestStatus.Approved, cancellationToken)
             : await _db.BudgetRequests.CountAsync(r => r.Status == BudgetRequestStatus.Approved, cancellationToken);
         var pendingCount = string.IsNullOrEmpty(tenantId)
-            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(r => r.Status == BudgetRequestStatus.PendingApproval, cancellationToken)
+            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(
+                r => !r.IsDeleted && r.Status == BudgetRequestStatus.PendingApproval, cancellationToken)
             : await _db.BudgetRequests.CountAsync(r => r.Status == BudgetRequestStatus.PendingApproval, cancellationToken);
         var reportCount = string.IsNullOrEmpty(tenantId)
             ? 0
-            : await _db.Budgets.IgnoreQueryFilters().CountAsync(cancellationToken);
+            : await _db.Budgets.IgnoreQueryFilters().CountAsync(b => !b.IsDeleted, cancellationToken);
 
         var dashboard = new CFODashboardDto(totalBudgets, approvedCount, pendingCount, reportCount, "CFO");
         return Result<CFODashboardDto>.Success(dashboard);
@@ -230,7 +234,8 @@ public class DashboardService : IDashboardService
         var myDeptBudgets = string.IsNullOrEmpty(departmentId)
             ? 0
             : (string.IsNullOrEmpty(tenantId)
-                ? await _db.Budgets.IgnoreQueryFilters().CountAsync(b => b.DepartmentId == departmentId, cancellationToken)
+                ? await _db.Budgets.IgnoreQueryFilters().CountAsync(
+                    b => !b.IsDeleted && b.DepartmentId == departmentId, cancellationToken)
                 : await _db.Budgets.CountAsync(b => b.DepartmentId == departmentId, cancellationToken));
         var deptName = string.IsNullOrEmpty(departmentId)
             ? null
@@ -238,9 +243,9 @@ public class DashboardService : IDashboardService
         var usesDeptWideMemoCount = SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.HOD);
         var myMemos = string.IsNullOrEmpty(tenantId)
             ? await _db.Memos.IgnoreQueryFilters().CountAsync(
-                m => usesDeptWideMemoCount
+                m => !m.IsDeleted && (usesDeptWideMemoCount
                     ? !string.IsNullOrEmpty(deptName) && m.Department == deptName
-                    : m.CreatedBy == userId,
+                    : m.CreatedBy == userId),
                 cancellationToken)
             : await _db.Memos.CountAsync(
                 m => usesDeptWideMemoCount
@@ -248,10 +253,11 @@ public class DashboardService : IDashboardService
                     : m.TenantId == tenantId && m.CreatedBy == userId,
                 cancellationToken);
         var pendingForMe = string.IsNullOrEmpty(tenantId)
-            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(r => r.Status == BudgetRequestStatus.PendingApproval, cancellationToken)
+            ? await _db.BudgetRequests.IgnoreQueryFilters().CountAsync(
+                r => !r.IsDeleted && r.Status == BudgetRequestStatus.PendingApproval, cancellationToken)
             : await _db.BudgetRequests.CountAsync(r => r.Status == BudgetRequestStatus.PendingApproval, cancellationToken);
         var deptsCount = string.IsNullOrEmpty(tenantId)
-            ? await _db.Departments.IgnoreQueryFilters().CountAsync(cancellationToken)
+            ? await _db.Departments.IgnoreQueryFilters().CountAsync(d => !d.IsDeleted, cancellationToken)
             : await _db.Departments.CountAsync(cancellationToken);
 
         var roleLabel = SystemRoles.UserRoleNamesMatch(userRoles, SystemRoles.HodAssistance) ? "HodAssistance" : "HOD";

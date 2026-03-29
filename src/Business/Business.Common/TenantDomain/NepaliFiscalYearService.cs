@@ -20,13 +20,12 @@ public class NepaliFiscalYearService(
     public async Task<Result<List<NepaliFiscalYearResponseDto>>> GetAllAsync(NepaliFiscalYearListRequestModel? requestModel = null, CancellationToken cancellationToken = default)
     {
         requestModel ??= new NepaliFiscalYearListRequestModel();
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         IQueryable<NepaliFiscalYear> query = db.NepaliFiscalYears.AsQueryable();
         if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
-            query = query.IgnoreQueryFilters().Where(f => f.TenantId == requestModel.TenantId);
+            query = query.IgnoreQueryFilters().Where(f => f.TenantId == requestModel.TenantId && !f.IsDeleted);
         else if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
 
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
         var list = await result.OrderBy(f => f.StartDateUtc).ToListAsync(cancellationToken);
@@ -50,10 +49,9 @@ public class NepaliFiscalYearService(
 
     public async Task<Result<NepaliFiscalYearResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.NepaliFiscalYears.Where(f => f.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<NepaliFiscalYearResponseDto>.Failed("Fiscal year not found.");
         return Result<NepaliFiscalYearResponseDto>.Success(new NepaliFiscalYearResponseDto
@@ -68,8 +66,7 @@ public class NepaliFiscalYearService(
 
     public async Task<Result<NepaliFiscalYearResponseDto>> CreateAsync(CreateNepaliFiscalYearDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
         var tenantId = isSuperAdmin ? user?.TenantId : db.CurrentTenantId;
@@ -110,10 +107,9 @@ public class NepaliFiscalYearService(
 
     public async Task<Result<NepaliFiscalYearResponseDto>> UpdateAsync(string id, UpdateNepaliFiscalYearDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.NepaliFiscalYears.Where(f => f.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<NepaliFiscalYearResponseDto>.Failed("Fiscal year not found.");
         if (dto.Code != null) entity.Code = dto.Code;
@@ -146,10 +142,9 @@ public class NepaliFiscalYearService(
 
     public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.NepaliFiscalYears.Where(f => f.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<bool>.Failed("Fiscal year not found.");
         entity.IsDeleted = true;

@@ -17,13 +17,12 @@ public class BudgetHeadingService(
     public async Task<Result<List<BudgetHeadingResponseDto>>> GetAllAsync(BudgetHeadingListRequestModel? requestModel = null, CancellationToken cancellationToken = default)
     {
         requestModel ??= new BudgetHeadingListRequestModel();
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.BudgetHeadings.AsQueryable();
         if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
             query = query.IgnoreQueryFilters().Where(h => h.TenantId == requestModel.TenantId);
         else if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
 
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
         var list = await result.OrderBy(h => h.Code).ToListAsync(cancellationToken);
@@ -39,10 +38,9 @@ public class BudgetHeadingService(
 
     public async Task<Result<BudgetHeadingResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.BudgetHeadings.Where(h => h.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<BudgetHeadingResponseDto>.Failed("Budget heading not found.");
         return Result<BudgetHeadingResponseDto>.Success(new BudgetHeadingResponseDto { Id = entity.Id, Name = entity.Name, Code = entity.Code, Description = entity.Description });
@@ -62,10 +60,9 @@ public class BudgetHeadingService(
 
     public async Task<Result<BudgetHeadingResponseDto>> UpdateAsync(string id, UpdateBudgetHeadingDto dto, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.BudgetHeadings.Where(h => h.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<BudgetHeadingResponseDto>.Failed("Budget heading not found.");
         if (dto.Name != null) entity.Name = dto.Name;
@@ -80,10 +77,9 @@ public class BudgetHeadingService(
 
     public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.BudgetHeadings.Where(h => h.Id == id);
-        if (isSuperAdmin) query = query.IgnoreQueryFilters();
+        if (isSuperAdmin) query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         var entity = await query.FirstOrDefaultAsync(cancellationToken);
         if (entity == null) return Result<bool>.Failed("Budget heading not found.");
         entity.IsDeleted = true;

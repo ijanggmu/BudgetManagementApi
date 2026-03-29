@@ -24,14 +24,13 @@ public class BranchService(
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
         // Only check role for query filtering logic
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         IQueryable<Branch> query = db.Branches;
         // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
 
         // Apply Sieve filtering and pagination
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
@@ -65,15 +64,14 @@ public class BranchService(
     public async Task<Result<BranchResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var query = db.Branches
             .Where(b => b.Id == id);
         // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
 
         var branch = await query.FirstOrDefaultAsync(cancellationToken);
 
@@ -100,8 +98,7 @@ public class BranchService(
     public async Task<Result<BranchResponseDto>> CreateAsync(CreateBranchDto dto, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
@@ -159,15 +156,14 @@ public class BranchService(
     public async Task<Result<BranchResponseDto>> UpdateAsync(string id, UpdateBranchDto dto, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var query = db.Branches
             .Where(b => b.Id == id);
         // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
 
         var branch = await query.FirstOrDefaultAsync(cancellationToken);
 
@@ -226,15 +222,14 @@ public class BranchService(
     public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var query = db.Branches
             .Where(b => b.Id == id);
         // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
 
         var branch = await query.FirstOrDefaultAsync(cancellationToken);
 
@@ -258,8 +253,7 @@ public class BranchService(
     public async Task<Result<ImportResult>> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);

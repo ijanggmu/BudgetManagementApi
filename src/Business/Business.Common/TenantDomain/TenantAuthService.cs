@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Net;
 using Business.Common.File;
 using Business.Common.Token;
@@ -38,9 +40,11 @@ public class TenantAuthService(
         if (user == null || user.IsDeleted)
             return Result<TenantLoginResponseDto>.Failed("Invalid username or password.");
 
-        // Check if user has Admin role
         var roles = await userManager.GetRolesAsync(user);
-        if (!roles.Contains(SystemRoles.Admin) && !roles.Contains(SystemRoles.SuperAdmin))
+        var hasTenantPortalAccess =
+            SystemRoles.UserRoleNamesMatch(roles, SystemRoles.Admin) ||
+            roles.Any(r => string.Equals(r, SystemRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase));
+        if (!hasTenantPortalAccess)
             return Result<TenantLoginResponseDto>.Failed("User does not have tenant admin access.");
 
         // Verify password

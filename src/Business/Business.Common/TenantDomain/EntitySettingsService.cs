@@ -20,8 +20,7 @@ public class EntitySettingsService(
     public async Task<Result<EntitySettingsResponseDto>> GetAsync(CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);
@@ -67,8 +66,7 @@ public class EntitySettingsService(
     public async Task<Result<MessageResponseModel>> UpdateAsync(UpdateEntitySettingsDto dto, CancellationToken cancellationToken = default)
     {
         // Role authorization is handled by [AdminOrSuperAdmin] filter attribute on controller
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         var userId = userProfileService.GetUserId();
         var user = await userManager.FindByIdAsync(userId);

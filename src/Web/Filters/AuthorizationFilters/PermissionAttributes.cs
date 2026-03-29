@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Constant;
+using SharedKernel.Constant.Roles;
 using BeemaEdgeApi.Utilities.ResponseWrapper;
 using Infrastructure.Common.UserProfile;
 
@@ -83,11 +84,15 @@ public class PermissionAttribute : AuthorizeAttribute, IAuthorizationFilter
             .Select(r => r.Trim())
             .ToList();
 
+        var roleTypeClaim = context.HttpContext.User.FindFirst(TokenKey.RoleType)?.Value;
+
         var hasAnyRoleRequirement = _requiredRoles is { Length: > 0 };
         var hasAnyPermissionRequirement = _permissions is { Length: > 0 };
 
+        // Match global names (e.g. SuperAdmin) and tenant-scoped names (e.g. Admin-acme) via RoleType / prefix rules.
         var hasRequiredRole = hasAnyRoleRequirement &&
-                              _requiredRoles!.Any(requiredRole => roleIds.Contains(requiredRole));
+                              _requiredRoles!.Any(required =>
+                                  UserMeetsRequiredRoleName(required, roleIds, roleTypeClaim));
 
         var hasRequiredPermission = false;
         if (hasAnyPermissionRequirement)
@@ -134,6 +139,19 @@ public class PermissionAttribute : AuthorizeAttribute, IAuthorizationFilter
 
             SetForbiddenResult(context, message, 4032);
         }
+    }
+
+    /// <summary>Resolves tenant-prefixed role names (Admin-tenantSlug) and RoleType claim.</summary>
+    private static bool UserMeetsRequiredRoleName(string required, System.Collections.Generic.List<string> roleNamesFromToken, string? roleTypeClaim)
+    {
+        if (roleNamesFromToken.Any(n => string.Equals(n, required, StringComparison.OrdinalIgnoreCase)))
+            return true;
+        if (SystemRoles.UserRoleNamesMatch(roleNamesFromToken, required))
+            return true;
+        if (!string.IsNullOrEmpty(roleTypeClaim) &&
+            string.Equals(roleTypeClaim, required, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
     }
 
     private void SetForbiddenResult(AuthorizationFilterContext context, string message, int errorCode = 4032)

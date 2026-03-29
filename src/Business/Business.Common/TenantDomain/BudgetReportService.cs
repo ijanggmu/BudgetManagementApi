@@ -12,14 +12,13 @@ public class BudgetReportService(ApplicationDataContext db, IUserProfileService 
 {
     public async Task<Result<BudgetReportResponseDto>> GetReportAsync(BudgetReportRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         IQueryable<Data.Entities.Tenant.Budget> budgetQuery = db.Budgets.AsQueryable();
         if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
-            budgetQuery = budgetQuery.IgnoreQueryFilters().Where(b => b.TenantId == requestModel.TenantId);
+            budgetQuery = budgetQuery.IgnoreQueryFilters().Where(b => b.TenantId == requestModel.TenantId && !b.IsDeleted);
         else if (isSuperAdmin)
-            budgetQuery = budgetQuery.IgnoreQueryFilters();
+            budgetQuery = budgetQuery.IgnoreQueryFilters().Where(b => !b.IsDeleted);
         if (!string.IsNullOrEmpty(requestModel.DepartmentId))
             budgetQuery = budgetQuery.Where(b => b.DepartmentId == requestModel.DepartmentId);
         if (!string.IsNullOrEmpty(requestModel.FiscalYearId))
@@ -44,9 +43,9 @@ public class BudgetReportService(ApplicationDataContext db, IUserProfileService 
 
         IQueryable<BudgetRequest> requestQuery = db.BudgetRequests.AsQueryable();
         if (isSuperAdmin && !string.IsNullOrEmpty(requestModel.TenantId))
-            requestQuery = requestQuery.IgnoreQueryFilters().Where(r => r.TenantId == requestModel.TenantId);
+            requestQuery = requestQuery.IgnoreQueryFilters().Where(r => r.TenantId == requestModel.TenantId && !r.IsDeleted);
         else if (isSuperAdmin)
-            requestQuery = requestQuery.IgnoreQueryFilters();
+            requestQuery = requestQuery.IgnoreQueryFilters().Where(r => !r.IsDeleted);
         if (!string.IsNullOrEmpty(requestModel.DepartmentId))
             requestQuery = requestQuery.Where(r => r.DepartmentId == requestModel.DepartmentId);
         if (!string.IsNullOrEmpty(requestModel.FiscalYearId))

@@ -13,6 +13,12 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
 {
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
+        // Identity default unique UserNameIndex blocks reusing login after soft-delete. Only active users must be unique.
+        builder.HasIndex(u => u.NormalizedUserName)
+            .IsUnique()
+            .HasDatabaseName("UserNameIndex")
+            .HasFilter("\"IsDeleted\" = false");
+
         builder.HasIndex(p => p.Email).IsUnique(false);
 
         builder.HasIndex(p => p.PhoneNumber).IsUnique(false);

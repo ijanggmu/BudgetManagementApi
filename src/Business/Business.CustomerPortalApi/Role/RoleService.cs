@@ -34,8 +34,7 @@ public class RoleService(
                                                                     .ToListAsync(cancellationToken));
     public async Task<Result<List<RoleResponseModel>>> GetAllRolesAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
 
         Expression<Func<ApplicationRole, bool>> predicate = c => !c.IsDeleted;
 
@@ -176,13 +175,11 @@ public class RoleService(
         await using var transaction = await dataContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var roleIdClaim = userProfileService.GetRoleId();
-            var isSuperAdmin = !string.IsNullOrWhiteSpace(roleIdClaim) &&
-                               roleIdClaim.Contains(SystemRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase);
+            var isSuperAdmin = userProfileService.IsSuperAdmin();
 
             IQueryable<ApplicationRole> roleQuery = dataContext.Roles;
             if (isSuperAdmin)
-                roleQuery = roleQuery.IgnoreQueryFilters();
+                roleQuery = roleQuery.IgnoreQueryFilters().Where(r => !r.IsDeleted);
 
             var role = await roleQuery.FirstOrDefaultAsync(r => r.Id == roleId && !r.IsDeleted, cancellationToken);
 

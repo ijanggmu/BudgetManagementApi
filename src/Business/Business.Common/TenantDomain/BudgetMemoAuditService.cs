@@ -17,8 +17,7 @@ public class BudgetMemoAuditService(
     {
         var userId = userProfileService.GetUserId();
         var tenantId = db.CurrentTenantId;
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var userName = userId; // Could resolve from UserManager if needed
         var log = new BudgetMemoAuditLog
         {
@@ -38,15 +37,14 @@ public class BudgetMemoAuditService(
 
     public async Task<Result<List<BudgetMemoAuditItemDto>>> GetListAsync(BudgetMemoAuditListRequestModel request, CancellationToken cancellationToken = default)
     {
-        var roleId = userProfileService.GetRoleId();
-        var isSuperAdmin = !string.IsNullOrEmpty(roleId) && roleId.Contains(SystemRoles.SuperAdmin);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
         var query = db.BudgetMemoAuditLogs.AsNoTracking().Where(x => !x.IsDeleted);
         if (isSuperAdmin && !string.IsNullOrEmpty(request.TenantId))
             query = query.IgnoreQueryFilters().Where(x => x.TenantId == request.TenantId);
         else if (!isSuperAdmin)
             query = query.Where(x => x.TenantId == db.CurrentTenantId);
         else if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(x => !x.IsDeleted);
         if (!string.IsNullOrEmpty(request.EntityType))
             query = query.Where(x => x.EntityType == request.EntityType);
         if (!string.IsNullOrEmpty(request.EntityId))
