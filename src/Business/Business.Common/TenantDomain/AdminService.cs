@@ -57,6 +57,11 @@ public class AdminService(
             // If tenantId is null, show all admins (global query filter will be ignored)
             query = query.IgnoreQueryFilters();
         }
+        // SuperAdmin uses IgnoreQueryFilters() for cross-tenant listing; re-apply soft-delete exclusion
+        // so removed admins do not reappear (global IsDeleted filter was bypassed).
+        if (isSuperAdmin)
+            query = query.Where(a => !a.IsDeleted && !a.User.IsDeleted);
+
         // For Admin: only show admins from their tenant (global query filter applies)
         var (result, totalCount, totalPage) = await sieveExtension.ApplySieve(query, requestModel);
 
@@ -152,7 +157,7 @@ public class AdminService(
         // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
         if (isSuperAdmin)
-            query = query.IgnoreQueryFilters();
+            query = query.IgnoreQueryFilters().Where(a => !a.IsDeleted && !a.User.IsDeleted);
 
         var admin = await query.FirstOrDefaultAsync(cancellationToken);
 
@@ -386,7 +391,7 @@ public class AdminService(
             // Note: IsDeleted and TenantId filters are now applied globally via query filters
 
             if (isSuperAdmin)
-                query = query.IgnoreQueryFilters();
+                query = query.IgnoreQueryFilters().Where(a => !a.IsDeleted && !a.User.IsDeleted);
 
             var admin = await query.FirstOrDefaultAsync(cancellationToken);
 
