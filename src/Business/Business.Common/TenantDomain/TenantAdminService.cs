@@ -5,9 +5,11 @@ using Common.Mail;
 using Data.Context;
 using Data.Seed;
 using Data.Entities.AdminEntity;
+using Data.Entities.CustomerEntity;
 using Data.Entities.Identity;
 using Data.Entities.Tenant;
 using Infrastructure.Common.PaginationAndFilter.Sieve;
+using Infrastructure.Common.UserProfile;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +19,7 @@ using Models.WebApi.TenantDTOs;
 using SharedKernel.Constant.Roles;
 using SharedKernel.Operation;
 using Tenant = Data.Entities.Tenant.Tenant;
+using TenantAddress = Data.Entities.Tenant.Address;
 
 namespace Business.Common.TenantDomain;
 
@@ -31,6 +34,7 @@ public class TenantAdminService : ITenantAdminService
     private readonly ILogger<TenantAdminService> _logger;
     private readonly IExcelExportService _excelExportService;
     private readonly IFileService _fileService;
+    private readonly IUserProfileService _userProfileService;
 
     public TenantAdminService(
         ApplicationDataContext db,
@@ -41,7 +45,8 @@ public class TenantAdminService : ITenantAdminService
         IConfiguration configuration,
         ILogger<TenantAdminService> logger,
         IExcelExportService excelExportService,
-        IFileService fileService)
+        IFileService fileService,
+        IUserProfileService userProfileService)
     {
         _db = db;
         _sieveExtension = sieveExtension;
@@ -52,6 +57,7 @@ public class TenantAdminService : ITenantAdminService
         _logger = logger;
         _excelExportService = excelExportService;
         _fileService = fileService;
+        _userProfileService = userProfileService;
     }
 
     public async Task<Result<List<TenantsResponseDto>>> ListAsync(CommonPaginationRequestModel requestModel = null, CancellationToken cancellationToken = default)
@@ -366,30 +372,161 @@ public class TenantAdminService : ITenantAdminService
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> DeleteAsync(string id, DeleteTenantDto dto, CancellationToken cancellationToken = default)
     {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Password))
+            return Result<bool>.Failed("Password is required to delete a tenant.");
+
+        var roleIdClaim = _userProfileService.GetRoleId();
+        if (string.IsNullOrEmpty(roleIdClaim) ||
+            !roleIdClaim.Contains(SystemRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase))
+            return Result<bool>.Failed("Only SuperAdmin can delete tenants.");
+
+        var currentUserId = _userProfileService.GetUserId();
+        if (string.IsNullOrEmpty(currentUserId))
+            return Result<bool>.Failed("User context is missing.");
+
+        var superAdminUser = await _userManager.FindByIdAsync(currentUserId);
+        if (superAdminUser == null || superAdminUser.IsDeleted)
+            return Result<bool>.Failed("User account not found.");
+
+        if (!await _userManager.CheckPasswordAsync(superAdminUser, dto.Password))
+            return Result<bool>.Failed("The password you entered is incorrect.");
+
+        var tenantId = id;
+        var existing = await _db.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        if (existing == null)
+            return Result<bool>.Failed("Tenant not found.");
+
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var existing = await _db.Tenants
-                                    .Include(x => x.Branding)
-                                    .FirstOrDefaultAsync(t => t.Id == id, cancellationToken: cancellationToken);
-            if (existing == null)
-                return Result<bool>.Failed("Tenant not found.");
+            await PurgeTenantScopedDataAsync(tenantId, cancellationToken);
 
-            _db.CompanyBrandings.Remove(existing.Branding);
-            _db.Tenants.Remove(existing);
-            await _db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-
+            _logger.LogWarning("Tenant {TenantId} and all related data were permanently deleted by SuperAdmin {UserId}", tenantId, currentUserId);
             return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
-            _logger.LogError(ex, "Error deleting tenant {TenantId}: {Message}", id, ex.Message);
-            throw;
+            await transaction.RollbackAsync(cancellationToken);
+            _logger.LogError(ex, "Error deleting tenant {TenantId}: {Message}", tenantId, ex.Message);
+            return Result<bool>.Failed($"Could not delete the tenant: {ex.Message}");
         }
+    }
+
+    /// <summary>Removes all rows scoped to the tenant, then identity roles/users, then the tenant record.</summary>
+    private async Task PurgeTenantScopedDataAsync(string tenantId, CancellationToken cancellationToken)
+    {
+        // Tenant-scoped business data (respect FK order)
+        await _db.BudgetMemoAuditLogs.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.Memos.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.BudgetRequests.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.ApprovalConfigs.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.Budgets.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.UserSignatures.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.MemoTemplates.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.BudgetSubheadings.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.BudgetHeadings.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.NepaliFiscalYears.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.Departments.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.Branches.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.Designations.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.NotificationHistories.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.Notifications.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.Noticeboards.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.AttendanceEntries.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.EmailGatewayConfigurations.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.SmsGatewayConfigurations.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+
+        await _db.Prospects.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.Contacts.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+        await _db.Set<TenantAddress>().IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+
+        var customerIds = await _db.Customers.IgnoreQueryFilters()
+            .Where(c => c.TenantId == tenantId)
+            .Select(c => c.Id)
+            .ToListAsync(cancellationToken);
+        if (customerIds.Count > 0)
+        {
+            await _db.Addresses.IgnoreQueryFilters()
+                .Where(a => customerIds.Contains(a.CustomerId))
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
+        await _db.Customers.IgnoreQueryFilters().Where(c => c.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken);
+
+        var userIds = await _db.Users.IgnoreQueryFilters()
+            .Where(u => u.TenantId == tenantId)
+            .Select(u => u.Id)
+            .ToListAsync(cancellationToken);
+
+        await _db.Admins.IgnoreQueryFilters()
+            .Where(a => a.TenantId == tenantId || userIds.Contains(a.UserId))
+            .ExecuteDeleteAsync(cancellationToken);
+
+        if (userIds.Count > 0)
+        {
+            await _db.UserOtps.IgnoreQueryFilters()
+                .Where(o => userIds.Contains(o.UserId))
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
+        var tenantRoleIds = await _db.Roles.IgnoreQueryFilters()
+            .Where(r => r.TenantId == tenantId)
+            .Select(r => r.Id)
+            .ToListAsync(cancellationToken);
+
+        if (tenantRoleIds.Count > 0 || userIds.Count > 0)
+        {
+            await _db.UserRoles.IgnoreQueryFilters()
+                .Where(ur =>
+                    (userIds.Count > 0 && userIds.Contains(ur.UserId)) ||
+                    (tenantRoleIds.Count > 0 && tenantRoleIds.Contains(ur.RoleId)))
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
+        if (tenantRoleIds.Count > 0)
+        {
+            await _db.RoleClaims.IgnoreQueryFilters()
+                .Where(rc => tenantRoleIds.Contains(rc.RoleId))
+                .ExecuteDeleteAsync(cancellationToken);
+
+            foreach (var roleId in tenantRoleIds)
+            {
+                var role = await _db.Roles.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Id == roleId, cancellationToken);
+                if (role == null)
+                    continue;
+                var del = await _roleManager.DeleteAsync(role);
+                if (!del.Succeeded)
+                    throw new InvalidOperationException(
+                        $"Failed to delete role {roleId}: {string.Join(", ", del.Errors.Select(e => e.Description))}");
+            }
+        }
+
+        foreach (var uid in userIds)
+        {
+            var user = await _userManager.FindByIdAsync(uid);
+            if (user == null)
+                continue;
+            var delUser = await _userManager.DeleteAsync(user);
+            if (!delUser.Succeeded)
+                throw new InvalidOperationException(
+                    $"Failed to delete user {uid}: {string.Join(", ", delUser.Errors.Select(e => e.Description))}");
+        }
+
+        var branding = await _db.CompanyBrandings.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(b => b.TenantId == tenantId, cancellationToken);
+        if (branding != null)
+            _db.CompanyBrandings.Remove(branding);
+
+        var tenant = await _db.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        if (tenant != null)
+            _db.Tenants.Remove(tenant);
+
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<Result<List<TenantDropdownDto>>> GetTenantsForDropdownAsync(CancellationToken cancellationToken = default)

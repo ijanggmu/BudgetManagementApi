@@ -71,6 +71,9 @@ public record TenantLoginResponseDto(
 // Tenant Dropdown DTO
 public record TenantDropdownDto(string Id, string Name, string Slug);
 
+/// <summary>SuperAdmin must confirm with their account password to permanently delete a tenant and all related data.</summary>
+public record DeleteTenantDto(string Password);
+
 // Branding DTOs
 public record BrandingResponseDto(
     string TenantId,

@@ -41,11 +41,12 @@ public class AdminTenantController(ITenantAdminService service) : BaseAdminApiCo
         return HandleResult(await service.UpdateAsync(id, dto, cancellationToken));
     }
 
-    [HttpDelete("{id}")]
-    [Permission(MenuPermissionConstant.TenantsDelete)]
-    public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    /// <summary>Permanently deletes the tenant and all related data. SuperAdmin only; requires account password confirmation.</summary>
+    [HttpPost("{id}/delete")]
+    [SuperAdminOnly]
+    public async Task<IActionResult> DeleteAsync(string id, [FromBody] DeleteTenantDto dto, CancellationToken cancellationToken = default)
     {
-        return HandleResult(await service.DeleteAsync(id, cancellationToken));
+        return HandleResult(await service.DeleteAsync(id, dto, cancellationToken));
     }
 
     /// <summary>

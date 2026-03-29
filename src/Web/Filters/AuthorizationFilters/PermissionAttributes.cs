@@ -83,22 +83,14 @@ public class PermissionAttribute : AuthorizeAttribute, IAuthorizationFilter
             .Select(r => r.Trim())
             .ToList();
 
-        bool hasRequiredRole = false;
-        bool hasRequiredPermission = false;
+        var hasAnyRoleRequirement = _requiredRoles is { Length: > 0 };
+        var hasAnyPermissionRequirement = _permissions is { Length: > 0 };
 
-        // Check roles if required
-        if (_requiredRoles != null && _requiredRoles.Length > 0)
-        {
-            hasRequiredRole = _requiredRoles.Any(requiredRole => roleIds.Contains(requiredRole));
-        }
-        else
-        {
-            // If no roles required, consider it as passed
-            hasRequiredRole = true;
-        }
+        var hasRequiredRole = hasAnyRoleRequirement &&
+                              _requiredRoles!.Any(requiredRole => roleIds.Contains(requiredRole));
 
-        // Check permissions if required
-        if (_permissions != null && _permissions.Length > 0)
+        var hasRequiredPermission = false;
+        if (hasAnyPermissionRequirement)
         {
             var dbContext = context.HttpContext.RequestServices.GetService(typeof(ApplicationDataContext)) as ApplicationDataContext;
             if (dbContext == null)
@@ -117,18 +109,18 @@ public class PermissionAttribute : AuthorizeAttribute, IAuthorizationFilter
                                          .ToList();
 
             var userPermissions = userPermissionQuery.SelectMany(x => x).ToList();
-            hasRequiredPermission = userPermissions.Count > 0 && userPermissions.Any(x => _permissions.Contains(x));
+            hasRequiredPermission = userPermissions.Count > 0 && userPermissions.Any(x => _permissions!.Contains(x));
         }
+
+        bool isAuthorized;
+        if (_requireBoth)
+            isAuthorized = hasRequiredRole && hasRequiredPermission;
+        else if (hasAnyRoleRequirement && hasAnyPermissionRequirement)
+            isAuthorized = hasRequiredRole || hasRequiredPermission;
+        else if (hasAnyRoleRequirement)
+            isAuthorized = hasRequiredRole;
         else
-        {
-            // If no permissions required, consider it as passed
-            hasRequiredPermission = true;
-        }
-        hasRequiredRole = true;
-        // Determine authorization result
-        bool isAuthorized = _requireBoth
-            ? hasRequiredRole && hasRequiredPermission  // Must have both
-            : hasRequiredRole || hasRequiredPermission;  // Must have at least one
+            isAuthorized = hasRequiredPermission;
 
         if (!isAuthorized)
         {

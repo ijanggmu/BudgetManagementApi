@@ -13,7 +13,7 @@ public interface ITenantAdminService
     Task<Result<TenantResponseDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<Result<TenantsResponseDto>> CreateAsync(CreateTenantDto dto, CancellationToken cancellationToken = default);
     Task<Result<TenantsResponseDto>> UpdateAsync(string id, UpdateTenantDto dto, CancellationToken cancellationToken = default);
-    Task<Result<bool>> DeleteAsync(string id, CancellationToken cancellationToken = default);
+    Task<Result<bool>> DeleteAsync(string id, DeleteTenantDto dto, CancellationToken cancellationToken = default);
     Task<Result<List<TenantDropdownDto>>> GetTenantsForDropdownAsync(CancellationToken cancellationToken = default);
     Task<Result<byte[]>> ExportToExcelAsync(CommonPaginationRequestModel requestModel, CancellationToken cancellationToken = default);
 }
