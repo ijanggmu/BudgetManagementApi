@@ -238,6 +238,7 @@ public static class MenuPermissionSeeder
         p.Add(MenuPermissionConstant.SignatureUpload);
         p.AddRange(MenuPermissionDefinitions.BudgetHeadings.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.NepaliFiscalYear.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.AdminManagement.GetAllValues());
         return p.Distinct().ToList();
     }
 

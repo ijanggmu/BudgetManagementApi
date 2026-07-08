@@ -10,9 +10,12 @@ public record AdminResponseDto(
     string? TenantId,
     string TenantName,
     List<string> Roles,
+    List<string> RoleDisplayNames,
     bool IsDisabled,
     bool EmailConfirmed,
-    DateTime CreatedOn
+    DateTime CreatedOn,
+    string? DepartmentId,
+    string? DepartmentName
 );
 
 public record CreateAdminDto(
@@ -23,7 +26,8 @@ public record CreateAdminDto(
     string Password,
     string ConfirmPassword,
     List<string> Roles,
-    string? TenantId
+    string? TenantId,
+    string? DepartmentId
 );
 
 public record UpdateAdminDto(
@@ -31,6 +35,7 @@ public record UpdateAdminDto(
     string Email,
     string PhoneNumber,
     bool IsDisabled,
-    List<string> Roles
+    List<string> Roles,
+    string? DepartmentId
 );
 

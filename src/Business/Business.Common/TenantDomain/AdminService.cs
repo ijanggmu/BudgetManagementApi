@@ -105,10 +105,35 @@ public class AdminService(
             .Where(t => tenantIds.Contains(t.Id))
             .ToDictionaryAsync(t => t.Id, t => t.Name, cancellationToken);
 
+        var departmentIds = admins
+            .Select(a => a.User.DepartmentId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .ToList();
+        var departmentNames = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (departmentIds.Count > 0)
+        {
+            IQueryable<Data.Entities.Tenant.Department> deptQuery = db.Departments.Where(d => departmentIds.Contains(d.Id));
+            if (isSuperAdmin)
+                deptQuery = deptQuery.IgnoreQueryFilters().Where(d => !d.IsDeleted);
+            departmentNames = await deptQuery
+                .ToDictionaryAsync(d => d.Id, d => d.Name, cancellationToken);
+        }
+
         var dtos = new List<AdminResponseDto>();
+        var adminRolesList = new List<(Data.Entities.AdminEntity.Admin Admin, List<string> Roles)>();
         foreach (var admin in admins)
         {
-            var userRoles = await userManager.GetRolesAsync(admin.User);
+            var userRoles = (await userManager.GetRolesAsync(admin.User)).ToList();
+            adminRolesList.Add((admin, userRoles));
+        }
+
+        var roleDisplayMap = await GetRoleDisplayNameMapAsync(
+            adminRolesList.SelectMany(x => x.Roles),
+            cancellationToken);
+
+        foreach (var (admin, userRoles) in adminRolesList)
+        {
             var effectiveTenantId = !string.IsNullOrWhiteSpace(admin.TenantId)
                 ? admin.TenantId
                 : (resolvedTenantIdByUserId.TryGetValue(admin.UserId, out var tid) ? tid : null);
@@ -117,6 +142,9 @@ public class AdminService(
                               tenants.TryGetValue(effectiveTenantId, out string value)
                 ? value
                 : string.Empty;
+
+            var deptId = string.IsNullOrWhiteSpace(admin.User.DepartmentId) ? null : admin.User.DepartmentId;
+            var deptName = deptId != null && departmentNames.TryGetValue(deptId, out var dn) ? dn : null;
 
             dtos.Add(new AdminResponseDto(
                 admin.Id,
@@ -128,9 +156,12 @@ public class AdminService(
                 string.IsNullOrWhiteSpace(effectiveTenantId) ? null : effectiveTenantId,
                 tenantName,
                 [.. userRoles],
+                MapRoleDisplayNames(userRoles, roleDisplayMap),
                 admin.User.IsDisabled,
                 admin.User.EmailConfirmed,
-                admin.CreatedOn
+                admin.CreatedOn,
+                deptId,
+                deptName
             ));
         }
         var pagination = new Pagination
@@ -182,6 +213,18 @@ public class AdminService(
             tenantName = tenant?.Name ?? string.Empty;
         }
 
+        string? departmentName = null;
+        var deptIdForGet = string.IsNullOrWhiteSpace(admin.User.DepartmentId) ? null : admin.User.DepartmentId;
+        if (deptIdForGet != null)
+        {
+            IQueryable<Data.Entities.Tenant.Department> deptQuery = db.Departments.Where(d => d.Id == deptIdForGet);
+            if (isSuperAdmin)
+                deptQuery = deptQuery.IgnoreQueryFilters().Where(d => !d.IsDeleted);
+            departmentName = await deptQuery.Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
+        }
+
+        var roleDisplayMap = await GetRoleDisplayNameMapAsync(userRoles, cancellationToken);
+
         var dto = new AdminResponseDto(
             admin.Id,
             admin.FullName,
@@ -192,9 +235,12 @@ public class AdminService(
             string.IsNullOrWhiteSpace(effectiveTenantId) ? null : effectiveTenantId,
             tenantName,
             [.. userRoles],
+            MapRoleDisplayNames(userRoles, roleDisplayMap),
             admin.User.IsDisabled,
             admin.User.EmailConfirmed,
-            admin.CreatedOn
+            admin.CreatedOn,
+            deptIdForGet,
+            departmentName
         );
 
         return Result<AdminResponseDto>.Success(dto);
@@ -244,65 +290,12 @@ public class AdminService(
                 SystemRoles.HodAssistance
             };
 
-            // Validate roles if provided
+            List<string> rolesToAssign;
             if (dto.Roles != null && dto.Roles.Count != 0)
             {
+                rolesToAssign = dto.Roles;
                 if (!isSuperAdmin && dto.Roles.Any(r => string.Equals(r, SystemRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase)))
                     return Result<AdminResponseDto>.Failed("You cannot assign SuperAdmin role.");
-
-                List<ApplicationRole> resolvedRoles;
-                if (isSuperAdmin)
-                {
-                    resolvedRoles = await db.Roles.IgnoreQueryFilters()
-                        .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
-                        .ToListAsync(cancellationToken);
-                }
-                else
-                {
-                    resolvedRoles = await db.Roles
-                        .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
-                        .ToListAsync(cancellationToken);
-                }
-
-                if (resolvedRoles.Count != dto.Roles.Count)
-                    return Result<AdminResponseDto>.Failed("One or more roles are invalid.");
-
-                if (!isSuperAdmin && !string.IsNullOrEmpty(tenantId))
-                {
-                    foreach (var r in resolvedRoles)
-                    {
-                        if (r.TenantId != tenantId)
-                            return Result<AdminResponseDto>.Failed("Role does not belong to this tenant.");
-                        if (!tenantAssignableTypes.Contains(r.RoleType ?? string.Empty))
-                            return Result<AdminResponseDto>.Failed(
-                                "You may only assign predefined tenant roles (Tenant Admin, CEO, CFO, HOD, HOD Assistant).");
-                    }
-                }
-            }
-
-            // Create ApplicationUser
-            var adminUser = new ApplicationUser
-            {
-                Id = Guid.NewGuid().ToString(),
-                UserName = dto.Username,
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
-                EmailConfirmed = false,
-                PhoneNumberConfirmed = false,
-                LockoutEnabled = true,
-                IsDisabled = false,
-                TenantId = tenantId
-            };
-
-            var createUserResult = await userManager.CreateAsync(adminUser, dto.Password);
-            if (!createUserResult.Succeeded)
-                return Result<AdminResponseDto>.Failed(createUserResult.Errors.FirstOrDefault()?.Description ?? "Failed to create user.");
-
-            // Assign roles — default TenantAdmin to this tenant's Admin-{slug} role when applicable
-            List<string> rolesToAssign;
-            if (dto.Roles != null && dto.Roles.Any())
-            {
-                rolesToAssign = dto.Roles;
             }
             else if (!isSuperAdmin && !string.IsNullOrEmpty(tenantId))
             {
@@ -318,6 +311,75 @@ public class AdminService(
             {
                 rolesToAssign = new List<string> { SystemRoles.Admin };
             }
+
+            var distinctRoleNames = rolesToAssign.Distinct(StringComparer.Ordinal).ToList();
+
+            List<ApplicationRole> resolvedRoles;
+            if (isSuperAdmin)
+            {
+                resolvedRoles = await db.Roles.IgnoreQueryFilters()
+                    .Where(r => distinctRoleNames.Contains(r.Name) && !r.IsDeleted)
+                    .ToListAsync(cancellationToken);
+            }
+            else
+            {
+                resolvedRoles = await db.Roles
+                    .Where(r => distinctRoleNames.Contains(r.Name) && !r.IsDeleted)
+                    .ToListAsync(cancellationToken);
+            }
+
+            if (resolvedRoles.Count != distinctRoleNames.Count)
+                return Result<AdminResponseDto>.Failed("One or more roles are invalid.");
+
+            if (!isSuperAdmin && !string.IsNullOrEmpty(tenantId))
+            {
+                foreach (var r in resolvedRoles)
+                {
+                    if (r.TenantId != tenantId)
+                        return Result<AdminResponseDto>.Failed("Role does not belong to this tenant.");
+                    if (!tenantAssignableTypes.Contains(r.RoleType ?? string.Empty))
+                        return Result<AdminResponseDto>.Failed(
+                            "You may only assign predefined tenant roles (Tenant Admin, CEO, CFO, HOD, HOD Assistant).");
+                }
+            }
+
+            var needsDepartment = resolvedRoles.Any(r =>
+                string.Equals(r.RoleType, SystemRoles.HOD, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r.RoleType, SystemRoles.HodAssistance, StringComparison.OrdinalIgnoreCase));
+
+            if (needsDepartment)
+            {
+                if (string.IsNullOrWhiteSpace(tenantId))
+                    return Result<AdminResponseDto>.Failed("Tenant is required when assigning Head of Department or HOD Assistant.");
+                if (string.IsNullOrWhiteSpace(dto.DepartmentId))
+                    return Result<AdminResponseDto>.Failed("Department is required for Head of Department and HOD Assistant.");
+                var departmentValid = await db.Departments.AnyAsync(
+                    d => d.Id == dto.DepartmentId && d.TenantId == tenantId && !d.IsDeleted,
+                    cancellationToken);
+                if (!departmentValid)
+                    return Result<AdminResponseDto>.Failed("Department not found or does not belong to this tenant.");
+            }
+
+            var departmentIdToSet = needsDepartment ? dto.DepartmentId : null;
+
+            // Create ApplicationUser
+            var adminUser = new ApplicationUser
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = dto.Username,
+                Email = dto.Email,
+                PhoneNumber = dto.PhoneNumber,
+                EmailConfirmed = false,
+                PhoneNumberConfirmed = false,
+                LockoutEnabled = true,
+                IsDisabled = false,
+                TenantId = tenantId,
+                DepartmentId = departmentIdToSet
+            };
+
+            var createUserResult = await userManager.CreateAsync(adminUser, dto.Password);
+            if (!createUserResult.Succeeded)
+                return Result<AdminResponseDto>.Failed(createUserResult.Errors.FirstOrDefault()?.Description ?? "Failed to create user.");
 
             foreach (var roleName in rolesToAssign)
             {
@@ -350,6 +412,17 @@ public class AdminService(
                 tenantName = tenant?.Name ?? string.Empty;
             }
 
+            string? createdDeptName = null;
+            if (!string.IsNullOrWhiteSpace(adminUser.DepartmentId))
+            {
+                createdDeptName = await db.Departments
+                    .Where(d => d.Id == adminUser.DepartmentId)
+                    .Select(d => d.Name)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            var roleDisplayMap = await GetRoleDisplayNameMapAsync(userRoles, cancellationToken);
+
             var responseDto = new AdminResponseDto(
                 admin.Id,
                 admin.FullName,
@@ -360,9 +433,12 @@ public class AdminService(
                 admin.TenantId ?? string.Empty,
                 tenantName,
                 userRoles.ToList(),
+                MapRoleDisplayNames(userRoles, roleDisplayMap),
                 adminUser.IsDisabled,
                 adminUser.EmailConfirmed,
-                admin.CreatedOn
+                admin.CreatedOn,
+                string.IsNullOrWhiteSpace(adminUser.DepartmentId) ? null : adminUser.DepartmentId,
+                createdDeptName
             );
 
             return Result<AdminResponseDto>.Success(responseDto);
@@ -451,21 +527,23 @@ public class AdminService(
                 if (!isSuperAdmin && dto.Roles.Any(r => string.Equals(r, SystemRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase)))
                     return Result<AdminResponseDto>.Failed("You cannot assign SuperAdmin role.");
 
+                var distinctUpdateRoleNames = dto.Roles.Distinct(StringComparer.Ordinal).ToList();
+
                 List<ApplicationRole> resolvedUpdateRoles;
                 if (isSuperAdmin)
                 {
                     resolvedUpdateRoles = await db.Roles.IgnoreQueryFilters()
-                        .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
+                        .Where(r => distinctUpdateRoleNames.Contains(r.Name) && !r.IsDeleted)
                         .ToListAsync(cancellationToken);
                 }
                 else
                 {
                     resolvedUpdateRoles = await db.Roles
-                        .Where(r => dto.Roles.Contains(r.Name) && !r.IsDeleted)
+                        .Where(r => distinctUpdateRoleNames.Contains(r.Name) && !r.IsDeleted)
                         .ToListAsync(cancellationToken);
                 }
 
-                if (resolvedUpdateRoles.Count != dto.Roles.Count)
+                if (resolvedUpdateRoles.Count != distinctUpdateRoleNames.Count)
                     return Result<AdminResponseDto>.Failed("One or more roles are invalid.");
 
                 var adminTenantId = admin.TenantId ?? db.CurrentTenantId;
@@ -509,6 +587,62 @@ public class AdminService(
                 }
             }
 
+            if (dto.DepartmentId != null)
+            {
+                admin.User.DepartmentId = string.IsNullOrWhiteSpace(dto.DepartmentId)
+                    ? null
+                    : dto.DepartmentId.Trim();
+            }
+
+            var effectiveTenantIdForDept = admin.TenantId ?? db.CurrentTenantId;
+            var roleNamesAfterUpdate = await userManager.GetRolesAsync(admin.User);
+            var distinctAfter = roleNamesAfterUpdate.Distinct(StringComparer.Ordinal).ToList();
+            List<ApplicationRole> resolvedAfterUpdate;
+            if (isSuperAdmin)
+            {
+                resolvedAfterUpdate = await db.Roles.IgnoreQueryFilters()
+                    .Where(r => distinctAfter.Contains(r.Name) && !r.IsDeleted)
+                    .ToListAsync(cancellationToken);
+            }
+            else
+            {
+                resolvedAfterUpdate = await db.Roles
+                    .Where(r => distinctAfter.Contains(r.Name) && !r.IsDeleted)
+                    .ToListAsync(cancellationToken);
+            }
+
+            var needsDepartmentAfter = resolvedAfterUpdate.Any(r =>
+                string.Equals(r.RoleType, SystemRoles.HOD, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r.RoleType, SystemRoles.HodAssistance, StringComparison.OrdinalIgnoreCase));
+
+            if (needsDepartmentAfter)
+            {
+                if (string.IsNullOrWhiteSpace(effectiveTenantIdForDept))
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return Result<AdminResponseDto>.Failed("Cannot validate department: tenant is unknown.");
+                }
+
+                if (string.IsNullOrWhiteSpace(admin.User.DepartmentId))
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return Result<AdminResponseDto>.Failed("Department is required for Head of Department and HOD Assistant.");
+                }
+
+                var departmentOk = await db.Departments.AnyAsync(
+                    d => d.Id == admin.User.DepartmentId && d.TenantId == effectiveTenantIdForDept && !d.IsDeleted,
+                    cancellationToken);
+                if (!departmentOk)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return Result<AdminResponseDto>.Failed("Department not found or does not belong to this tenant.");
+                }
+            }
+            else
+            {
+                admin.User.DepartmentId = null;
+            }
+
             var updateResult = await userManager.UpdateAsync(admin.User);
             if (!updateResult.Succeeded)
                 return Result<AdminResponseDto>.Failed(updateResult.Errors.FirstOrDefault()?.Description ?? "Failed to update user.");
@@ -525,6 +659,17 @@ public class AdminService(
                 tenantName = tenant?.Name ?? string.Empty;
             }
 
+            string? updatedDeptName = null;
+            if (!string.IsNullOrWhiteSpace(admin.User.DepartmentId))
+            {
+                updatedDeptName = await db.Departments
+                    .Where(d => d.Id == admin.User.DepartmentId)
+                    .Select(d => d.Name)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            var roleDisplayMap = await GetRoleDisplayNameMapAsync(userRoles, cancellationToken);
+
             var responseDto = new AdminResponseDto(
                 admin.Id,
                 admin.FullName,
@@ -535,9 +680,12 @@ public class AdminService(
                 admin.TenantId ?? string.Empty,
                 tenantName,
                 userRoles.ToList(),
+                MapRoleDisplayNames(userRoles, roleDisplayMap),
                 admin.User.IsDisabled,
                 admin.User.EmailConfirmed,
-                admin.CreatedOn
+                admin.CreatedOn,
+                string.IsNullOrWhiteSpace(admin.User.DepartmentId) ? null : admin.User.DepartmentId,
+                updatedDeptName
             );
 
             return Result<AdminResponseDto>.Success(responseDto);
@@ -607,6 +755,27 @@ public class AdminService(
     }
 
     /// <summary>Resolves tenant for an admin row when <see cref="Admin.TenantId"/> is not set (legacy / role-only linkage).</summary>
+    private async Task<Dictionary<string, string>> GetRoleDisplayNameMapAsync(
+        IEnumerable<string> roleNames,
+        CancellationToken cancellationToken)
+    {
+        var names = roleNames.Distinct(StringComparer.Ordinal).Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
+        if (names.Count == 0)
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+
+        var pairs = await db.Roles.IgnoreQueryFilters()
+            .Where(r => !r.IsDeleted && r.Name != null && names.Contains(r.Name))
+            .Select(r => new { Name = r.Name!, Label = r.RoleDisplayName ?? r.Name! })
+            .ToListAsync(cancellationToken);
+
+        return pairs.ToDictionary(x => x.Name, x => x.Label, StringComparer.Ordinal);
+    }
+
+    private static List<string> MapRoleDisplayNames(
+        IEnumerable<string> roleNames,
+        IReadOnlyDictionary<string, string> displayMap)
+        => roleNames.Select(name => displayMap.TryGetValue(name, out var label) ? label : name).ToList();
+
     private async Task<string?> GetEffectiveTenantIdForAdminAsync(Admin admin, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrWhiteSpace(admin.TenantId))
@@ -651,6 +820,8 @@ public class AdminService(
                 { "UserId", "User ID" },
                 { "TenantId", "Tenant ID" },
                 { "TenantName", "Tenant Name" },
+                { "DepartmentId", "Department ID" },
+                { "DepartmentName", "Department Name" },
                 { "Roles", "Roles" },
                 { "IsDisabled", "Is Disabled" },
                 { "EmailConfirmed", "Email Confirmed" },

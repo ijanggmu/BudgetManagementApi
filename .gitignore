@@ -8,6 +8,9 @@ appsettings.Development.json
 # FileUploadFolder
 */wwwroot/Uploads/
 
+# Ad-hoc build output copies
+_build_out/
+
 # User-specific files
 *.rsuser
 *.suo

@@ -52,6 +52,7 @@ public class ApprovalConfigService(
                 : "Default (All Departments)";
             return MapToDto(a, deptName);
         }).ToList();
+        await EnrichApprovalConfigRoleNamesAsync(dtos, cancellationToken);
         return Result<List<ApprovalConfigResponseDto>>.Success(dtos, new Pagination
         {
             TotalItems = totalCount,
@@ -71,7 +72,9 @@ public class ApprovalConfigService(
         var deptName = entity.DepartmentId == null
             ? "Default (All Departments)"
             : await db.Departments.Where(d => d.Id == entity.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
-        return Result<ApprovalConfigResponseDto>.Success(MapToDto(entity, deptName));
+        var dto = MapToDto(entity, deptName);
+        await EnrichApprovalConfigRoleNamesAsync([dto], cancellationToken);
+        return Result<ApprovalConfigResponseDto>.Success(dto);
     }
 
     public async Task<Result<ApprovalConfigResponseDto>> GetByDepartmentIdAsync(string departmentId, CancellationToken cancellationToken = default)
@@ -103,7 +106,9 @@ public class ApprovalConfigService(
         var deptName = entity.DepartmentId == null
             ? "Default (All Departments)"
             : await db.Departments.Where(d => d.Id == entity.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
-        return Result<ApprovalConfigResponseDto>.Success(MapToDto(entity, deptName));
+        var dto = MapToDto(entity, deptName);
+        await EnrichApprovalConfigRoleNamesAsync([dto], cancellationToken);
+        return Result<ApprovalConfigResponseDto>.Success(dto);
     }
 
     public async Task<Result<ApprovalConfigResponseDto>> CreateAsync(CreateApprovalConfigDto dto, CancellationToken cancellationToken = default)
@@ -126,7 +131,7 @@ public class ApprovalConfigService(
 
         var roleIds = dto.Steps.Select(s => s.ApproverRoleId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
         var roleNames = roleIds.Count > 0
-            ? await db.Roles.Where(r => roleIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.Name ?? r.NormalizedName ?? "", cancellationToken)
+            ? await db.Roles.Where(r => roleIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.RoleDisplayName ?? r.Name ?? r.NormalizedName ?? "", cancellationToken)
             : new Dictionary<string, string>();
         var stepsWithNames = dto.Steps.Select(s => new
         {
@@ -164,7 +169,7 @@ public class ApprovalConfigService(
         {
             var roleIds = dto.Steps.Select(s => s.ApproverRoleId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
             var roleNames = roleIds.Count > 0
-                ? await db.Roles.Where(r => roleIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.Name ?? r.NormalizedName ?? "", cancellationToken)
+                ? await db.Roles.Where(r => roleIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.RoleDisplayName ?? r.Name ?? r.NormalizedName ?? "", cancellationToken)
                 : new Dictionary<string, string>();
             var stepsWithNames = dto.Steps.Select(s => new { s.StepOrder, s.MinAmount, s.MaxAmount, s.ApproverRoleId, ApproverRoleName = roleNames.GetValueOrDefault(s.ApproverRoleId, ""), s.IsMandatory }).ToList();
             entity.StepsJson = JsonSerializer.Serialize(stepsWithNames, JsonOptions);
@@ -208,7 +213,7 @@ public class ApprovalConfigService(
         while (await reader.ReadLineAsync(cancellationToken) is { } line)
             lines.Add(line);
 
-        var roleIds = await db.Roles.ToDictionaryAsync(r => r.Id, r => r.Name ?? r.NormalizedName ?? "", cancellationToken);
+        var roleIds = await db.Roles.ToDictionaryAsync(r => r.Id, r => r.RoleDisplayName ?? r.Name ?? r.NormalizedName ?? "", cancellationToken);
         var departments = await db.Departments.Where(d => d.TenantId == tenantId).ToDictionaryAsync(d => d.Id, d => d.Name, cancellationToken);
 
         var rowsByDept = new Dictionary<string, List<(int StepOrder, decimal MinAmount, decimal MaxAmount, string ApproverRoleId, bool IsMandatory)>>(StringComparer.OrdinalIgnoreCase);
@@ -281,7 +286,12 @@ public class ApprovalConfigService(
 
         var list = await query
             .OrderBy(r => r.Name)
-            .Select(r => new ApproverRoleItemDto { RoleId = r.Id, RoleName = r.Name ?? r.NormalizedName ?? "" })
+            .Select(r => new ApproverRoleItemDto
+            {
+                RoleId = r.Id,
+                RoleName = r.Name ?? r.NormalizedName ?? "",
+                RoleDisplayName = r.RoleDisplayName ?? r.Name ?? r.NormalizedName ?? ""
+            })
             .ToListAsync(cancellationToken);
         return Result<List<ApproverRoleItemDto>>.Success(list);
     }
@@ -335,5 +345,35 @@ public class ApprovalConfigService(
             Steps = steps.OrderBy(s => s.StepOrder).ToList(),
             CreatedOn = a.CreatedOn
         };
+    }
+
+    private async Task EnrichApprovalConfigRoleNamesAsync(
+        List<ApprovalConfigResponseDto> dtos,
+        CancellationToken cancellationToken)
+    {
+        var roleIds = dtos
+            .SelectMany(d => d.Steps)
+            .Select(s => s.ApproverRoleId)
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Distinct()
+            .ToList();
+        if (roleIds.Count == 0)
+            return;
+
+        var labels = await db.Roles
+            .Where(r => roleIds.Contains(r.Id))
+            .ToDictionaryAsync(r => r.Id, r => r.RoleDisplayName ?? r.Name ?? r.NormalizedName ?? "", cancellationToken);
+
+        foreach (var dto in dtos)
+        {
+            foreach (var step in dto.Steps)
+            {
+                if (!string.IsNullOrEmpty(step.ApproverRoleId) &&
+                    labels.TryGetValue(step.ApproverRoleId, out var label))
+                {
+                    step.ApproverRoleName = label;
+                }
+            }
+        }
     }
 }

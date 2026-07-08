@@ -43,6 +43,10 @@ public class CreateAdminDtoValidator : AbstractValidator<CreateAdminDto>
             .NotEmpty().WithMessage("Role cannot be empty.")
             .MaximumLength(256).WithMessage("Role name cannot exceed 256 characters.")
             .When(x => x.Roles != null && x.Roles.Count > 0);
+
+        RuleFor(x => x.DepartmentId)
+            .MaximumLength(128).WithMessage("Department Id cannot exceed 128 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.DepartmentId));
     }
 }
 
@@ -71,6 +75,10 @@ public class UpdateAdminDtoValidator : AbstractValidator<UpdateAdminDto>
             .NotEmpty().WithMessage("Role cannot be empty.")
             .MaximumLength(256).WithMessage("Role name cannot exceed 256 characters.")
             .When(x => x.Roles != null && x.Roles.Count > 0);
+
+        RuleFor(x => x.DepartmentId)
+            .MaximumLength(128).WithMessage("Department Id cannot exceed 128 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.DepartmentId));
     }
 }
 

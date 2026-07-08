@@ -85,7 +85,7 @@ public class BudgetRequestService(
                 ? await db.Departments.Where(d => deptIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, d => d.Name, cancellationToken)
                 : new Dictionary<string, string>();
             var roleList = await db.Roles.ToListAsync(cancellationToken);
-            var roles = roleList.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First().Name ?? g.First().NormalizedName ?? "");
+            var roles = roleList.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First().RoleDisplayName ?? g.First().Name ?? g.First().NormalizedName ?? "");
             var users = userIds.Count > 0
                 ? await db.Users.Where(u => userIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.UserName ?? u.Email ?? "", cancellationToken)
                 : new Dictionary<string, string>();
@@ -114,7 +114,7 @@ public class BudgetRequestService(
         if (entity == null) return Result<BudgetRequestResponseDto>.Failed("Budget request not found.");
         var deptName = await db.Departments.Where(d => d.Id == entity.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
         var userName = await db.Users.Where(u => u.Id == entity.UserId).Select(u => u.UserName ?? u.Email).FirstOrDefaultAsync(cancellationToken);
-        var nextRoleName = entity.NextApproverRoleId == null ? null : await db.Roles.Where(r => r.Id == entity.NextApproverRoleId).Select(r => r.Name ?? r.NormalizedName).FirstOrDefaultAsync(cancellationToken);
+        var nextRoleName = entity.NextApproverRoleId == null ? null : await db.Roles.Where(r => r.Id == entity.NextApproverRoleId).Select(r => r.RoleDisplayName ?? r.Name ?? r.NormalizedName).FirstOrDefaultAsync(cancellationToken);
         return Result<BudgetRequestResponseDto>.Success(MapToDto(entity, deptName, userName ?? "", nextRoleName ?? ""));
     }
 
@@ -214,7 +214,7 @@ public class BudgetRequestService(
             return Result<BudgetRequestResponseDto>.Failed("You are not authorized to approve this request.");
         var approver = await userManager.FindByIdAsync(userId);
         var role = await db.Roles.FindAsync(request.NextApproverRoleId);
-        var history = AppendApprovalHistory(request.ApprovalHistoryJson, request.NextApproverRoleId, role?.Name ?? role?.NormalizedName ?? "", userId, approver?.UserName ?? approver?.Email ?? "", dto.SignatureUrl);
+        var history = AppendApprovalHistory(request.ApprovalHistoryJson, request.NextApproverRoleId, role?.RoleDisplayName ?? role?.Name ?? role?.NormalizedName ?? "", userId, approver?.UserName ?? approver?.Email ?? "", dto.SignatureUrl);
         request.ApprovalHistoryJson = history;
         // Reload approval config (department-specific, or fall back to default) to determine next approver.
         var config = await db.ApprovalConfigs.FirstOrDefaultAsync(
@@ -281,7 +281,7 @@ public class BudgetRequestService(
         }
         var deptName = await db.Departments.Where(d => d.Id == request.DepartmentId).Select(d => d.Name).FirstOrDefaultAsync(cancellationToken);
         var userName = await db.Users.Where(u => u.Id == request.UserId).Select(u => u.UserName ?? u.Email).FirstOrDefaultAsync(cancellationToken);
-        var nextRoleName = request.NextApproverRoleId == null ? null : await db.Roles.Where(r => r.Id == request.NextApproverRoleId).Select(r => r.Name ?? r.NormalizedName).FirstOrDefaultAsync(cancellationToken);
+        var nextRoleName = request.NextApproverRoleId == null ? null : await db.Roles.Where(r => r.Id == request.NextApproverRoleId).Select(r => r.RoleDisplayName ?? r.Name ?? r.NormalizedName).FirstOrDefaultAsync(cancellationToken);
         return Result<BudgetRequestResponseDto>.Success(MapToDto(request, deptName ?? "", userName ?? "", nextRoleName ?? ""));
     }
 

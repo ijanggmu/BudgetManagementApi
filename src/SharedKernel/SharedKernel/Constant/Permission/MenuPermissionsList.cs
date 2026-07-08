@@ -161,7 +161,7 @@ public static partial class MenuPermissionsList
                         IsMenu = true,
                         ToHide = false,
                         HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin" }, // Admin Management for SuperAdmin and TenantAdmin
+                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // User Management for SuperAdmin and Tenant Admin
                         Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.AdminManagement, false),
                         Children = null
                     },
@@ -209,39 +209,39 @@ public static partial class MenuPermissionsList
                         ],
                         Children = null
                     },
-                    // 20-18. Operations > Entity Settings
-                    new MenuItem
-                    {
-                        MenuId = 18,
-                        MenuName = MenuPermissionConstant.EntityName,
-                        MenuSlug = "/entity",
-                        Icon = "SettingOutlined",
-                        Rank = 3,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Entity, false),
-                        Children = null
-                    },
-                    // 20-22. Operations > Notice Board
-                    new MenuItem
-                    {
-                        MenuId = 22,
-                        MenuName = "Notice Board",
-                        MenuSlug = "/noticeboard",
-                        Icon = "NotificationOutlined",
-                        Rank = 6,
-                        Level = 2,
-                        IsDisabled = false,
-                        IsMenu = true,
-                        ToHide = false,
-                        HideChildren = false,
-                        AllowedRoles = new List<string> { "SuperAdmin", "Admin" }, // Notice Board for SuperAdmin and TenantAdmin
-                        Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.NoticeBoard, false),
-                        Children = null
-                    },
+                    // 20-18. Operations > Entity Settings — hidden from menu
+                    //new MenuItem
+                    //{
+                    //    MenuId = 18,
+                    //    MenuName = MenuPermissionConstant.EntityName,
+                    //    MenuSlug = "/entity",
+                    //    Icon = "SettingOutlined",
+                    //    Rank = 3,
+                    //    Level = 2,
+                    //    IsDisabled = false,
+                    //    IsMenu = true,
+                    //    ToHide = false,
+                    //    HideChildren = false,
+                    //    Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.Entity, false),
+                    //    Children = null
+                    //},
+                    // 20-22. Operations > Notice Board — hidden from menu
+                    //new MenuItem
+                    //{
+                    //    MenuId = 22,
+                    //    MenuName = "Notice Board",
+                    //    MenuSlug = "/noticeboard",
+                    //    Icon = "NotificationOutlined",
+                    //    Rank = 6,
+                    //    Level = 2,
+                    //    IsDisabled = false,
+                    //    IsMenu = true,
+                    //    ToHide = false,
+                    //    HideChildren = false,
+                    //    AllowedRoles = new List<string> { "SuperAdmin", "Admin" },
+                    //    Permissions = PermissionHelper.ToPermissionList(MenuPermissionDefinitions.NoticeBoard, false),
+                    //    Children = null
+                    //},
                     ////// 20-23. Operations > Email Gateway
                     //new MenuItem
                     //{
