@@ -52,47 +52,7 @@ public static class MenuPermissionSeeder
             return;
 
         var roleClaim = await dbContext.RoleClaims.FirstOrDefaultAsync(x => x.RoleId == roleId);
-
-        // Tenant Admin permissions: Operations, System sections with full CRUD+Export
-        var tenantAdminPermissions = new List<string>();
-
-        // Operations section
-        tenantAdminPermissions.Add(MenuPermissionConstant.OperationsView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.NotificationsView);
-
-        // System section
-        tenantAdminPermissions.Add(MenuPermissionConstant.SystemView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.LogsView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.SystemLogView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.ConfigView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.DashboardView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.ProfileView);
-
-        // Budget Management (23-xx) - full access for TenantAdmin
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Budget.GetAllValues());
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Department.GetAllValues());
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.ApprovalConfig.GetAllValues());
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.BudgetReport.GetAllValues());
-        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestCreate);
-        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestApprove);
-        tenantAdminPermissions.Add(MenuPermissionConstant.BudgetRequestReject);
-        tenantAdminPermissions.Add(MenuPermissionConstant.MemoView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.MemoCreate);
-        tenantAdminPermissions.Add(MenuPermissionConstant.MemoUpdate);
-        tenantAdminPermissions.Add(MenuPermissionConstant.MemoDelete);
-        tenantAdminPermissions.Add(MenuPermissionConstant.MemoExport);
-        tenantAdminPermissions.Add(MenuPermissionConstant.MemoGeneratePdf);
-        tenantAdminPermissions.Add(MenuPermissionConstant.SignatureView);
-        tenantAdminPermissions.Add(MenuPermissionConstant.SignatureUpload);
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.BudgetHeadings.GetAllValues());
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.NepaliFiscalYear.GetAllValues());
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.AdminManagement.GetAllValues());
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Roles.GetAllValues());
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Menu.GetAllValues());
-        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Branding.GetAllValues());
-
-        tenantAdminPermissions = tenantAdminPermissions.Distinct().ToList();
+        var tenantAdminPermissions = GetAdminPermissions();
 
         if (roleClaim == null)
         {
@@ -210,12 +170,13 @@ public static class MenuPermissionSeeder
     private static Task SetRolePermissionsAsync(ApplicationDataContext dbContext, string roleId, List<string> permissions) =>
         UpsertRoleMenuPermissionsAsync(dbContext, roleId, permissions);
 
-    /// <summary>Full tenant-admin style menu permissions (aligned with global Admin demo role).</summary>
+    /// <summary>Full tenant-admin permission set (all tenant features except SuperAdmin-only Tenants).</summary>
     public static List<string> GetAdminPermissions()
     {
         var p = new List<string>
         {
             MenuPermissionConstant.DashboardView,
+            MenuPermissionConstant.AdministrationView,
             MenuPermissionConstant.BudgetManagementView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
@@ -223,8 +184,24 @@ public static class MenuPermissionSeeder
             MenuPermissionConstant.LogsView,
             MenuPermissionConstant.SystemLogView,
             MenuPermissionConstant.ConfigView,
-            MenuPermissionConstant.ProfileView
         };
+
+        // Dashboard utilities (profile, password, 2FA, uploads, common APIs)
+        p.AddRange(MenuPermissionDefinitions.Profile.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.Password.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.TwoFactor.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.CommonUtilities.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.FileUpload.GetAllValues());
+
+        // Administration (tenant-scoped; Tenants menu is SuperAdmin-only)
+        p.AddRange(MenuPermissionDefinitions.Branding.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.Branch.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.Designation.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.Roles.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.Menu.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.AdminManagement.GetAllValues());
+
+        // Budget management
         p.AddRange(MenuPermissionDefinitions.Budget.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.Department.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.ApprovalConfig.GetAllValues());
@@ -243,10 +220,7 @@ public static class MenuPermissionSeeder
         p.Add(MenuPermissionConstant.SignatureUpload);
         p.AddRange(MenuPermissionDefinitions.BudgetHeadings.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.NepaliFiscalYear.GetAllValues());
-        p.AddRange(MenuPermissionDefinitions.AdminManagement.GetAllValues());
-        p.AddRange(MenuPermissionDefinitions.Roles.GetAllValues());
-        p.AddRange(MenuPermissionDefinitions.Menu.GetAllValues());
-        p.AddRange(MenuPermissionDefinitions.Branding.GetAllValues());
+
         return p.Distinct().ToList();
     }
 

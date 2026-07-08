@@ -45,6 +45,14 @@ public class RoleService(
             predicate = c => !c.IsDeleted && (c.TenantId == tid || c.TenantId == null);
         }
 
+        // Non–Super Admin: only roles for the current tenant (no global demo roles).
+        if (!isSuperAdmin)
+        {
+            var currentTenantId = dataContext.CurrentTenantId;
+            if (!string.IsNullOrWhiteSpace(currentTenantId))
+                predicate = c => !c.IsDeleted && c.TenantId == currentTenantId;
+        }
+
         IQueryable<ApplicationRole> query = dataContext.Roles.AsNoTracking();
         if (isSuperAdmin)
         {
