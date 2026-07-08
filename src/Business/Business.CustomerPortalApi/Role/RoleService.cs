@@ -128,7 +128,12 @@ public class RoleService(
 
     public async Task<Result<RoleResponseModel>> GetRoleByIdAsync(string roleId, CancellationToken cancellationToken = default)
     {
-        var role = await roleManager.Roles.Where(x => x.Id == roleId && !x.IsDeleted).FirstOrDefaultAsync(cancellationToken);
+        var isSuperAdmin = userProfileService.IsSuperAdmin();
+        IQueryable<ApplicationRole> roleQuery = dataContext.Roles.AsNoTracking();
+        if (isSuperAdmin)
+            roleQuery = roleQuery.IgnoreQueryFilters();
+
+        var role = await roleQuery.Where(x => x.Id == roleId && !x.IsDeleted).FirstOrDefaultAsync(cancellationToken);
         if (role == null)
             return Result<RoleResponseModel>.Failed("Role not found.");
 

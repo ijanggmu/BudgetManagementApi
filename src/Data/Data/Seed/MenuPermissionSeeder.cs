@@ -14,6 +14,7 @@ public static class MenuPermissionSeeder
         await SeedSuperAdminPermissions(dbContext);
         await SeedTenantAdminPermissions(dbContext);
         await SeedGlobalDemoRolePermissions(dbContext);
+        await SeedPerTenantAdminRolePermissions(dbContext);
     }
 
     private static async Task SeedSuperAdminPermissions(ApplicationDataContext dbContext)
@@ -86,6 +87,10 @@ public static class MenuPermissionSeeder
         tenantAdminPermissions.Add(MenuPermissionConstant.SignatureUpload);
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.BudgetHeadings.GetAllValues());
         tenantAdminPermissions.AddRange(MenuPermissionDefinitions.NepaliFiscalYear.GetAllValues());
+        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.AdminManagement.GetAllValues());
+        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Roles.GetAllValues());
+        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Menu.GetAllValues());
+        tenantAdminPermissions.AddRange(MenuPermissionDefinitions.Branding.GetAllValues());
 
         tenantAdminPermissions = tenantAdminPermissions.Distinct().ToList();
 
@@ -239,7 +244,26 @@ public static class MenuPermissionSeeder
         p.AddRange(MenuPermissionDefinitions.BudgetHeadings.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.NepaliFiscalYear.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.AdminManagement.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.Roles.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.Menu.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.Branding.GetAllValues());
         return p.Distinct().ToList();
+    }
+
+    /// <summary>Sync tenant-scoped Admin roles (e.g. Admin-acme) with the current admin permission set.</summary>
+    private static async Task SeedPerTenantAdminRolePermissions(ApplicationDataContext dbContext)
+    {
+        var tenantAdminRoleIds = await dbContext.Roles
+            .IgnoreQueryFilters()
+            .Where(r => !r.IsDeleted && r.TenantId != null && r.RoleType == SystemRoles.Admin)
+            .Select(r => r.Id)
+            .ToListAsync();
+
+        foreach (var roleId in tenantAdminRoleIds)
+            await SetRolePermissionsAsync(dbContext, roleId, GetAdminPermissions());
+
+        if (tenantAdminRoleIds.Count > 0)
+            await dbContext.SaveChangesAsync();
     }
 
     public static List<string> GetCEOPermissions()
