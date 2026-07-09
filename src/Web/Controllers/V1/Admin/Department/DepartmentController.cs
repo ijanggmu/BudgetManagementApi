@@ -9,7 +9,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Department;
 
-[AdminOrSuperAdmin]
+[BmsPortalUser]
 public class DepartmentController(IDepartmentService service) : BaseAdminApiController
 {
     [HttpPost]

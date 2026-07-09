@@ -9,7 +9,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.Memo;
 
-[AdminOrSuperAdmin]
+[BmsPortalUser]
 public class MemoController(IMemoService service, IBudgetRequestService budgetRequestService) : BaseAdminApiController
 {
     [HttpPost]

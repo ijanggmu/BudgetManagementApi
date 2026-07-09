@@ -12,7 +12,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.ApprovalConfig;
 
-[AdminOrSuperAdmin]
+[BmsPortalUser]
 public class ApprovalConfigController(IApprovalConfigService service) : BaseAdminApiController
 {
     [HttpPost]

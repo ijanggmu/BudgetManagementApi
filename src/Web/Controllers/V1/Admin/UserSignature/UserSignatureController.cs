@@ -11,7 +11,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.UserSignature;
 
-[AdminOrSuperAdmin]
+[BmsPortalUser]
 public class UserSignatureController(IUserSignatureService signatureService, IFileService fileService) : BaseAdminApiController
 {
     [HttpGet]

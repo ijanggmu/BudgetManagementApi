@@ -9,7 +9,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.NepaliFiscalYear;
 
-[AdminOrSuperAdmin]
+[BmsPortalUser]
 public class NepaliFiscalYearController(INepaliFiscalYearService service) : BaseAdminApiController
 {
     [HttpPost]

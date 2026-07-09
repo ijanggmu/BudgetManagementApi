@@ -15,6 +15,7 @@ public static class MenuPermissionSeeder
         await SeedTenantAdminPermissions(dbContext);
         await SeedGlobalDemoRolePermissions(dbContext);
         await SeedPerTenantAdminRolePermissions(dbContext);
+        await SeedPerTenantBusinessRolePermissions(dbContext);
     }
 
     private static async Task SeedSuperAdminPermissions(ApplicationDataContext dbContext)
@@ -240,11 +241,52 @@ public static class MenuPermissionSeeder
             await dbContext.SaveChangesAsync();
     }
 
+    /// <summary>Sync CEO/CFO/HOD/HodAssistance tenant roles (e.g. CEO-hei) with current permission sets.</summary>
+    private static async Task SeedPerTenantBusinessRolePermissions(ApplicationDataContext dbContext)
+    {
+        var businessRoles = await dbContext.Roles
+            .IgnoreQueryFilters()
+            .Where(r => !r.IsDeleted && r.TenantId != null &&
+                        (r.RoleType == SystemRoles.CEO ||
+                         r.RoleType == SystemRoles.CFO ||
+                         r.RoleType == SystemRoles.HOD ||
+                         r.RoleType == SystemRoles.HodAssistance))
+            .Select(r => new { r.Id, r.RoleType })
+            .ToListAsync();
+
+        foreach (var role in businessRoles)
+        {
+            var perms = role.RoleType switch
+            {
+                SystemRoles.CEO => GetCEOPermissions(),
+                SystemRoles.CFO => GetCFOPermissions(),
+                SystemRoles.HOD => GetHODPermissions(),
+                SystemRoles.HodAssistance => GetHodAssistancePermissions(),
+                _ => new List<string>()
+            };
+            if (perms.Count > 0)
+                await SetRolePermissionsAsync(dbContext, role.Id, perms);
+        }
+
+        if (businessRoles.Count > 0)
+            await dbContext.SaveChangesAsync();
+    }
+
+    /// <summary>Profile, auth utilities, and uploads required by the app shell for every portal role.</summary>
+    private static void AddPortalBasePermissions(List<string> permissions)
+    {
+        permissions.Add(MenuPermissionConstant.DashboardView);
+        permissions.AddRange(MenuPermissionDefinitions.Profile.GetAllValues());
+        permissions.AddRange(MenuPermissionDefinitions.Password.GetAllValues());
+        permissions.AddRange(MenuPermissionDefinitions.TwoFactor.GetAllValues());
+        permissions.AddRange(MenuPermissionDefinitions.CommonUtilities.GetAllValues());
+        permissions.AddRange(MenuPermissionDefinitions.FileUpload.GetAllValues());
+    }
+
     public static List<string> GetCEOPermissions()
     {
-        return new List<string>
+        var p = new List<string>
         {
-            MenuPermissionConstant.DashboardView,
             MenuPermissionConstant.BudgetManagementView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
@@ -258,15 +300,15 @@ public static class MenuPermissionSeeder
             MenuPermissionConstant.MemoUpdate,
             MenuPermissionConstant.MemoExport,
             MenuPermissionConstant.MemoGeneratePdf,
-            MenuPermissionConstant.ProfileView
-        }.Distinct().ToList();
+        };
+        AddPortalBasePermissions(p);
+        return p.Distinct().ToList();
     }
 
     public static List<string> GetCFOPermissions()
     {
         var p = new List<string>
         {
-            MenuPermissionConstant.DashboardView,
             MenuPermissionConstant.BudgetManagementView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
@@ -279,7 +321,6 @@ public static class MenuPermissionSeeder
             MenuPermissionConstant.SignatureView,
             MenuPermissionConstant.SignatureUpload,
             MenuPermissionConstant.DepartmentView,
-            MenuPermissionConstant.ProfileView
         };
         p.AddRange(MenuPermissionDefinitions.Budget.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.BudgetReport.GetAllValues());
@@ -290,6 +331,7 @@ public static class MenuPermissionSeeder
         p.Add(MenuPermissionConstant.MemoExport);
         p.Add(MenuPermissionConstant.MemoGeneratePdf);
         p.Add(MenuPermissionConstant.BudgetHeadingsView);
+        AddPortalBasePermissions(p);
         return p.Distinct().ToList();
     }
 
@@ -297,9 +339,8 @@ public static class MenuPermissionSeeder
     {
         // HOD is department-scoped; they should not manage departments or budget headings from the menu.
         // Exclude DepartmentView and BudgetHeadingsView so those modules are hidden in the UI for HOD.
-        return new List<string>
+        var p = new List<string>
         {
-            MenuPermissionConstant.DashboardView,
             MenuPermissionConstant.BudgetManagementView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
@@ -313,16 +354,16 @@ public static class MenuPermissionSeeder
             MenuPermissionConstant.MemoUpdate,
             MenuPermissionConstant.MemoExport,
             MenuPermissionConstant.MemoGeneratePdf,
-            MenuPermissionConstant.ProfileView
-        }.Distinct().ToList();
+        };
+        AddPortalBasePermissions(p);
+        return p.Distinct().ToList();
     }
 
     /// <summary>HOD assistant: prepare memos and budget requests for their department only (no approval chain).</summary>
     public static List<string> GetHodAssistancePermissions()
     {
-        return new List<string>
+        var p = new List<string>
         {
-            MenuPermissionConstant.DashboardView,
             MenuPermissionConstant.BudgetManagementView,
             MenuPermissionConstant.OperationsView,
             MenuPermissionConstant.NotificationsView,
@@ -333,7 +374,8 @@ public static class MenuPermissionSeeder
             MenuPermissionConstant.MemoCreate,
             MenuPermissionConstant.MemoUpdate,
             MenuPermissionConstant.MemoGeneratePdf,
-            MenuPermissionConstant.ProfileView
-        }.Distinct().ToList();
+        };
+        AddPortalBasePermissions(p);
+        return p.Distinct().ToList();
     }
 }

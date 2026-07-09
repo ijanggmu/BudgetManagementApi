@@ -9,7 +9,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.MemoTemplate;
 
-[AdminOrSuperAdmin]
+[BmsPortalUser]
 public class MemoTemplateController(IMemoTemplateService service) : BaseAdminApiController
 {
     [HttpGet]

@@ -10,7 +10,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.BudgetMemoAudit;
 
-[AdminOrSuperAdmin]
+[BmsPortalUser]
 [Route("api/v{version:apiVersion}/BudgetMemoAudit")]
 [ApiVersion("1.0")]
 public class BudgetMemoAuditController(IBudgetMemoAuditService service) : BaseAdminApiController

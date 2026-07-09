@@ -9,7 +9,7 @@ using SharedKernel.Constant.Permission;
 
 namespace BeemaEdgeApi.Controllers.V1.Admin.BudgetReport;
 
-[AdminOrSuperAdmin]
+[BmsPortalUser]
 public class BudgetReportController(IBudgetReportService service) : BaseAdminApiController
 {
     [HttpPost]

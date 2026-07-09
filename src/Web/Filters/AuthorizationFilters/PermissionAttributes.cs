@@ -109,7 +109,7 @@ public class PermissionAttribute : AuthorizeAttribute, IAuthorizationFilter
                                                role => role.Id,
                                                roleClaim => roleClaim.RoleId,
                                                (role, roleClaim) => new { Role = role, RoleClaim = roleClaim })
-                                         .Where(rc => roleIds.Contains(rc.Role.Name) && !rc.Role.IsDeleted)
+                                         .Where(rc => (roleIds.Contains(rc.Role.Name) || roleIds.Contains(rc.Role.Id)) && !rc.Role.IsDeleted)
                                          .Select(rc => rc.RoleClaim.Permissions)
                                          .ToList();
 
@@ -198,6 +198,25 @@ public class AdminOrSuperAdminAttribute : RequireRolesAttribute
 {
     public AdminOrSuperAdminAttribute()
         : base(SharedKernel.Constant.Roles.SystemRoles.Admin, SharedKernel.Constant.Roles.SystemRoles.SuperAdmin)
+    {
+    }
+}
+
+/// <summary>
+/// BMS portal users: SuperAdmin, tenant Admin, CEO, CFO, HOD, and HOD assistant.
+/// Use with per-endpoint <see cref="PermissionAttribute"/> for fine-grained access.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+public class BmsPortalUserAttribute : RequireRolesAttribute
+{
+    public BmsPortalUserAttribute()
+        : base(
+            SharedKernel.Constant.Roles.SystemRoles.SuperAdmin,
+            SharedKernel.Constant.Roles.SystemRoles.Admin,
+            SharedKernel.Constant.Roles.SystemRoles.CEO,
+            SharedKernel.Constant.Roles.SystemRoles.CFO,
+            SharedKernel.Constant.Roles.SystemRoles.HOD,
+            SharedKernel.Constant.Roles.SystemRoles.HodAssistance)
     {
     }
 }
