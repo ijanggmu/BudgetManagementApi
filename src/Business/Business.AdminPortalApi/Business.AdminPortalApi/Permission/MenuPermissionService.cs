@@ -82,9 +82,14 @@ public class MenuPermissionService : IMenuPermissionService
         var roleName = existingRole.Name;
         var roleForFiltering = MapRoleNameToAllowedRole(roleName);
 
-        // Filter menus based on the role's AllowedRoles
+        // The caller's own privilege caps what they can see/assign, regardless of which
+        // target role they're editing — a tenant admin must never see SuperAdmin-only
+        // permissions (e.g. Tenants management), even when editing the SuperAdmin role.
+        var isCallerSuperAdmin = _personAccessor.IsSuperAdmin();
+
+        // Filter menus based on the role's AllowedRoles and the caller's own privilege
         var groupedPermissions = MenuPermissionsList._list
-            .Where(menu => IsMenuAllowedForRole(menu, roleForFiltering))
+            .Where(menu => IsMenuAllowedForRole(menu, roleForFiltering) && IsVisibleToCaller(menu, isCallerSuperAdmin))
             .ToList();
 
         foreach (var menuItem in groupedPermissions)
@@ -103,7 +108,7 @@ public class MenuPermissionService : IMenuPermissionService
                 rolePermissionViewModel.RolePermissionGroup.Add(rolePermissionGroup);
             }
 
-            AddPermissionsWithChildren(menuItem, existingPermissions, rolePermissionGroup, roleForFiltering);
+            AddPermissionsWithChildren(menuItem, existingPermissions, rolePermissionGroup, roleForFiltering, isCallerSuperAdmin);
         }
 
         return Result<RolePermissionViewModel>.Success(rolePermissionViewModel);
@@ -151,7 +156,50 @@ public class MenuPermissionService : IMenuPermissionService
         );
     }
 
-    private void AddPermissionsWithChildren(MenuItem menuItem, List<string> permissions, RolePermissionGroup rolePermissionGroup, string? roleForFiltering = null)
+    /// <summary>
+    /// A non-SuperAdmin caller must never see/assign a menu item that is exclusively
+    /// restricted to SuperAdmin (e.g. Tenants management), no matter which role they're editing.
+    /// </summary>
+    private static bool IsVisibleToCaller(MenuItem menu, bool isCallerSuperAdmin)
+    {
+        if (isCallerSuperAdmin)
+            return true;
+
+        if (menu.AllowedRoles == null || !menu.AllowedRoles.Any())
+            return true;
+
+        if (menu.AllowedRoles.Contains("All", StringComparer.OrdinalIgnoreCase))
+            return true;
+
+        var isSuperAdminOnly = menu.AllowedRoles.All(r => string.Equals(r, "SuperAdmin", StringComparison.OrdinalIgnoreCase));
+        return !isSuperAdminOnly;
+    }
+
+    /// <summary>Permission ids belonging to menu items restricted exclusively to SuperAdmin.</summary>
+    private static HashSet<string> GetSuperAdminOnlyPermissionIds()
+    {
+        var ids = new HashSet<string>();
+
+        void Collect(IEnumerable<MenuItem> items)
+        {
+            foreach (var item in items)
+            {
+                if (!IsVisibleToCaller(item, isCallerSuperAdmin: false))
+                {
+                    foreach (var permission in item.Permissions)
+                        ids.Add(permission.Value);
+                }
+
+                if (item.Children != null)
+                    Collect(item.Children);
+            }
+        }
+
+        Collect(MenuPermissionsList._list);
+        return ids;
+    }
+
+    private void AddPermissionsWithChildren(MenuItem menuItem, List<string> permissions, RolePermissionGroup rolePermissionGroup, string? roleForFiltering = null, bool isCallerSuperAdmin = true)
     {
         foreach (var permission in menuItem.Permissions)
         {
@@ -167,9 +215,9 @@ public class MenuPermissionService : IMenuPermissionService
 
         if (menuItem.Children != null)
         {
-            // Filter children based on role's AllowedRoles
+            // Filter children based on role's AllowedRoles and the caller's own privilege
             var filteredChildren = menuItem.Children
-                .Where(child => IsMenuAllowedForRole(child, roleForFiltering))
+                .Where(child => IsMenuAllowedForRole(child, roleForFiltering) && IsVisibleToCaller(child, isCallerSuperAdmin))
                 .ToList();
 
             foreach (var child in filteredChildren)
@@ -181,7 +229,7 @@ public class MenuPermissionService : IMenuPermissionService
                     HideChildren = child.HideChildren
                 };
                 rolePermissionGroup.Childrens.Add(childRolePermissionGroup);
-                AddPermissionsWithChildren(child, permissions, childRolePermissionGroup, roleForFiltering);
+                AddPermissionsWithChildren(child, permissions, childRolePermissionGroup, roleForFiltering, isCallerSuperAdmin);
             }
         }
     }
@@ -194,6 +242,16 @@ public class MenuPermissionService : IMenuPermissionService
         if (!hasRole)
             return Result<MessageResponseModel>.Failed("Role not found.");
 
+        var claimList = requestModel.ClaimList ?? new List<string>();
+
+        // Defense in depth: even if a request bypasses the UI, a non-SuperAdmin caller
+        // can never grant a SuperAdmin-only permission to any role.
+        if (!_personAccessor.IsSuperAdmin())
+        {
+            var superAdminOnlyIds = GetSuperAdminOnlyPermissionIds();
+            claimList = claimList.Where(c => !superAdminOnlyIds.Contains(c)).ToList();
+        }
+
         var roleClaim = await _context.RoleClaims.Where(x => x.RoleId == roleId).FirstOrDefaultAsync(cancellationToken);
 
         if (roleClaim == null)
@@ -201,12 +259,12 @@ public class MenuPermissionService : IMenuPermissionService
             _context.RoleClaims.Add(new ApplicationRoleClaim
             {
                 RoleId = roleId,
-                Permissions = requestModel.ClaimList
+                Permissions = claimList
             });
         }
         else
         {
-            roleClaim.Permissions = requestModel.ClaimList;
+            roleClaim.Permissions = claimList;
             _context.RoleClaims.Update(roleClaim);
         }
 

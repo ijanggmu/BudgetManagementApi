@@ -201,6 +201,7 @@ public static class MenuPermissionSeeder
         p.AddRange(MenuPermissionDefinitions.Roles.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.Menu.GetAllValues());
         p.AddRange(MenuPermissionDefinitions.AdminManagement.GetAllValues());
+        p.AddRange(MenuPermissionDefinitions.Entity.GetAllValues());
 
         // Budget management
         p.AddRange(MenuPermissionDefinitions.Budget.GetAllValues());
